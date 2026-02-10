@@ -1,0 +1,930 @@
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Plus, Edit2, Trash2, Boxes, Tag, X, FileText, Truck } from 'lucide-react';
+import Button from '../components/ui/Button';
+import Modal from '../components/ui/Modal';
+import { PageHeader } from '../components/PageHeader';
+import Input from '../components/ui/Input';
+import { useToast } from '../components/ui/Toast';
+import api from '../services/api';
+import type { AssemblyType, Assembly, OrderTemplate, ApiResponse, PaginatedResponse } from '../types';
+
+export default function Settings() {
+  const queryClient = useQueryClient();
+  const toast = useToast();
+
+  // Assembly Types state (ex: Borne Classik, Borne Spherik)
+  const [isAssemblyTypeModalOpen, setIsAssemblyTypeModalOpen] = useState(false);
+  const [selectedAssemblyType, setSelectedAssemblyType] = useState<AssemblyType | undefined>();
+  const [assemblyTypeName, setAssemblyTypeName] = useState('');
+  const [assemblyTypeDescription, setAssemblyTypeDescription] = useState('');
+  const [deleteAssemblyTypeConfirm, setDeleteAssemblyTypeConfirm] = useState<AssemblyType | null>(null);
+
+  // Order Templates state
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<OrderTemplate | undefined>();
+  const [templateName, setTemplateName] = useState('');
+  const [deleteTemplateConfirm, setDeleteTemplateConfirm] = useState<OrderTemplate | null>(null);
+
+  // Assemblies state (ex: Ossature, Face Avant, Écran)
+  const [isAssemblyModalOpen, setIsAssemblyModalOpen] = useState(false);
+  const [selectedAssembly, setSelectedAssembly] = useState<Assembly | undefined>();
+  const [assemblyName, setAssemblyName] = useState('');
+  const [assemblyDescription, setAssemblyDescription] = useState('');
+  const [assemblyTypeIds, setAssemblyTypeIds] = useState<string[]>([]);
+  const [deleteAssemblyConfirm, setDeleteAssemblyConfirm] = useState<Assembly | null>(null);
+
+  // Fetch assembly types
+  const { data: assemblyTypesData, isLoading: assemblyTypesLoading } = useQuery({
+    queryKey: ['assembly-types'],
+    queryFn: async () => {
+      const res = await api.get<PaginatedResponse<AssemblyType>>('/assembly-types?limit=100');
+      return res.data;
+    },
+  });
+
+  // Fetch assemblies
+  const { data: assembliesData, isLoading: assembliesLoading } = useQuery({
+    queryKey: ['assemblies'],
+    queryFn: async () => {
+      const res = await api.get<PaginatedResponse<Assembly>>('/assemblies?limit=100');
+      return res.data;
+    },
+  });
+
+  // Fetch order templates
+  const { data: templatesData, isLoading: templatesLoading } = useQuery({
+    queryKey: ['order-templates'],
+    queryFn: async () => {
+      const res = await api.get<ApiResponse<OrderTemplate[]>>('/order-templates');
+      return res.data?.data;
+    },
+  });
+
+  // Order Template mutations
+  const updateTemplateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: { name: string } }) => {
+      await api.put(`/order-templates/${id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['order-templates'], refetchType: 'all' });
+      handleCloseTemplateModal();
+      toast.success('Modèle modifié', 'Le modèle a été renommé');
+    },
+    onError: () => {
+      toast.error('Erreur', 'Impossible de modifier le modèle');
+    },
+  });
+
+  const deleteTemplateMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await api.delete(`/order-templates/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['order-templates'], refetchType: 'all' });
+      setDeleteTemplateConfirm(null);
+      toast.success('Modèle supprimé', 'Le modèle a été supprimé');
+    },
+    onError: () => {
+      toast.error('Erreur', 'Impossible de supprimer le modèle');
+    },
+  });
+
+  // Assembly Type mutations
+  const createAssemblyTypeMutation = useMutation({
+    mutationFn: async (data: { name: string; description?: string }) => {
+      await api.post('/assembly-types', data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['assembly-types'], refetchType: 'all' });
+      handleCloseAssemblyTypeModal();
+      toast.success('Type borne créé', 'Le type borne a été créé avec succès');
+    },
+    onError: () => {
+      toast.error('Erreur', 'Impossible de créer le type borne');
+    },
+  });
+
+  const updateAssemblyTypeMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: { name: string; description?: string } }) => {
+      await api.put(`/assembly-types/${id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['assembly-types'], refetchType: 'all' });
+      handleCloseAssemblyTypeModal();
+      toast.success('Type borne modifié', 'Le type borne a été mis à jour');
+    },
+    onError: () => {
+      toast.error('Erreur', 'Impossible de modifier le type borne');
+    },
+  });
+
+  const deleteAssemblyTypeMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await api.delete(`/assembly-types/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['assembly-types'], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ['assemblies'], refetchType: 'all' });
+      setDeleteAssemblyTypeConfirm(null);
+      toast.success('Type borne supprimé', 'Le type borne a été supprimé');
+    },
+    onError: () => {
+      toast.error('Erreur', 'Impossible de supprimer le type borne');
+    },
+  });
+
+  // Assembly mutations
+  const createAssemblyMutation = useMutation({
+    mutationFn: async (data: { name: string; description?: string; assemblyTypeIds?: string[] }) => {
+      await api.post('/assemblies', data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['assemblies'], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ['assembly-types'], refetchType: 'all' });
+      handleCloseAssemblyModal();
+      toast.success('Borne créée', 'La borne a été créée avec succès');
+    },
+    onError: () => {
+      toast.error('Erreur', 'Impossible de créer la borne');
+    },
+  });
+
+  const updateAssemblyMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: { name: string; description?: string; assemblyTypeIds?: string[] } }) => {
+      await api.put(`/assemblies/${id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['assemblies'], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ['assembly-types'], refetchType: 'all' });
+      handleCloseAssemblyModal();
+      toast.success('Borne modifiée', 'La borne a été mise à jour');
+    },
+    onError: () => {
+      toast.error('Erreur', 'Impossible de modifier la borne');
+    },
+  });
+
+  const deleteAssemblyMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await api.delete(`/assemblies/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['assemblies'], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ['assembly-types'], refetchType: 'all' });
+      setDeleteAssemblyConfirm(null);
+      toast.success('Borne supprimée', 'La borne a été supprimée');
+    },
+    onError: () => {
+      toast.error('Erreur', 'Impossible de supprimer la borne');
+    },
+  });
+
+
+  // Assembly Type handlers
+  const handleOpenAssemblyTypeModal = (assemblyType?: AssemblyType) => {
+    setSelectedAssemblyType(assemblyType);
+    setAssemblyTypeName(assemblyType?.name || '');
+    setAssemblyTypeDescription(assemblyType?.description || '');
+    setIsAssemblyTypeModalOpen(true);
+  };
+
+  const handleCloseAssemblyTypeModal = () => {
+    setIsAssemblyTypeModalOpen(false);
+    setSelectedAssemblyType(undefined);
+    setAssemblyTypeName('');
+    setAssemblyTypeDescription('');
+  };
+
+  const handleSaveAssemblyType = () => {
+    const data = {
+      name: assemblyTypeName,
+      description: assemblyTypeDescription || undefined,
+    };
+
+    if (selectedAssemblyType) {
+      updateAssemblyTypeMutation.mutate({ id: selectedAssemblyType.id, data });
+    } else {
+      createAssemblyTypeMutation.mutate(data);
+    }
+  };
+
+  // Assembly handlers
+  const handleOpenAssemblyModal = (assembly?: Assembly) => {
+    setSelectedAssembly(assembly);
+    setAssemblyName(assembly?.name || '');
+    setAssemblyDescription(assembly?.description || '');
+    setAssemblyTypeIds(assembly?.assemblyTypes?.map(at => at.id) || []);
+    setIsAssemblyModalOpen(true);
+  };
+
+  const handleCloseAssemblyModal = () => {
+    setIsAssemblyModalOpen(false);
+    setSelectedAssembly(undefined);
+    setAssemblyName('');
+    setAssemblyDescription('');
+    setAssemblyTypeIds([]);
+  };
+
+  const handleToggleAssemblyType = (typeId: string) => {
+    setAssemblyTypeIds(prev =>
+      prev.includes(typeId)
+        ? prev.filter(id => id !== typeId)
+        : [...prev, typeId]
+    );
+  };
+
+  const handleSaveAssembly = () => {
+    const data = {
+      name: assemblyName,
+      description: assemblyDescription || undefined,
+      assemblyTypeIds: assemblyTypeIds.length > 0 ? assemblyTypeIds : undefined,
+    };
+
+    if (selectedAssembly) {
+      updateAssemblyMutation.mutate({ id: selectedAssembly.id, data });
+    } else {
+      createAssemblyMutation.mutate(data);
+    }
+  };
+
+  // Order Template handlers
+  const handleOpenTemplateModal = (template: OrderTemplate) => {
+    setSelectedTemplate(template);
+    setTemplateName(template.name);
+    setIsTemplateModalOpen(true);
+  };
+
+  const handleCloseTemplateModal = () => {
+    setIsTemplateModalOpen(false);
+    setSelectedTemplate(undefined);
+    setTemplateName('');
+  };
+
+  const handleSaveTemplate = () => {
+    if (selectedTemplate) {
+      updateTemplateMutation.mutate({ id: selectedTemplate.id, data: { name: templateName } });
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <PageHeader title="Paramètres" subtitle="Configuration des types de bornes, bornes et modèles de commande" />
+
+      {/* Types de bornes */}
+      <div className="rounded-2xl border border-[--k-border] bg-white shadow-sm shadow-black/[0.03] overflow-hidden">
+        <div className="flex items-center justify-between border-b border-[--k-border] px-4 py-2.5">
+          <div className="flex items-center gap-2">
+            <Boxes className="h-4 w-4 text-[--k-primary]" />
+            <span className="text-[13px] font-semibold text-[--k-text]">Types de bornes</span>
+          </div>
+          <Button size="sm" onClick={() => handleOpenAssemblyTypeModal()}>
+            <Plus className="mr-1 h-4 w-4" />
+            Ajouter
+          </Button>
+        </div>
+        <div className="p-4">
+          <p className="text-sm text-[--k-muted] mb-4">
+            Les types de bornes représentent les familles de bornes (ex: Borne Classik, Borne Spherik). Une borne peut appartenir à plusieurs types.
+          </p>
+          {assemblyTypesLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-[--k-primary] border-t-transparent" />
+            </div>
+          ) : !assemblyTypesData?.data.length ? (
+            <p className="text-[--k-muted] italic py-4">
+              Aucun type borne créé
+            </p>
+          ) : (
+            <>
+              {/* Mobile Cards */}
+              <div className="space-y-3 lg:hidden">
+                {assemblyTypesData.data.map((assemblyType) => (
+                  <div
+                    key={assemblyType.id}
+                    className="rounded-2xl border border-[--k-border] bg-[--k-surface] p-3"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h3 className="font-semibold text-[--k-text]">{assemblyType.name}</h3>
+                        {assemblyType.description && (
+                          <p className="mt-1 text-sm text-[--k-muted] line-clamp-2">
+                            {assemblyType.description}
+                          </p>
+                        )}
+                        <p className="mt-2 text-xs text-[--k-muted]">
+                          {assemblyType._count?.assemblies || 0} borne(s)
+                        </p>
+                      </div>
+                      <div className="flex gap-1 shrink-0">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleOpenAssemblyTypeModal(assemblyType)}
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setDeleteAssemblyTypeConfirm(assemblyType)}
+                          className="text-red-600 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop Table */}
+              <div className="hidden lg:block overflow-x-auto">
+                <table className="w-full text-[13px]">
+                  <thead>
+                    <tr className="border-b border-[--k-border] bg-[--k-surface-2]/50">
+                      <th className="px-4 py-1.5 text-left text-xs font-medium text-[--k-muted]">Nom</th>
+                      <th className="px-4 py-1.5 text-left text-xs font-medium text-[--k-muted]">Description</th>
+                      <th className="px-4 py-1.5 text-center text-xs font-medium text-[--k-muted]">Bornes</th>
+                      <th className="px-4 py-1.5 text-right text-xs font-medium text-[--k-muted]">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {assemblyTypesData.data.map((assemblyType) => (
+                      <tr key={assemblyType.id} className="border-t border-[--k-border] hover:bg-[--k-surface-2]/30 transition-colors">
+                        <td className="px-4 py-1.5 font-medium text-[--k-text]">
+                          {assemblyType.name}
+                        </td>
+                        <td className="px-4 py-1.5 text-[--k-muted]">
+                          {assemblyType.description || '-'}
+                        </td>
+                        <td className="px-4 py-1.5 text-center text-[--k-muted]">
+                          {assemblyType._count?.assemblies || 0}
+                        </td>
+                        <td className="px-4 py-1.5">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleOpenAssemblyTypeModal(assemblyType)}
+                              title="Modifier"
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setDeleteAssemblyTypeConfirm(assemblyType)}
+                              title="Supprimer"
+                              className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Bornes */}
+      <div className="rounded-2xl border border-[--k-border] bg-white shadow-sm shadow-black/[0.03] overflow-hidden">
+        <div className="flex items-center justify-between border-b border-[--k-border] px-4 py-2.5">
+          <div className="flex items-center gap-2">
+            <Tag className="h-4 w-4 text-[--k-primary]" />
+            <span className="text-[13px] font-semibold text-[--k-text]">Bornes</span>
+          </div>
+          <Button size="sm" onClick={() => handleOpenAssemblyModal()}>
+            <Plus className="mr-1 h-4 w-4" />
+            Ajouter
+          </Button>
+        </div>
+        <div className="p-4">
+          <p className="text-sm text-[--k-muted] mb-4">
+            Les bornes catégorisent les composants (ex: Ossature, Face Avant, Écran). Chaque borne peut être liée à plusieurs types de bornes.
+          </p>
+          {assembliesLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-[--k-primary] border-t-transparent" />
+            </div>
+          ) : !assembliesData?.data.length ? (
+            <p className="text-[--k-muted] italic py-4">
+              Aucune borne créée
+            </p>
+          ) : (
+            <>
+              {/* Mobile Cards */}
+              <div className="space-y-3 lg:hidden">
+                {assembliesData.data.map((assembly) => (
+                  <div
+                    key={assembly.id}
+                    className="rounded-2xl border border-[--k-border] bg-[--k-surface] p-3"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-[--k-text]">{assembly.name}</h3>
+                        {assembly.description && (
+                          <p className="mt-1 text-sm text-[--k-muted] line-clamp-2">
+                            {assembly.description}
+                          </p>
+                        )}
+                        {assembly.assemblyTypes?.length ? (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {assembly.assemblyTypes.map((type) => (
+                              <span
+                                key={type.id}
+                                className="inline-flex items-center rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-800"
+                              >
+                                {type.name}
+                              </span>
+                            ))}
+                          </div>
+                        ) : null}
+                        <p className="mt-2 text-xs text-[--k-muted]">
+                          {assembly._count?.products || 0} produit(s)
+                        </p>
+                      </div>
+                      <div className="flex gap-1 shrink-0 ml-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleOpenAssemblyModal(assembly)}
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setDeleteAssemblyConfirm(assembly)}
+                          className="text-red-600 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop Table */}
+              <div className="hidden lg:block overflow-x-auto">
+                <table className="w-full text-[13px]">
+                  <thead>
+                    <tr className="border-b border-[--k-border] bg-[--k-surface-2]/50">
+                      <th className="px-4 py-1.5 text-left text-xs font-medium text-[--k-muted]">Nom</th>
+                      <th className="px-4 py-1.5 text-left text-xs font-medium text-[--k-muted]">Description</th>
+                      <th className="px-4 py-1.5 text-left text-xs font-medium text-[--k-muted]">Types de bornes</th>
+                      <th className="px-4 py-1.5 text-center text-xs font-medium text-[--k-muted]">Produits</th>
+                      <th className="px-4 py-1.5 text-right text-xs font-medium text-[--k-muted]">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {assembliesData.data.map((assembly) => (
+                      <tr key={assembly.id} className="border-t border-[--k-border] hover:bg-[--k-surface-2]/30 transition-colors">
+                        <td className="px-4 py-1.5 font-medium text-[--k-text]">
+                          {assembly.name}
+                        </td>
+                        <td className="px-4 py-1.5 text-[--k-muted]">
+                          {assembly.description || '-'}
+                        </td>
+                        <td className="px-4 py-1.5 text-[--k-muted]">
+                          {assembly.assemblyTypes?.length ? (
+                            <div className="flex flex-wrap gap-1">
+                              {assembly.assemblyTypes.map((type) => (
+                                <span
+                                  key={type.id}
+                                  className="inline-flex items-center rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-800"
+                                >
+                                  {type.name}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="italic text-[--k-muted]">Aucun type</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-1.5 text-center text-[--k-muted]">
+                          {assembly._count?.products || 0}
+                        </td>
+                        <td className="px-4 py-1.5">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleOpenAssemblyModal(assembly)}
+                              title="Modifier"
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setDeleteAssemblyConfirm(assembly)}
+                              title="Supprimer"
+                              className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Modèles de commande */}
+      <div className="rounded-2xl border border-[--k-border] bg-white shadow-sm shadow-black/[0.03] overflow-hidden">
+        <div className="flex items-center justify-between border-b border-[--k-border] px-4 py-2.5">
+          <div className="flex items-center gap-2">
+            <FileText className="h-4 w-4 text-[--k-primary]" />
+            <span className="text-[13px] font-semibold text-[--k-text]">Modèles de commande</span>
+          </div>
+        </div>
+        <div className="p-4">
+          <p className="text-sm text-[--k-muted] mb-4">
+            Les modèles permettent de créer rapidement des commandes pré-remplies. Créez un modèle depuis la page détail d'une commande.
+          </p>
+          {templatesLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-[--k-primary] border-t-transparent" />
+            </div>
+          ) : !templatesData?.length ? (
+            <p className="text-[--k-muted] italic py-4">
+              Aucun modèle enregistré
+            </p>
+          ) : (
+            <>
+              {/* Mobile Cards */}
+              <div className="space-y-3 lg:hidden">
+                {templatesData.map((template) => (
+                  <div
+                    key={template.id}
+                    className="rounded-2xl border border-[--k-border] bg-[--k-surface] p-3"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-[--k-text]">{template.name}</h3>
+                        <p className="mt-1 text-sm text-[--k-muted] flex items-center gap-1">
+                          <Truck className="h-3 w-3" />
+                          {template.supplier?.name}
+                        </p>
+                        <p className="mt-1 text-xs text-[--k-muted]">
+                          {template.items?.length || 0} article(s)
+                        </p>
+                      </div>
+                      <div className="flex gap-1 shrink-0 ml-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleOpenTemplateModal(template)}
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setDeleteTemplateConfirm(template)}
+                          className="text-red-600 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop Table */}
+              <div className="hidden lg:block overflow-x-auto">
+                <table className="w-full text-[13px]">
+                  <thead>
+                    <tr className="border-b border-[--k-border] bg-[--k-surface-2]/50">
+                      <th className="px-4 py-1.5 text-left text-xs font-medium text-[--k-muted]">Nom</th>
+                      <th className="px-4 py-1.5 text-left text-xs font-medium text-[--k-muted]">Fournisseur</th>
+                      <th className="px-4 py-1.5 text-center text-xs font-medium text-[--k-muted]">Articles</th>
+                      <th className="px-4 py-1.5 text-right text-xs font-medium text-[--k-muted]">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {templatesData.map((template) => (
+                      <tr key={template.id} className="border-t border-[--k-border] hover:bg-[--k-surface-2]/30 transition-colors">
+                        <td className="px-4 py-1.5 font-medium text-[--k-text]">
+                          {template.name}
+                        </td>
+                        <td className="px-4 py-1.5 text-[--k-muted]">
+                          <span className="flex items-center gap-1">
+                            <Truck className="h-3.5 w-3.5" />
+                            {template.supplier?.name}
+                          </span>
+                        </td>
+                        <td className="px-4 py-1.5 text-center text-[--k-muted]">
+                          {template.items?.length || 0}
+                        </td>
+                        <td className="px-4 py-1.5">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleOpenTemplateModal(template)}
+                              title="Renommer"
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setDeleteTemplateConfirm(template)}
+                              title="Supprimer"
+                              className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Assembly Type Modal */}
+      <Modal
+        isOpen={isAssemblyTypeModalOpen}
+        onClose={handleCloseAssemblyTypeModal}
+        title={selectedAssemblyType ? 'Modifier le type borne' : 'Nouveau type borne'}
+        size="md"
+      >
+        <div className="space-y-4">
+          <Input
+            label="Nom"
+            value={assemblyTypeName}
+            onChange={(e) => setAssemblyTypeName(e.target.value)}
+            placeholder="ex: Borne Classik"
+          />
+          <div className="space-y-1">
+            <label className="block text-[13px] font-medium text-[--k-text]">
+              Description
+            </label>
+            <textarea
+              value={assemblyTypeDescription}
+              onChange={(e) => setAssemblyTypeDescription(e.target.value)}
+              placeholder="Description optionnelle..."
+              rows={3}
+              className="input-field"
+              style={{ height: 'auto', padding: '0.5rem 0.75rem' }}
+            />
+          </div>
+          <div className="flex justify-end gap-3 pt-4">
+            <Button variant="secondary" onClick={handleCloseAssemblyTypeModal}>
+              Annuler
+            </Button>
+            <Button
+              onClick={handleSaveAssemblyType}
+              disabled={!assemblyTypeName || createAssemblyTypeMutation.isPending || updateAssemblyTypeMutation.isPending}
+            >
+              {createAssemblyTypeMutation.isPending || updateAssemblyTypeMutation.isPending
+                ? 'Enregistrement...'
+                : selectedAssemblyType
+                ? 'Modifier'
+                : 'Créer'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Assembly Modal */}
+      <Modal
+        isOpen={isAssemblyModalOpen}
+        onClose={handleCloseAssemblyModal}
+        title={selectedAssembly ? 'Modifier la borne' : 'Nouvelle borne'}
+        size="md"
+      >
+        <div className="space-y-4">
+          <Input
+            label="Nom"
+            value={assemblyName}
+            onChange={(e) => setAssemblyName(e.target.value)}
+            placeholder="ex: Ossature, Face Avant, Écran"
+          />
+          <div className="space-y-1">
+            <label className="block text-[13px] font-medium text-[--k-text]">
+              Types de bornes associés
+            </label>
+            <p className="text-xs text-[--k-muted] mb-2">
+              Sélectionnez un ou plusieurs types de bornes
+            </p>
+            {assemblyTypesData?.data.length ? (
+              <div className="space-y-2">
+                {/* Selected types */}
+                {assemblyTypeIds.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {assemblyTypeIds.map((typeId) => {
+                      const type = assemblyTypesData.data.find(t => t.id === typeId);
+                      return type ? (
+                        <span
+                          key={type.id}
+                          className="inline-flex items-center gap-1 rounded-full bg-indigo-100 px-3 py-1 text-sm font-medium text-indigo-800"
+                        >
+                          {type.name}
+                          <button
+                            type="button"
+                            onClick={() => handleToggleAssemblyType(type.id)}
+                            className="ml-1 hover:text-[--k-primary]"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </span>
+                      ) : null;
+                    })}
+                  </div>
+                )}
+                {/* Available types to add */}
+                <div className="flex flex-wrap gap-2 border border-[--k-border] rounded-lg p-3">
+                  {assemblyTypesData.data
+                    .filter(type => !assemblyTypeIds.includes(type.id))
+                    .map((type) => (
+                      <button
+                        key={type.id}
+                        type="button"
+                        onClick={() => handleToggleAssemblyType(type.id)}
+                        className="inline-flex items-center rounded-full border border-[--k-border] bg-[--k-surface] px-3 py-1 text-sm text-[--k-text] hover:bg-[--k-surface-2]"
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        {type.name}
+                      </button>
+                    ))}
+                  {assemblyTypesData.data.filter(type => !assemblyTypeIds.includes(type.id)).length === 0 && (
+                    <span className="text-sm text-[--k-muted] italic">
+                      Tous les types sont sélectionnés
+                    </span>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-[--k-muted] italic">
+                Aucun type borne disponible. Créez-en d'abord.
+              </p>
+            )}
+          </div>
+          <div className="space-y-1">
+            <label className="block text-[13px] font-medium text-[--k-text]">
+              Description
+            </label>
+            <textarea
+              value={assemblyDescription}
+              onChange={(e) => setAssemblyDescription(e.target.value)}
+              placeholder="Description optionnelle..."
+              rows={3}
+              className="input-field"
+              style={{ height: 'auto', padding: '0.5rem 0.75rem' }}
+            />
+          </div>
+          <div className="flex justify-end gap-3 pt-4">
+            <Button variant="secondary" onClick={handleCloseAssemblyModal}>
+              Annuler
+            </Button>
+            <Button
+              onClick={handleSaveAssembly}
+              disabled={!assemblyName || createAssemblyMutation.isPending || updateAssemblyMutation.isPending}
+            >
+              {createAssemblyMutation.isPending || updateAssemblyMutation.isPending
+                ? 'Enregistrement...'
+                : selectedAssembly
+                ? 'Modifier'
+                : 'Créer'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Delete Assembly Type Confirmation */}
+      <Modal
+        isOpen={!!deleteAssemblyTypeConfirm}
+        onClose={() => setDeleteAssemblyTypeConfirm(null)}
+        title="Confirmer la suppression"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <p className="text-[--k-muted]">
+            Êtes-vous sûr de vouloir supprimer le type borne{' '}
+            <span className="font-semibold text-[--k-text]">{deleteAssemblyTypeConfirm?.name}</span> ?
+          </p>
+          <p className="text-sm text-red-600">
+            Les bornes liées à ce type ne seront plus associées.
+          </p>
+          <div className="flex justify-end gap-3 pt-4">
+            <Button variant="secondary" onClick={() => setDeleteAssemblyTypeConfirm(null)}>
+              Annuler
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => deleteAssemblyTypeConfirm && deleteAssemblyTypeMutation.mutate(deleteAssemblyTypeConfirm.id)}
+              disabled={deleteAssemblyTypeMutation.isPending}
+            >
+              {deleteAssemblyTypeMutation.isPending ? 'Suppression...' : 'Supprimer'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Delete Assembly Confirmation */}
+      <Modal
+        isOpen={!!deleteAssemblyConfirm}
+        onClose={() => setDeleteAssemblyConfirm(null)}
+        title="Confirmer la suppression"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <p className="text-[--k-muted]">
+            Êtes-vous sûr de vouloir supprimer la borne{' '}
+            <span className="font-semibold text-[--k-text]">{deleteAssemblyConfirm?.name}</span> ?
+          </p>
+          <p className="text-sm text-red-600">
+            Les produits associés ne seront plus liés à cette borne.
+          </p>
+          <div className="flex justify-end gap-3 pt-4">
+            <Button variant="secondary" onClick={() => setDeleteAssemblyConfirm(null)}>
+              Annuler
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => deleteAssemblyConfirm && deleteAssemblyMutation.mutate(deleteAssemblyConfirm.id)}
+              disabled={deleteAssemblyMutation.isPending}
+            >
+              {deleteAssemblyMutation.isPending ? 'Suppression...' : 'Supprimer'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Rename Template Modal */}
+      <Modal
+        isOpen={isTemplateModalOpen}
+        onClose={handleCloseTemplateModal}
+        title="Renommer le modèle"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <Input
+            label="Nom du modèle"
+            value={templateName}
+            onChange={(e) => setTemplateName(e.target.value)}
+            placeholder="ex: Commande mensuelle RS"
+          />
+          <div className="flex justify-end gap-3 pt-4">
+            <Button variant="secondary" onClick={handleCloseTemplateModal}>
+              Annuler
+            </Button>
+            <Button
+              onClick={handleSaveTemplate}
+              disabled={!templateName || updateTemplateMutation.isPending}
+            >
+              {updateTemplateMutation.isPending ? 'Enregistrement...' : 'Renommer'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Delete Template Confirmation */}
+      <Modal
+        isOpen={!!deleteTemplateConfirm}
+        onClose={() => setDeleteTemplateConfirm(null)}
+        title="Confirmer la suppression"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <p className="text-[--k-muted]">
+            Êtes-vous sûr de vouloir supprimer le modèle{' '}
+            <span className="font-semibold text-[--k-text]">{deleteTemplateConfirm?.name}</span> ?
+          </p>
+          <div className="flex justify-end gap-3 pt-4">
+            <Button variant="secondary" onClick={() => setDeleteTemplateConfirm(null)}>
+              Annuler
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => deleteTemplateConfirm && deleteTemplateMutation.mutate(deleteTemplateConfirm.id)}
+              disabled={deleteTemplateMutation.isPending}
+            >
+              {deleteTemplateMutation.isPending ? 'Suppression...' : 'Supprimer'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+    </div>
+  );
+}
