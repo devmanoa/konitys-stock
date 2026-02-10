@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { useSearchParams, Link } from 'react-router-dom';
 import {
   Plus,
@@ -70,6 +70,7 @@ export default function Movements() {
       const res = await api.get<PaginatedResponse<StockMovement>>(`/movements?${params.toString()}`);
       return res.data;
     },
+    placeholderData: keepPreviousData,
   });
 
   // Fetch sites for filter
@@ -82,7 +83,7 @@ export default function Movements() {
   });
 
   // Filter movements by search (client-side)
-  const filteredMovements = movementsData?.data.filter((movement) => {
+  const filteredMovements = (movementsData?.data || []).filter((movement) => {
     if (!search) return true;
     const searchLower = search.toLowerCase();
     return (

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   Plus,
@@ -77,6 +77,7 @@ export default function Orders() {
       const res = await api.get<PaginatedResponse<Order>>(`/orders?${params.toString()}`);
       return res.data;
     },
+    placeholderData: keepPreviousData,
   });
 
   // Fetch suppliers for filter
@@ -117,7 +118,7 @@ export default function Orders() {
   };
 
   // Filter orders by search (client-side)
-  const filteredOrders = ordersData?.data.filter((order) => {
+  const filteredOrders = (ordersData?.data || []).filter((order) => {
     if (!search) return true;
     const searchLower = search.toLowerCase();
     return (

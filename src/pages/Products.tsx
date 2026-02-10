@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { Plus, Search, Edit2, Trash2, Eye, Link, X } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
@@ -119,6 +119,7 @@ export default function Products() {
       const res = await api.get<PaginatedResponse<Product>>(`/products?${params}`);
       return res.data;
     },
+    placeholderData: keepPreviousData,
   });
 
   const deleteMutation = useMutation({
