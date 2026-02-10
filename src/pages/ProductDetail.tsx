@@ -22,7 +22,6 @@ import Modal from '../components/ui/Modal';
 import ProductForm from '../components/forms/ProductForm';
 import ProductSupplierForm from '../components/forms/ProductSupplierForm';
 import MovementForm from '../components/forms/MovementForm';
-import { PageHeader } from '../components/PageHeader';
 import api from '../services/api';
 import type { Product, ApiResponse } from '../types';
 

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Plus, Search, Edit2, Trash2, Mail, Phone, Globe, Eye, Filter } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Mail, Phone, Globe, Eye } from 'lucide-react';
 import Button from '../components/ui/Button';
 import SearchSelect from '../components/ui/SearchSelect';
 import Modal from '../components/ui/Modal';

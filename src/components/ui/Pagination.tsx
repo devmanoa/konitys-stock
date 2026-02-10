@@ -13,7 +13,7 @@ export default function Pagination({
   currentPage,
   totalPages,
   onPageChange,
-  totalItems,
+  totalItems: _totalItems,
   className,
 }: PaginationProps) {
   if (totalPages <= 1) return null
