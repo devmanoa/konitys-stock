@@ -28,6 +28,12 @@ function loadRemoteEntry(): Promise<RemoteContainer> {
 export async function loadRemoteComponent(moduleName: string) {
   const container = await loadRemoteEntry();
   const factory = await container.get(moduleName);
-  const module = factory();
-  return module;
+  const result = factory();
+
+  // React.lazy expects { default: Component }
+  // The federation factory may return the component directly or { default: Component }
+  if (result && typeof result === 'object' && 'default' in result) {
+    return result;
+  }
+  return { default: result };
 }
