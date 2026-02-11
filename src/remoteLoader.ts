@@ -42,37 +42,10 @@ function ensureSharedScope() {
 
 let containerPromise: Promise<RemoteContainer> | null = null;
 
-/**
- * Inject the remote platform's stylesheet so shared components render correctly.
- * We fetch the platform index.html and extract the CSS href to handle hash changes.
- */
-let cssLoaded = false;
-function loadRemoteCSS(): void {
-  if (cssLoaded) return;
-  cssLoaded = true;
-
-  fetch(`${PLATEFORM_URL}/index.html`)
-    .then((res) => res.text())
-    .then((html) => {
-      // Extract CSS href from <link rel="stylesheet" href="/assets/style-XXXX.css">
-      const match = html.match(/href="(\/assets\/style[^"]+\.css)"/);
-      if (match) {
-        const link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = `${PLATEFORM_URL}${match[1]}`;
-        document.head.appendChild(link);
-      }
-    })
-    .catch(() => {
-      // Silently fail — components will render without platform styles
-    });
-}
-
 function loadRemoteEntry(): Promise<RemoteContainer> {
   if (containerPromise) return containerPromise;
 
   ensureSharedScope();
-  loadRemoteCSS();
 
   containerPromise = import(/* @vite-ignore */ `${PLATEFORM_URL}/assets/remoteEntry.js`)
     .then((container: RemoteContainer) => {
