@@ -42,11 +42,7 @@ function ensureSharedScope() {
 
 let containerPromise: Promise<RemoteContainer> | null = null;
 
-/**
- * Block the remote's auto-injected CSS that conflicts with our Tailwind styles.
- * The remote's dynamicLoadingCss() calls document.head.appendChild(<link>) —
- * we intercept and silently drop stylesheet links pointing to the platform.
- */
+/*
 function blockRemoteCSS() {
   const origAppendChild = document.head.appendChild.bind(document.head);
   document.head.appendChild = function <T extends Node>(node: T): T {
@@ -55,11 +51,12 @@ function blockRemoteCSS() {
       node.rel === 'stylesheet' &&
       node.href?.includes(PLATEFORM_URL.replace(/^https?:\/\//, ''))
     ) {
-      return node; // silently skip
+      return node;
     }
     return origAppendChild(node);
   };
 }
+*/
 
 function loadRemoteEntry(): Promise<RemoteContainer> {
   if (containerPromise) return containerPromise;
