@@ -65,7 +65,7 @@ function loadRemoteEntry(): Promise<RemoteContainer> {
   if (containerPromise) return containerPromise;
 
   ensureSharedScope();
-  blockRemoteCSS();
+  // blockRemoteCSS();
 
   containerPromise = import(/* @vite-ignore */ `${PLATEFORM_URL}/assets/remoteEntry.js`)
     .then((container: RemoteContainer) => {
