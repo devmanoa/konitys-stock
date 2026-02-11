@@ -3,7 +3,7 @@ const PLATEFORM_URL =
   'https://plateform-frontend-production.up.railway.app';
 
 interface RemoteContainer {
-  init: (shareScope: Record<string, unknown>) => Promise<void>;
+  init: (shareScope: Record<string, unknown>) => void;
   get: (module: string) => Promise<() => { default: React.ComponentType<any> }>;
 }
 
@@ -14,7 +14,8 @@ function loadRemoteEntry(): Promise<RemoteContainer> {
 
   containerPromise = import(/* @vite-ignore */ `${PLATEFORM_URL}/assets/remoteEntry.js`)
     .then((container: RemoteContainer) => {
-      return container.init({}).then(() => container).catch(() => container);
+      container.init({});
+      return container;
     })
     .catch((err) => {
       containerPromise = null;
