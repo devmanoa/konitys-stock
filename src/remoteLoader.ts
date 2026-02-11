@@ -1,6 +1,3 @@
-import * as React from 'react';
-import * as ReactDOM from 'react-dom';
-
 const PLATEFORM_URL =
   import.meta.env.VITE_PLATEFORM_URL ||
   'https://plateform-frontend-production.up.railway.app';
@@ -10,47 +7,10 @@ interface RemoteContainer {
   get: (module: string) => Promise<() => any>;
 }
 
-/**
- * Register host React/ReactDOM into the federation shared scope
- * so remote components reuse our instance instead of loading their own.
- *
- * The remote requires ^18.2.0 but we run React 19.
- * We advertise version "18.2.0" so the semver check passes — the APIs
- * used by the remote (useState, useEffect, etc.) are fully compatible.
- */
-function ensureSharedScope() {
-  const g = globalThis as any;
-  g.__federation_shared__ = g.__federation_shared__ || {};
-  g.__federation_shared__['default'] = g.__federation_shared__['default'] || {};
-
-  const shared = g.__federation_shared__['default'];
-
-  if (!shared['react']) {
-    shared['react'] = {
-      '18.2.0': {
-        get: () => () => React,
-        scope: 'default',
-      },
-    };
-  }
-
-  if (!shared['react-dom']) {
-    shared['react-dom'] = {
-      '18.2.0': {
-        get: () => () => ReactDOM,
-        scope: 'default',
-      },
-    };
-  }
-}
-
 let containerPromise: Promise<RemoteContainer> | null = null;
 
 function loadRemoteEntry(): Promise<RemoteContainer> {
   if (containerPromise) return containerPromise;
-
-  // Register shared React before loading the remote
-  ensureSharedScope();
 
   containerPromise = import(/* @vite-ignore */ `${PLATEFORM_URL}/assets/remoteEntry.js`)
     .then((container: RemoteContainer) => {
@@ -65,14 +25,40 @@ function loadRemoteEntry(): Promise<RemoteContainer> {
   return containerPromise;
 }
 
-export async function loadRemoteComponent(moduleName: string) {
+export async function loadRemoteComponent(moduleName: string): Promise<React.ComponentType<any>> {
   const container = await loadRemoteEntry();
   const factory = await container.get(moduleName);
   const result = factory();
 
-  // React.lazy expects { default: Component }
   if (result && typeof result === 'object' && 'default' in result) {
-    return result;
+    return result.default;
   }
-  return { default: result };
+  return result;
+}
+
+// Also expose a way to get remote's own React + ReactDOM
+let remoteReactPromise: Promise<{ React: any; ReactDOM: any }> | null = null;
+
+export function getRemoteReact(): Promise<{ React: any; ReactDOM: any }> {
+  if (remoteReactPromise) return remoteReactPromise;
+
+  remoteReactPromise = loadRemoteEntry().then(async (container) => {
+    // The remote's __federation_fn_import resolves 'react' and 'react-dom'
+    // from its own bundled copies via getSharedFromLocal
+    const reactFactory = await container.get('./HeaderBar');
+    // We need to import the remote's shared react directly
+    const remoteReactModule = await import(
+      /* @vite-ignore */ `${PLATEFORM_URL}/assets/__federation_shared_react-BVrXI7vh.js`
+    );
+    const remoteReactDOMModule = await import(
+      /* @vite-ignore */ `${PLATEFORM_URL}/assets/__federation_shared_react-dom-BvZD8imA.js`
+    );
+    void reactFactory; // just to ensure container is loaded
+    return {
+      React: remoteReactModule.default || remoteReactModule,
+      ReactDOM: remoteReactDOMModule.default || remoteReactDOMModule,
+    };
+  });
+
+  return remoteReactPromise;
 }

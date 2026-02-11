@@ -1,4 +1,4 @@
-import React, { Suspense, useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard,
@@ -13,11 +13,7 @@ import {
   Settings,
 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
-import { loadRemoteComponent } from '../../remoteLoader'
-
-// Lazy-load remote components
-const RemoteHeaderBar = React.lazy(() => loadRemoteComponent('./HeaderBar'))
-const RemoteSidebar = React.lazy(() => loadRemoteComponent('./Sidebar'))
+import RemoteMounter from './RemoteMounter'
 
 // Sidebar sections for this app
 const SIDEBAR_SECTIONS = [
@@ -52,16 +48,6 @@ const SIDEBAR_SECTIONS = [
     ],
   },
 ]
-
-// Placeholder matching header height
-function HeaderFallback() {
-  return <div className="h-12 shrink-0 border-b border-[--k-border] bg-gradient-to-r from-white to-blue-50" />
-}
-
-// Placeholder matching sidebar width
-function SidebarFallback() {
-  return <div className="hidden md:block w-[210px] shrink-0 bg-[--k-sidebar-bg]" />
-}
 
 export default function AppLayout() {
   const { user, logout } = useAuth()
@@ -104,31 +90,49 @@ export default function AppLayout() {
     navigate(path)
   }
 
+  const headerProps = {
+    user: headerUser,
+    onLogout: logout,
+    currentAppName: 'Stock Manager',
+    onNavigate: handleNavigate,
+  }
+
+  const sidebarProps = {
+    sections: SIDEBAR_SECTIONS,
+    activePath: location.pathname,
+    onNavigate: handleNavigate,
+    collapsed: sidebarCollapsed,
+    onCollapse: () => setSidebarCollapsed((v: boolean) => !v),
+    onHelpClick: () => {},
+  }
+
+  const mobileSidebarProps = {
+    ...sidebarProps,
+    collapsed: false,
+    onCollapse: () => setMobileMenuOpen(false),
+  }
+
   return (
     <div className="h-screen flex flex-col bg-[--k-bg]">
       {/* Remote Header — full width */}
-      <Suspense fallback={<HeaderFallback />}>
-        <RemoteHeaderBar
-          user={headerUser}
-          onLogout={logout}
-          currentAppName="Stock Manager"
-          onNavigate={handleNavigate}
-        />
-      </Suspense>
+      <RemoteMounter
+        moduleName="./HeaderBar"
+        props={headerProps}
+        fallback={
+          <div className="h-12 shrink-0 border-b border-[--k-border] bg-gradient-to-r from-white to-blue-50" />
+        }
+      />
 
       <div className="flex flex-1 min-h-0">
         {/* Desktop sidebar */}
         <div className="hidden md:block">
-          <Suspense fallback={<SidebarFallback />}>
-            <RemoteSidebar
-              sections={SIDEBAR_SECTIONS}
-              activePath={location.pathname}
-              onNavigate={handleNavigate}
-              collapsed={sidebarCollapsed}
-              onCollapse={() => setSidebarCollapsed((v) => !v)}
-              onHelpClick={() => {}}
-            />
-          </Suspense>
+          <RemoteMounter
+            moduleName="./Sidebar"
+            props={sidebarProps}
+            fallback={
+              <div className="w-[210px] shrink-0 bg-[--k-sidebar-bg] h-full" />
+            }
+          />
         </div>
 
         {/* Mobile sidebar overlay */}
@@ -139,16 +143,10 @@ export default function AppLayout() {
               onClick={() => setMobileMenuOpen(false)}
             />
             <div className="fixed left-0 top-12 z-40 h-[calc(100vh-48px)] md:hidden">
-              <Suspense fallback={<SidebarFallback />}>
-                <RemoteSidebar
-                  sections={SIDEBAR_SECTIONS}
-                  activePath={location.pathname}
-                  onNavigate={handleNavigate}
-                  collapsed={false}
-                  onCollapse={() => setMobileMenuOpen(false)}
-                  onHelpClick={() => {}}
-                />
-              </Suspense>
+              <RemoteMounter
+                moduleName="./Sidebar"
+                props={mobileSidebarProps}
+              />
             </div>
           </>
         )}
