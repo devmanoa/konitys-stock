@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, createElement } from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
 import { loadRemoteComponent, getRemoteReact } from '../../remoteLoader'
 
 interface RemoteMounterProps {
@@ -6,6 +7,53 @@ interface RemoteMounterProps {
   props: Record<string, any>
   fallback?: React.ReactNode
   className?: string
+}
+
+/**
+ * Pre-renders a host React 19 Lucide icon component to a static SVG string,
+ * then returns a function component for the remote React 18 that injects
+ * it via dangerouslySetInnerHTML — zero cross-version element conflicts.
+ */
+function makeSvgBridge(HostIcon: React.ComponentType<any>, remoteReact: any) {
+  // Pre-render with default Lucide props to get the SVG markup
+  const svgMarkup = renderToStaticMarkup(createElement(HostIcon, {
+    size: 16,
+    strokeWidth: 2,
+  }))
+
+  // Return a function component for the remote's React 18
+  // It takes className and merges it onto the SVG via string replacement
+  return function BridgedIcon(props: { className?: string }) {
+    const finalSvg = props.className
+      ? svgMarkup.replace('<svg ', `<svg class="${props.className}" `)
+      : svgMarkup
+    return remoteReact.createElement('span', {
+      dangerouslySetInnerHTML: { __html: finalSvg },
+      style: { display: 'inline-flex', alignItems: 'center' },
+    })
+  }
+}
+
+/**
+ * Transforms sidebar sections props so that icon components (React 19 Lucide)
+ * are bridged to static SVG wrappers compatible with the remote's React 18.
+ */
+function bridgeProps(props: Record<string, any>, remoteReact: any): Record<string, any> {
+  if (!props.sections) return props
+
+  return {
+    ...props,
+    sections: props.sections.map((section: any) => ({
+      ...section,
+      items: section.items.map((item: any) => {
+        if (!item.icon) return item
+        return {
+          ...item,
+          icon: makeSvgBridge(item.icon, remoteReact),
+        }
+      }),
+    })),
+  }
 }
 
 /**
@@ -51,7 +99,6 @@ export default function RemoteMounter({ moduleName, props, fallback, className }
       if (remoteReactDOM.createRoot) {
         rootRef.current = remoteReactDOM.createRoot(containerRef.current)
       } else {
-        // Fallback for React 18 without createRoot (shouldn't happen)
         rootRef.current = {
           render: (el: any) => remoteReactDOM.render(el, containerRef.current),
           unmount: () => remoteReactDOM.unmountComponentAtNode(containerRef.current),
@@ -59,7 +106,10 @@ export default function RemoteMounter({ moduleName, props, fallback, className }
       }
     }
 
-    const element = remoteReact.createElement(Component, props)
+    // Bridge icon components in sidebar sections for cross-React compatibility
+    const bridgedProps = bridgeProps(props, remoteReact)
+
+    const element = remoteReact.createElement(Component, bridgedProps)
     rootRef.current.render(element)
   })
 
@@ -67,7 +117,6 @@ export default function RemoteMounter({ moduleName, props, fallback, className }
   useEffect(() => {
     return () => {
       if (rootRef.current) {
-        // Defer unmount to avoid React warnings
         const root = rootRef.current
         rootRef.current = null
         setTimeout(() => {
