@@ -220,13 +220,13 @@ export default function Suppliers() {
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-[--k-primary] border-t-transparent" />
             <span className="ml-2 text-[--k-muted]">Chargement...</span>
           </div>
-        ) : data?.data.length === 0 ? (
+        ) : (data?.data || []).length === 0 ? (
           <div className="py-8 text-center text-[--k-muted]">
             Aucun fournisseur trouve
           </div>
         ) : (
           <div className="space-y-3">
-            {data?.data.map((supplier) => (
+            {(data?.data || []).map((supplier) => (
               <SupplierCard key={supplier.id} supplier={supplier} />
             ))}
           </div>
@@ -249,7 +249,7 @@ export default function Suppliers() {
         {/* Table header bar */}
         <div className="flex items-baseline justify-between gap-3 border-b border-[--k-border] px-4 py-2.5">
           <div className="text-[13px] font-semibold">Fournisseurs</div>
-          <div className="text-xs text-[--k-muted]">{data?.data.length || 0} éléments</div>
+          <div className="text-xs text-[--k-muted]">{(data?.data || []).length || 0} éléments</div>
         </div>
 
         {isLoading ? (
@@ -257,7 +257,7 @@ export default function Suppliers() {
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-[--k-primary] border-t-transparent" />
             <span className="ml-2 text-[--k-muted]">Chargement...</span>
           </div>
-        ) : data?.data.length === 0 ? (
+        ) : (data?.data || []).length === 0 ? (
           <div className="py-12 text-center text-[--k-muted]">
             Aucun fournisseur trouve
           </div>
@@ -293,7 +293,7 @@ export default function Suppliers() {
                 </tr>
               </thead>
               <tbody>
-                {data?.data.map((supplier) => (
+                {(data?.data || []).map((supplier) => (
                   <tr
                     key={supplier.id}
                     className="border-b border-[--k-border] hover:bg-[--k-surface-2]/30 transition-colors"
@@ -397,7 +397,7 @@ export default function Suppliers() {
 
         {/* Table footer */}
         <div className="flex items-center justify-between border-t border-[--k-border] px-4 py-2 text-xs text-[--k-muted]">
-          <span>{data?.data.length || 0} résultat{(data?.data.length || 0) > 1 ? 's' : ''}</span>
+          <span>{(data?.data || []).length || 0} résultat{((data?.data || []).length || 0) > 1 ? 's' : ''}</span>
           {/* Desktop Pagination */}
           {data && data.pagination.totalPages > 1 && (
             <Pagination

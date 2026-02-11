@@ -319,13 +319,13 @@ export default function Products() {
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-[--k-primary] border-t-transparent" />
             <span className="ml-2 text-[--k-muted]">Chargement...</span>
           </div>
-        ) : data?.data.length === 0 ? (
+        ) : (data?.data || []).length === 0 ? (
           <div className="py-8 text-center text-[--k-muted]">
             Aucun produit trouve
           </div>
         ) : (
           <div className="space-y-3">
-            {data?.data.map((product) => (
+            {(data?.data || []).map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>
@@ -385,14 +385,14 @@ export default function Products() {
                     </div>
                   </td>
                 </tr>
-              ) : data?.data.length === 0 ? (
+              ) : (data?.data || []).length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-4 py-8 text-center text-[--k-muted]">
                     Aucun produit trouve
                   </td>
                 </tr>
               ) : (
-                data?.data.map((product) => (
+                (data?.data || []).map((product) => (
                   <tr key={product.id} className="border-t border-[--k-border] hover:bg-[--k-surface-2]/30 transition-colors">
                     <td className="px-4 py-1.5">
                       <div className="flex items-center gap-3">

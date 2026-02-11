@@ -19,11 +19,12 @@ interface SearchSelectProps {
 export default function SearchSelect({
   value,
   onChange,
-  options,
+  options: rawOptions,
   placeholder = 'Sélectionner...',
   className,
   disabled,
 }: SearchSelectProps) {
+  const options = rawOptions || []
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
   const buttonRef = useRef<HTMLButtonElement>(null)
