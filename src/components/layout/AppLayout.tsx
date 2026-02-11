@@ -118,8 +118,7 @@ export default function AppLayout() {
 
       <div className="flex flex-1 min-h-0">
         {/* Desktop sidebar */}
-        <div className="hidden md:block">
-          <Suspense fallback={<SidebarFallback />}>
+        <Suspense fallback={<SidebarFallback />}>
             <RemoteSidebar
               sections={SIDEBAR_SECTIONS}
               activePath={location.pathname}
@@ -129,7 +128,6 @@ export default function AppLayout() {
               onHelpClick={() => {}}
             />
           </Suspense>
-        </div>
 
         {/* Mobile sidebar overlay */}
         {mobileMenuOpen && (
