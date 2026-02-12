@@ -434,7 +434,7 @@ export default function Stocks() {
               onChange={(val) => setSelectedSite(val)}
               options={storageSites.map((site) => ({ value: site.id, label: site.name }))}
               placeholder="Tous sites"
-              className="min-w-[130px] sm:w-44"
+              className="min-w-[130px] sm:w-80"
             />
             <SearchSelect
               value={selectedAssemblyType}
@@ -444,14 +444,14 @@ export default function Stocks() {
               }}
               options={assemblyTypesData?.filter((at) => at && at.id && at.name).map((at) => ({ value: at.id, label: at.name })) || []}
               placeholder="Type borne"
-              className="min-w-[130px] sm:w-44"
+              className="min-w-[130px] sm:w-80"
             />
             <SearchSelect
               value={selectedAssembly}
               onChange={(val) => setSelectedAssembly(val)}
               options={filteredAssemblies?.filter((a) => a && a.id && a.name).map((a) => ({ value: a.id, label: a.name })) || []}
               placeholder="Borne"
-              className="min-w-[130px] sm:w-44"
+              className="min-w-[130px] sm:w-80"
             />
           </div>
 

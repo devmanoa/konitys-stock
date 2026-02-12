@@ -283,14 +283,14 @@ export default function Movements() {
                 { value: 'TRANSFER', label: 'Transfert' },
               ]}
               placeholder="Type"
-              className="min-w-[110px] sm:w-64"
+              className="min-w-[110px] sm:w-80"
             />
             <SearchSelect
               value={siteFilter}
               onChange={(val) => updateParams({ site: val })}
               options={sites?.map((s) => ({ value: s.id, label: s.name })) || []}
               placeholder="Site"
-              className="min-w-[120px] sm:w-72"
+              className="min-w-[120px] sm:w-80"
             />
             <SearchSelect
               value={conditionFilter}
@@ -300,7 +300,7 @@ export default function Movements() {
                 { value: 'USED', label: 'Occasion' },
               ]}
               placeholder="Etat"
-              className="min-w-[100px] sm:w-56"
+              className="min-w-[100px] sm:w-80"
             />
 
             <input
