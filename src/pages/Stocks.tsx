@@ -538,22 +538,11 @@ export default function Stocks() {
                       </button>
                     </th>
                     <th className="bg-white px-3 py-1.5 text-left text-xs font-medium text-[--k-muted]">
-                      Borne
+                      <div className="flex flex-col">
+                        <span>Type borne</span>
+                        <span>Borne</span>
+                      </div>
                     </th>
-                    {storageSites.map((site) => (
-                      <th
-                        key={site.id}
-                        className="bg-white px-3 py-1.5 text-center text-xs font-medium text-[--k-muted]"
-                      >
-                        <div className="flex flex-col items-center">
-                          <span>{site.name}</span>
-                          <span className="text-xs font-normal text-[--k-muted]">
-                            {(siteTotals.get(site.id)?.totalNew || 0) +
-                              (siteTotals.get(site.id)?.totalUsed || 0)}
-                          </span>
-                        </div>
-                      </th>
-                    ))}
                     <th className="bg-white px-3 py-1.5 text-center">
                       <button
                         onClick={() => handleSort('total')}
@@ -581,6 +570,20 @@ export default function Stocks() {
                         {getSortIcon('totalUsed')}
                       </button>
                     </th>
+                    {storageSites.map((site) => (
+                      <th
+                        key={site.id}
+                        className="bg-white px-3 py-1.5 text-center text-xs font-medium text-[--k-muted]"
+                      >
+                        <div className="flex flex-col items-center">
+                          <span>{site.name}</span>
+                          <span className="text-xs font-normal text-[--k-muted]">
+                            {(siteTotals.get(site.id)?.totalNew || 0) +
+                              (siteTotals.get(site.id)?.totalUsed || 0)}
+                          </span>
+                        </div>
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
@@ -630,15 +633,24 @@ export default function Stocks() {
                       </td>
                       <td className="px-3 py-1.5">
                         <div className="flex flex-col">
-                          <span className="text-[--k-muted]">
-                            {row.product.assembly?.name || '-'}
-                          </span>
                           {row.product.assemblyType && (
                             <span className="text-xs text-[--k-primary]">
                               {row.product.assemblyType.name}
                             </span>
                           )}
+                          <span className="text-[--k-muted]">
+                            {row.product.assembly?.name || '-'}
+                          </span>
                         </div>
+                      </td>
+                      <td className="px-3 py-1.5 text-center font-bold text-[--k-text]">
+                        {row.total}
+                      </td>
+                      <td className="px-3 py-1.5 text-center font-medium text-green-600">
+                        {row.totalNew}
+                      </td>
+                      <td className="px-3 py-1.5 text-center font-medium text-orange-600">
+                        {row.totalUsed}
                       </td>
                       {storageSites.map((site) => {
                         const siteStock = row.stocks.get(site.id);
@@ -651,15 +663,6 @@ export default function Stocks() {
                           </td>
                         );
                       })}
-                      <td className="px-3 py-1.5 text-center font-bold text-[--k-text]">
-                        {row.total}
-                      </td>
-                      <td className="px-3 py-1.5 text-center font-medium text-green-600">
-                        {row.totalNew}
-                      </td>
-                      <td className="px-3 py-1.5 text-center font-medium text-orange-600">
-                        {row.totalUsed}
-                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -669,6 +672,15 @@ export default function Stocks() {
                       Total
                     </td>
                     <td className="bg-[--k-surface-2] px-3 py-1.5"></td>
+                    <td className="px-3 py-1.5 text-center font-bold text-[--k-text]">
+                      {grandTotal.total}
+                    </td>
+                    <td className="px-3 py-1.5 text-center text-green-600">
+                      {grandTotal.totalNew}
+                    </td>
+                    <td className="px-3 py-1.5 text-center text-orange-600">
+                      {grandTotal.totalUsed}
+                    </td>
                     {storageSites.map((site) => {
                       const siteTotal = siteTotals.get(site.id);
                       return (
@@ -680,15 +692,6 @@ export default function Stocks() {
                         </td>
                       );
                     })}
-                    <td className="px-3 py-1.5 text-center font-bold text-[--k-text]">
-                      {grandTotal.total}
-                    </td>
-                    <td className="px-3 py-1.5 text-center text-green-600">
-                      {grandTotal.totalNew}
-                    </td>
-                    <td className="px-3 py-1.5 text-center text-orange-600">
-                      {grandTotal.totalUsed}
-                    </td>
                   </tr>
                 </tfoot>
               </table>
