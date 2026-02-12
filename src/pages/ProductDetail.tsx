@@ -148,21 +148,24 @@ export default function ProductDetail() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
+        {/* Image produit */}
+        <Card className="lg:col-span-1 lg:row-span-2">
+          <CardContent className="flex h-full items-center justify-center p-4">
+            <img
+              src={getFullImageUrl(data.imageUrl)}
+              alt={data.reference}
+              className="max-h-full max-w-full rounded-lg object-contain"
+            />
+          </CardContent>
+        </Card>
+
         {/* Informations principales */}
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>Informations</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex gap-6">
-              <div className="shrink-0 overflow-hidden rounded-lg border border-[--k-border] bg-[--k-surface-2]">
-                <img
-                  src={getFullImageUrl(data.imageUrl)}
-                  alt={data.reference}
-                  className="h-full w-auto object-contain"
-                />
-              </div>
-              <dl className="grid flex-1 grid-cols-2 gap-4 content-start">
+            <dl className="grid grid-cols-2 gap-4">
               <div>
                 <dt className="text-[13px] font-medium text-[--k-muted]">Reference</dt>
                 <dd className="mt-1 text-[--k-text]">{data.reference}</dd>
@@ -213,8 +216,7 @@ export default function ProductDetail() {
                   <dd className="mt-1 text-[--k-text]">{data.comment}</dd>
                 </div>
               )}
-              </dl>
-            </div>
+            </dl>
           </CardContent>
         </Card>
 
