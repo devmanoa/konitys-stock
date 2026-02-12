@@ -37,7 +37,7 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
     queryKey: ['assembly-types'],
     queryFn: async () => {
       const res = await api.get<PaginatedResponse<AssemblyType>>('/assembly-types?limit=100');
-      return res.data;
+      return res.data?.data || [];
     },
   });
 
@@ -46,18 +46,18 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
     queryKey: ['assemblies'],
     queryFn: async () => {
       const res = await api.get<PaginatedResponse<Assembly>>('/assemblies?limit=100');
-      return res.data;
+      return res.data?.data || [];
     },
   });
 
   // Filter assemblies by selected type
   const filteredAssemblies = formData.assemblyTypeId
-    ? assembliesData?.data.filter((assembly) =>
+    ? assembliesData?.filter((assembly) =>
         assembly.assemblyTypes?.some((at: any) =>
           at.assemblyTypeId === formData.assemblyTypeId || at.id === formData.assemblyTypeId
         )
       )
-    : assembliesData?.data;
+    : assembliesData;
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isUploading, setIsUploading] = useState(false);
@@ -286,7 +286,7 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
               handleChange('assemblyTypeId', e.target.value || undefined);
               // Reset assembly if changing type filter
               if (e.target.value && formData.assemblyId) {
-                const assembly = assembliesData?.data.find(a => a.id === formData.assemblyId);
+                const assembly = assembliesData?.find(a => a.id === formData.assemblyId);
                 const hasType = assembly?.assemblyTypes?.some((at: any) =>
                   at.assemblyTypeId === e.target.value || at.id === e.target.value
                 );
@@ -297,7 +297,7 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
             }}
           >
             <option value="">Aucun type</option>
-            {assemblyTypesData?.data.map((type) => (
+            {assemblyTypesData?.map((type) => (
               <option key={type.id} value={type.id}>
                 {type.name}
               </option>

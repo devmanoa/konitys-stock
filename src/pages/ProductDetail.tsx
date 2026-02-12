@@ -14,6 +14,9 @@ import {
   ArrowUpCircle,
   ArrowLeftRight,
   ExternalLink,
+  ZoomIn,
+  Download,
+  X,
 } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
@@ -41,6 +44,7 @@ export default function ProductDetail() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSupplierModalOpen, setIsSupplierModalOpen] = useState(false);
   const [isMovementModalOpen, setIsMovementModalOpen] = useState(false);
+  const [isImageOpen, setIsImageOpen] = useState(false);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['product', id],
@@ -52,7 +56,7 @@ export default function ProductDetail() {
   });
 
   const getRiskBadge = (risk?: string) => {
-    if (!risk) return <Badge>Non defini</Badge>;
+    if (!risk) return <Badge>Non défini</Badge>;
     const variants: Record<string, 'danger' | 'warning' | 'success'> = {
       HIGH: 'danger',
       MEDIUM: 'warning',
@@ -103,7 +107,7 @@ export default function ProductDetail() {
   if (error || !data) {
     return (
       <div className="text-center py-12">
-        <p className="text-red-600">Produit non trouve</p>
+        <p className="text-red-600">Produit non trouvé</p>
         <Button variant="secondary" onClick={() => navigate('/products')} className="mt-4">
           Retour aux produits
         </Button>
@@ -155,20 +159,28 @@ export default function ProductDetail() {
           </CardHeader>
           <CardContent>
             <div className="flex gap-6">
-              <div className="shrink-0 self-stretch overflow-hidden rounded-lg border border-[--k-border] bg-[--k-surface-2]">
+              <div
+                className="group relative shrink-0 self-stretch overflow-hidden rounded-lg border border-[--k-border] bg-[--k-surface-2] cursor-zoom-in"
+                onClick={() => data.imageUrl && setIsImageOpen(true)}
+              >
                 <img
                   src={getFullImageUrl(data.imageUrl)}
                   alt={data.reference}
                   className="h-full w-48 object-contain"
                 />
+                {data.imageUrl && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/20 transition-colors">
+                    <ZoomIn className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                )}
               </div>
               <dl className="grid flex-1 grid-cols-2 gap-4 content-start">
                 <div>
-                  <dt className="text-[13px] font-medium text-[--k-muted]">Reference</dt>
+                  <dt className="text-[13px] font-medium text-[--k-muted]">Référence</dt>
                   <dd className="mt-1 text-[--k-text]">{data.reference}</dd>
                 </div>
                 <div>
-                  <dt className="text-[13px] font-medium text-[--k-muted]">Quantite par unite</dt>
+                  <dt className="text-[13px] font-medium text-[--k-muted]">Quantité par unité</dt>
                   <dd className="mt-1 text-[--k-text]">{data.qtyPerUnit}</dd>
                 </div>
                 {data.supplyRisk && (
@@ -197,7 +209,7 @@ export default function ProductDetail() {
                 )}
                 {data.createdAt && (
                   <div>
-                    <dt className="text-[13px] font-medium text-[--k-muted]">Produit cree le</dt>
+                    <dt className="text-[13px] font-medium text-[--k-muted]">Produit créé le</dt>
                     <dd className="mt-1 text-[--k-text]">
                       {new Date(data.createdAt).toLocaleDateString('fr-FR', {
                         day: '2-digit',
@@ -257,7 +269,7 @@ export default function ProductDetail() {
         </CardHeader>
         <CardContent>
           {!data.productSuppliers?.length ? (
-            <p className="text-[--k-muted]">Aucun fournisseur lie</p>
+            <p className="text-[--k-muted]">Aucun fournisseur lié</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -266,7 +278,7 @@ export default function ProductDetail() {
                     <th className="pb-2">Fournisseur</th>
                     <th className="pb-2">Ref. fournisseur</th>
                     <th className="pb-2">Prix HT</th>
-                    <th className="pb-2">Delai</th>
+                    <th className="pb-2">Délai</th>
                     <th className="pb-2">Principal</th>
                   </tr>
                 </thead>
@@ -303,7 +315,7 @@ export default function ProductDetail() {
         </CardHeader>
         <CardContent>
           {!data.stocks?.length ? (
-            <p className="text-[--k-muted]">Aucun stock enregistre</p>
+            <p className="text-[--k-muted]">Aucun stock enregistré</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -356,10 +368,10 @@ export default function ProductDetail() {
         <CardContent>
           {!data.movements?.length ? (
             <div className="text-center py-8">
-              <p className="text-[--k-muted] mb-4">Aucun mouvement enregistre</p>
+              <p className="text-[--k-muted] mb-4">Aucun mouvement enregistré</p>
               <Button variant="secondary" onClick={() => setIsMovementModalOpen(true)}>
                 <Plus className="mr-2 h-4 w-4" />
-                Creer un mouvement
+                Créer un mouvement
               </Button>
             </div>
           ) : (
@@ -371,9 +383,9 @@ export default function ProductDetail() {
                     <th className="pb-2">Type</th>
                     <th className="pb-2">Source</th>
                     <th className="pb-2">Destination</th>
-                    <th className="pb-2">Etat</th>
-                    <th className="pb-2 text-right">Quantite</th>
-                    <th className="pb-2">Operateur</th>
+                    <th className="pb-2">État</th>
+                    <th className="pb-2 text-right">Quantité</th>
+                    <th className="pb-2">Opérateur</th>
                     <th className="pb-2">Commentaire</th>
                   </tr>
                 </thead>
@@ -399,7 +411,7 @@ export default function ProductDetail() {
                               mvt.type === 'IN' ? 'success' : mvt.type === 'OUT' ? 'danger' : 'info'
                             }
                           >
-                            {mvt.type === 'IN' ? 'Entree' : mvt.type === 'OUT' ? 'Sortie' : 'Transfert'}
+                            {mvt.type === 'IN' ? 'Entrée' : mvt.type === 'OUT' ? 'Sortie' : 'Transfert'}
                           </Badge>
                         </div>
                       </td>
@@ -498,6 +510,44 @@ export default function ProductDetail() {
           onCancel={() => setIsMovementModalOpen(false)}
         />
       </Modal>
+
+      {/* Image Lightbox */}
+      {isImageOpen && data.imageUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          onClick={() => setIsImageOpen(false)}
+        >
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px]" />
+          <div
+            className="relative max-h-[90vh] max-w-[90vw]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={getFullImageUrl(data.imageUrl)}
+              alt={data.reference}
+              className="max-h-[85vh] max-w-[85vw] rounded-lg object-contain"
+            />
+            <div className="absolute top-3 right-3 flex items-center gap-2">
+              <a
+                href={getFullImageUrl(data.imageUrl)}
+                download={`${data.reference}.png`}
+                className="rounded-lg bg-black/50 p-2 text-white hover:bg-black/70 transition-colors"
+                title="Télécharger"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Download className="h-5 w-5" />
+              </a>
+              <button
+                onClick={() => setIsImageOpen(false)}
+                className="rounded-lg bg-black/50 p-2 text-white hover:bg-black/70 transition-colors"
+                title="Fermer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

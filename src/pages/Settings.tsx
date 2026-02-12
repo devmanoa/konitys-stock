@@ -39,7 +39,7 @@ export default function Settings() {
     queryKey: ['assembly-types'],
     queryFn: async () => {
       const res = await api.get<PaginatedResponse<AssemblyType>>('/assembly-types?limit=100');
-      return res.data;
+      return res.data?.data || [];
     },
   });
 
@@ -48,7 +48,7 @@ export default function Settings() {
     queryKey: ['assemblies'],
     queryFn: async () => {
       const res = await api.get<PaginatedResponse<Assembly>>('/assemblies?limit=100');
-      return res.data;
+      return res.data?.data || [];
     },
   });
 
@@ -291,7 +291,7 @@ export default function Settings() {
             <div className="flex items-center justify-center py-8">
               <div className="h-6 w-6 animate-spin rounded-full border-2 border-[--k-primary] border-t-transparent" />
             </div>
-          ) : !assemblyTypesData?.data.length ? (
+          ) : !assemblyTypesData?.length ? (
             <p className="text-[--k-muted] italic py-4">
               Aucun type borne créé
             </p>
@@ -299,7 +299,7 @@ export default function Settings() {
             <>
               {/* Mobile Cards */}
               <div className="space-y-3 lg:hidden">
-                {assemblyTypesData.data.map((assemblyType) => (
+                {assemblyTypesData.map((assemblyType) => (
                   <div
                     key={assemblyType.id}
                     className="rounded-2xl border border-[--k-border] bg-[--k-surface] p-3"
@@ -350,7 +350,7 @@ export default function Settings() {
                     </tr>
                   </thead>
                   <tbody>
-                    {assemblyTypesData.data.map((assemblyType) => (
+                    {assemblyTypesData.map((assemblyType) => (
                       <tr key={assemblyType.id} className="border-t border-[--k-border] hover:bg-[--k-surface-2]/30 transition-colors">
                         <td className="px-4 py-1.5 font-medium text-[--k-text]">
                           {assemblyType.name}
@@ -412,7 +412,7 @@ export default function Settings() {
             <div className="flex items-center justify-center py-8">
               <div className="h-6 w-6 animate-spin rounded-full border-2 border-[--k-primary] border-t-transparent" />
             </div>
-          ) : !assembliesData?.data.length ? (
+          ) : !assembliesData?.length ? (
             <p className="text-[--k-muted] italic py-4">
               Aucune borne créée
             </p>
@@ -420,7 +420,7 @@ export default function Settings() {
             <>
               {/* Mobile Cards */}
               <div className="space-y-3 lg:hidden">
-                {assembliesData.data.map((assembly) => (
+                {assembliesData.map((assembly) => (
                   <div
                     key={assembly.id}
                     className="rounded-2xl border border-[--k-border] bg-[--k-surface] p-3"
@@ -484,7 +484,7 @@ export default function Settings() {
                     </tr>
                   </thead>
                   <tbody>
-                    {assembliesData.data.map((assembly) => (
+                    {assembliesData.map((assembly) => (
                       <tr key={assembly.id} className="border-t border-[--k-border] hover:bg-[--k-surface-2]/30 transition-colors">
                         <td className="px-4 py-1.5 font-medium text-[--k-text]">
                           {assembly.name}
@@ -727,13 +727,13 @@ export default function Settings() {
             <p className="text-xs text-[--k-muted] mb-2">
               Sélectionnez un ou plusieurs types de bornes
             </p>
-            {assemblyTypesData?.data.length ? (
+            {assemblyTypesData?.length ? (
               <div className="space-y-2">
                 {/* Selected types */}
                 {assemblyTypeIds.length > 0 && (
                   <div className="flex flex-wrap gap-2 mb-2">
                     {assemblyTypeIds.map((typeId) => {
-                      const type = assemblyTypesData.data.find(t => t.id === typeId);
+                      const type = assemblyTypesData.find(t => t.id === typeId);
                       return type ? (
                         <span
                           key={type.id}
@@ -754,7 +754,7 @@ export default function Settings() {
                 )}
                 {/* Available types to add */}
                 <div className="flex flex-wrap gap-2 border border-[--k-border] rounded-lg p-3">
-                  {assemblyTypesData.data
+                  {assemblyTypesData
                     .filter(type => !assemblyTypeIds.includes(type.id))
                     .map((type) => (
                       <button
@@ -767,7 +767,7 @@ export default function Settings() {
                         {type.name}
                       </button>
                     ))}
-                  {assemblyTypesData.data.filter(type => !assemblyTypeIds.includes(type.id)).length === 0 && (
+                  {assemblyTypesData.filter(type => !assemblyTypeIds.includes(type.id)).length === 0 && (
                     <span className="text-sm text-[--k-muted] italic">
                       Tous les types sont sélectionnés
                     </span>
