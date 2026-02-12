@@ -538,10 +538,7 @@ export default function Stocks() {
                       </button>
                     </th>
                     <th className="bg-white px-3 py-1.5 text-left text-xs font-medium text-[--k-muted]">
-                      <div className="flex flex-col">
-                        <span>Type borne</span>
-                        <span>Borne</span>
-                      </div>
+                      Borne
                     </th>
                     <th className="bg-white px-3 py-1.5 text-center">
                       <button
@@ -638,9 +635,11 @@ export default function Stocks() {
                               {row.product.assemblyType.name}
                             </span>
                           )}
-                          <span className="text-[--k-muted]">
-                            {row.product.assembly?.name || '-'}
-                          </span>
+                          {row.product.assembly && (
+                            <span className="text-[--k-text]">
+                              {row.product.assembly.name}
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="px-3 py-1.5 text-center font-bold text-[--k-text]">
