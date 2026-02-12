@@ -119,13 +119,10 @@ export default function ProductDetail() {
       <div className="mb-5">
         <div className="flex items-end justify-between gap-4">
           <div className="flex items-center gap-4 min-w-0">
-            <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-[--k-border] bg-[--k-surface-2]">
-              <img
-                src={getFullImageUrl(data.imageUrl)}
-                alt={data.reference}
-                className="h-full w-full object-cover"
-              />
-            </div>
+            <Button variant="secondary" onClick={() => navigate(-1)}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Retour
+            </Button>
             <div className="min-w-0">
               <h1 className="text-2xl font-bold text-[--k-text] truncate">{data.description || data.reference}</h1>
               {data.reference !== (data.description || data.reference) && (
@@ -134,10 +131,6 @@ export default function ProductDetail() {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <Button variant="secondary" onClick={() => navigate(-1)}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Retour
-            </Button>
             <Button variant="secondary" onClick={() => setIsMovementModalOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
               Mouvement
@@ -161,6 +154,15 @@ export default function ProductDetail() {
             <CardTitle>Informations</CardTitle>
           </CardHeader>
           <CardContent>
+            <div className="mb-6 flex justify-center">
+              <div className="h-64 w-64 overflow-hidden rounded-lg border border-[--k-border] bg-[--k-surface-2]">
+                <img
+                  src={getFullImageUrl(data.imageUrl)}
+                  alt={data.reference}
+                  className="h-full w-full object-contain"
+                />
+              </div>
+            </div>
             <dl className="grid grid-cols-2 gap-4">
               <div>
                 <dt className="text-[13px] font-medium text-[--k-muted]">Reference</dt>
