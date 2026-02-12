@@ -131,7 +131,7 @@ export default function Products() {
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-alerts'] });
       setDeleteConfirm(null);
-      toast.success('Produit supprime', 'Le produit a ete supprime avec succes');
+      toast.success('Produit supprimé', 'Le produit a été supprimé avec succès');
     },
     onError: () => {
       toast.error('Erreur', 'Impossible de supprimer le produit');
@@ -171,8 +171,8 @@ export default function Products() {
   const handleSuccess = (isEdit: boolean) => {
     handleModalClose();
     toast.success(
-      isEdit ? 'Produit modifie' : 'Produit cree',
-      isEdit ? 'Le produit a ete mis a jour avec succes' : 'Le produit a ete cree avec succes'
+      isEdit ? 'Produit modifié' : 'Produit créé',
+      isEdit ? 'Le produit a été mis à jour avec succès' : 'Le produit a été créé avec succès'
     );
   };
 
@@ -233,7 +233,7 @@ export default function Products() {
           variant="ghost"
           size="sm"
           onClick={() => setSupplierModalProduct(product)}
-          title="Gerer fournisseurs"
+          title="Gérer fournisseurs"
         >
           <Link className="h-4 w-4" />
         </Button>
@@ -306,7 +306,7 @@ export default function Products() {
                 className="text-[--k-muted] whitespace-nowrap"
               >
                 <X className="h-4 w-4 sm:mr-1" />
-                <span className="hidden sm:inline">Reinitialiser</span>
+                <span className="hidden sm:inline">Réinitialiser</span>
               </Button>
             )}
           </div>
@@ -321,7 +321,7 @@ export default function Products() {
           </div>
         ) : (data?.data || []).length === 0 ? (
           <div className="py-8 text-center text-[--k-muted]">
-            Aucun produit trouve
+            Aucun produit trouvé
           </div>
         ) : (
           <div className="space-y-3">
@@ -388,7 +388,7 @@ export default function Products() {
               ) : (data?.data || []).length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-4 py-8 text-center text-[--k-muted]">
-                    Aucun produit trouve
+                    Aucun produit trouvé
                   </td>
                 </tr>
               ) : (
@@ -396,7 +396,7 @@ export default function Products() {
                   <tr key={product.id} className="border-t border-[--k-border] hover:bg-[--k-surface-2]/30 transition-colors">
                     <td className="px-4 py-1.5">
                       <div className="flex items-center gap-3">
-                        <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg border border-[--k-border] bg-[--k-surface-2]">
+                        <div className="h-[7rem] w-[7rem] flex-shrink-0 overflow-hidden rounded-lg border border-[--k-border] bg-[--k-surface-2]">
                           <img
                             src={getFullImageUrl(product.imageUrl)}
                             alt={product.reference}
@@ -406,11 +406,11 @@ export default function Products() {
                         <div className="flex flex-col">
                           <button
                             onClick={() => navigate(`/products/${product.id}`)}
-                            className="text-[15px] font-medium text-[--k-primary] hover:text-indigo-700 hover:underline text-left"
+                            className="text-[18px] font-medium text-[--k-primary] hover:text-indigo-700 hover:underline text-left"
                           >
                             {product.description || product.reference}
                           </button>
-                          <span className="text-[13px] text-[--k-muted] truncate max-w-xs">
+                          <span className="text-[15px] text-[--k-muted] truncate max-w-xs">
                             {product.reference}
                           </span>
                         </div>
@@ -453,7 +453,7 @@ export default function Products() {
                           variant="ghost"
                           size="sm"
                           onClick={() => setSupplierModalProduct(product)}
-                          title="Gerer fournisseurs"
+                          title="Gérer fournisseurs"
                         >
                           <Link className="h-4 w-4" />
                         </Button>
@@ -520,11 +520,11 @@ export default function Products() {
       >
         <div className="space-y-4">
           <p className="text-[--k-muted]">
-            Etes-vous sur de vouloir supprimer le produit{' '}
+            Êtes-vous sûr de vouloir supprimer le produit{' '}
             <span className="font-semibold text-[--k-text]">{deleteConfirm?.reference}</span> ?
           </p>
           <p className="text-[13px] text-red-600">
-            Cette action est irreversible et supprimera egalement les stocks et mouvements associes.
+            Cette action est irréversible et supprimera également les stocks et mouvements associés.
           </p>
           <div className="flex justify-end gap-3 pt-4">
             <Button variant="secondary" onClick={() => setDeleteConfirm(null)}>

@@ -39,7 +39,7 @@ interface SupplierWithRelations extends Supplier {
       id: string;
       reference: string;
       description?: string;
-      photoUrl?: string;
+      imageUrl?: string;
     };
   })[];
   orders: Order[];
@@ -86,10 +86,10 @@ export default function SupplierDetail() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['supplier', id] });
       setIsEditingComment(false);
-      toast.success('Commentaire mis a jour', 'Le commentaire a ete enregistre');
+      toast.success('Commentaire mis à jour', 'Le commentaire a été enregistré');
     },
     onError: () => {
-      toast.error('Erreur', 'Impossible de mettre a jour le commentaire');
+      toast.error('Erreur', 'Impossible de mettre à jour le commentaire');
     },
   });
 
@@ -100,7 +100,7 @@ export default function SupplierDetail() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['supplier', id] });
       setDeleteContactConfirm(null);
-      toast.success('Contact supprime', 'Le contact a ete supprime');
+      toast.success('Contact supprimé', 'Le contact a été supprimé');
     },
     onError: () => {
       toast.error('Erreur', 'Impossible de supprimer le contact');
@@ -130,8 +130,8 @@ export default function SupplierDetail() {
     };
     const labels: Record<string, string> = {
       PENDING: 'En attente',
-      COMPLETED: 'Recue',
-      CANCELLED: 'Annulee',
+      COMPLETED: 'Reçue',
+      CANCELLED: 'Annulée',
     };
     return <Badge variant={variants[status]}>{labels[status]}</Badge>;
   };
@@ -177,7 +177,7 @@ export default function SupplierDetail() {
   if (error || !data) {
     return (
       <div className="text-center py-12">
-        <p className="text-red-600">Fournisseur non trouve</p>
+        <p className="text-red-600">Fournisseur non trouvé</p>
         <Button variant="secondary" onClick={() => navigate('/suppliers')} className="mt-4">
           Retour aux fournisseurs
         </Button>
@@ -246,7 +246,7 @@ export default function SupplierDetail() {
               )}
               {data.phone && (
                 <div>
-                  <dt className="text-[13px] font-medium text-[--k-muted]">Telephone</dt>
+                  <dt className="text-[13px] font-medium text-[--k-muted]">Téléphone</dt>
                   <dd className="mt-1">
                     <a
                       href={`tel:${data.phone}`}
@@ -296,7 +296,7 @@ export default function SupplierDetail() {
               )}
               {(data.latitude !== null && data.latitude !== undefined) || (data.longitude !== null && data.longitude !== undefined) ? (
                 <div>
-                  <dt className="text-[13px] font-medium text-[--k-muted]">Coordonnees GPS</dt>
+                  <dt className="text-[13px] font-medium text-[--k-muted]">Coordonnées GPS</dt>
                   <dd className="mt-1">
                     <a
                       href={`https://www.google.com/maps?q=${data.latitude},${data.longitude}`}
@@ -336,7 +336,7 @@ export default function SupplierDetail() {
                 </div>
                 <div className="text-center">
                   <p className="text-2xl font-semibold text-green-600">{completedOrders}</p>
-                  <p className="text-xs text-[--k-muted]">Recues</p>
+                  <p className="text-xs text-[--k-muted]">Reçues</p>
                 </div>
               </div>
             </div>
@@ -401,7 +401,7 @@ export default function SupplierDetail() {
         </CardHeader>
         <CardContent>
           {!data.contacts?.length ? (
-            <p className="text-[--k-muted]">Aucun contact enregistre pour ce fournisseur</p>
+            <p className="text-[--k-muted]">Aucun contact enregistré pour ce fournisseur</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-[13px]">
@@ -410,9 +410,9 @@ export default function SupplierDetail() {
                     <th className="pb-2">Nom</th>
                     <th className="pb-2">Poste</th>
                     <th className="pb-2">Email</th>
-                    <th className="pb-2">Telephone</th>
+                    <th className="pb-2">Téléphone</th>
                     <th className="pb-2">Description</th>
-                    <th className="pb-2">Modifie le</th>
+                    <th className="pb-2">Modifié le</th>
                     <th className="pb-2 text-right">Actions</th>
                   </tr>
                 </thead>
@@ -495,27 +495,27 @@ export default function SupplierDetail() {
         </CardContent>
       </Card>
 
-      {/* Produits associes */}
+      {/* Produits associés */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Package className="h-5 w-5" />
-            Produits associes ({data.productSuppliers?.length || 0})
+            Produits associés ({data.productSuppliers?.length || 0})
           </CardTitle>
         </CardHeader>
         <CardContent>
           {!data.productSuppliers?.length ? (
-            <p className="text-[--k-muted]">Aucun produit associe a ce fournisseur</p>
+            <p className="text-[--k-muted]">Aucun produit associé à ce fournisseur</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-[13px]">
                 <thead>
                   <tr className="border-b border-[--k-border] text-left text-xs font-medium uppercase text-[--k-muted]">
                     <th className="pb-2">Description</th>
-                    <th className="pb-2">Reference</th>
+                    <th className="pb-2">Référence</th>
                     <th className="pb-2">Ref. fournisseur</th>
                     <th className="pb-2 text-right">Prix HT</th>
-                    <th className="pb-2">Delai</th>
+                    <th className="pb-2">Délai</th>
                     <th className="pb-2">Principal</th>
                   </tr>
                 </thead>
@@ -528,7 +528,7 @@ export default function SupplierDetail() {
                           className="flex items-center gap-3 group"
                         >
                           <img
-                            src={getFullImageUrl(ps.product.photoUrl)}
+                            src={getFullImageUrl(ps.product.imageUrl)}
                             alt={ps.product.description || ps.product.reference}
                             className="h-10 w-10 rounded-lg object-cover bg-[--k-surface-2] flex-shrink-0"
                             onError={(e) => {
@@ -576,20 +576,20 @@ export default function SupplierDetail() {
         </CardHeader>
         <CardContent>
           {!data.orders?.length ? (
-            <p className="text-[--k-muted]">Aucune commande passee aupres de ce fournisseur</p>
+            <p className="text-[--k-muted]">Aucune commande passée auprès de ce fournisseur</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-[13px]">
                 <thead>
                   <tr className="border-b border-[--k-border] text-left text-xs font-medium uppercase text-[--k-muted]">
-                    <th className="pb-2 pr-4">N Commande</th>
+                    <th className="pb-2 pr-4">N° Commande</th>
                     <th className="pb-2 pr-4">Date commande</th>
                     <th className="pb-2 pr-4">Commande</th>
                     <th className="pb-2 px-4 text-center">Articles</th>
-                    <th className="pb-2 px-4 text-right">Quantite</th>
+                    <th className="pb-2 px-4 text-right">Quantité</th>
                     <th className="pb-2 pr-4">Statut</th>
-                    <th className="pb-2 pr-4">Date prevue</th>
-                    <th className="pb-2 pr-4">Date reception</th>
+                    <th className="pb-2 pr-4">Date prévue</th>
+                    <th className="pb-2 pr-4">Date réception</th>
                     <th className="pb-2">Destination</th>
                   </tr>
                 </thead>
@@ -627,7 +627,7 @@ export default function SupplierDetail() {
                           {totalQty}
                           {receivedQty > 0 && receivedQty !== totalQty && (
                             <span className="ml-1 text-xs text-[--k-muted]">
-                              (recu: {receivedQty})
+                              (reçu : {receivedQty})
                             </span>
                           )}
                         </td>
@@ -677,7 +677,7 @@ export default function SupplierDetail() {
           onSuccess={() => {
             setIsEditModalOpen(false);
             queryClient.invalidateQueries({ queryKey: ['supplier', id] });
-            toast.success('Fournisseur modifie', 'Les informations ont ete mises a jour');
+            toast.success('Fournisseur modifié', 'Les informations ont été mises à jour');
           }}
           onCancel={() => setIsEditModalOpen(false)}
         />
@@ -695,8 +695,8 @@ export default function SupplierDetail() {
           onSuccess={() => {
             handleContactModalClose();
             toast.success(
-              selectedContact ? 'Contact modifie' : 'Contact ajoute',
-              selectedContact ? 'Les informations ont ete mises a jour' : 'Le contact a ete ajoute'
+              selectedContact ? 'Contact modifié' : 'Contact ajouté',
+              selectedContact ? 'Les informations ont été mises à jour' : 'Le contact a été ajouté'
             );
           }}
           onCancel={handleContactModalClose}
@@ -712,7 +712,7 @@ export default function SupplierDetail() {
       >
         <div className="space-y-4">
           <p className="text-[--k-muted]">
-            Etes-vous sur de vouloir supprimer le contact{' '}
+            Êtes-vous sûr de vouloir supprimer le contact{' '}
             <span className="font-semibold text-[--k-text]">
               {deleteContactConfirm?.firstName} {deleteContactConfirm?.lastName}
             </span> ?
@@ -736,7 +736,7 @@ export default function SupplierDetail() {
       <Modal
         isOpen={!!receiveItem}
         onClose={() => setReceiveItem(null)}
-        title="Receptionner un article"
+        title="Réceptionner un article"
         size="md"
       >
         {receiveItem && (
@@ -746,7 +746,7 @@ export default function SupplierDetail() {
             onSuccess={() => {
               setReceiveItem(null);
               queryClient.invalidateQueries({ queryKey: ['supplier', id] });
-              toast.success('Article receptionne', 'La reception a ete enregistree avec succes');
+              toast.success('Article réceptionné', 'La réception a été enregistrée avec succès');
             }}
             onCancel={() => setReceiveItem(null)}
           />

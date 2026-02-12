@@ -400,7 +400,7 @@ export default function OrderDetail() {
               <div key={item.id} className="p-4 space-y-2">
                 <div className="flex items-center gap-3">
                   <img
-                    src={getFullImageUrl((item.product as any)?.photoUrl || (item.product as any)?.imageUrl)}
+                    src={getFullImageUrl((item.product as any)?.imageUrl)}
                     alt=""
                     className="h-10 w-10 rounded object-cover bg-[--k-surface-2]"
                     onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_PRODUCT_IMAGE; }}
@@ -469,7 +469,7 @@ export default function OrderDetail() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <img
-                          src={getFullImageUrl((item.product as any)?.photoUrl || (item.product as any)?.imageUrl)}
+                          src={getFullImageUrl((item.product as any)?.imageUrl)}
                           alt=""
                           className="h-8 w-8 rounded object-cover bg-[--k-surface-2]"
                           onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_PRODUCT_IMAGE; }}

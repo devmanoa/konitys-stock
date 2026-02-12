@@ -41,10 +41,10 @@ export default function Packs() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['packs'], refetchType: 'all' });
       handleCloseModal();
-      toast.success('Pack cree', 'Le pack a ete cree avec succes');
+      toast.success('Pack créé', 'Le pack a été créé avec succès');
     },
     onError: () => {
-      toast.error('Erreur', 'Impossible de creer le pack');
+      toast.error('Erreur', 'Impossible de créer le pack');
     },
   });
 
@@ -55,7 +55,7 @@ export default function Packs() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['packs'], refetchType: 'all' });
       handleCloseModal();
-      toast.success('Pack modifie', 'Le pack a ete mis a jour');
+      toast.success('Pack modifié', 'Le pack a été mis à jour');
     },
     onError: () => {
       toast.error('Erreur', 'Impossible de modifier le pack');
@@ -69,7 +69,7 @@ export default function Packs() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['packs'], refetchType: 'all' });
       setDeleteConfirm(null);
-      toast.success('Pack supprime', 'Le pack a ete supprime');
+      toast.success('Pack supprimé', 'Le pack a été supprimé');
     },
     onError: () => {
       toast.error('Erreur', 'Impossible de supprimer le pack');
@@ -195,12 +195,12 @@ export default function Packs() {
             <div className="py-8 text-center">
               <PackageOpen className="mx-auto h-12 w-12 text-[--k-muted]" />
               <p className="mt-2 text-[--k-muted]">
-                {searchTerm ? 'Aucun pack trouve' : 'Aucun pack cree'}
+                {searchTerm ? 'Aucun pack trouvé' : 'Aucun pack créé'}
               </p>
               {!searchTerm && (
                 <Button className="mt-4" onClick={() => handleOpenModal()}>
                   <Plus className="mr-2 h-4 w-4" />
-                  Creer un pack
+                  Créer un pack
                 </Button>
               )}
             </div>
@@ -296,7 +296,7 @@ export default function Packs() {
                               : 'bg-orange-100 text-orange-800'
                           }`}>
                             {pack.type === 'IN' ? (
-                              <><ArrowDownCircle className="h-3.5 w-3.5" /> Entree</>
+                              <><ArrowDownCircle className="h-3.5 w-3.5" /> Entrée</>
                             ) : (
                               <><ArrowUpCircle className="h-3.5 w-3.5" /> Sortie</>
                             )}
@@ -358,7 +358,7 @@ export default function Packs() {
             label="Nom du pack"
             value={packName}
             onChange={(e) => setPackName(e.target.value)}
-            placeholder="ex: Tete Spherik, Kit Ecran"
+            placeholder="ex: Tête Spherik, Kit Écran"
           />
 
           <div className="space-y-1">
@@ -391,7 +391,7 @@ export default function Packs() {
                 />
                 <span className="inline-flex items-center gap-1 text-sm text-[--k-text]">
                   <ArrowDownCircle className="h-4 w-4 text-green-500" />
-                  Entree
+                  Entrée
                 </span>
               </label>
             </div>
@@ -474,7 +474,7 @@ export default function Packs() {
                 ? 'Enregistrement...'
                 : selectedPack
                 ? 'Modifier'
-                : 'Creer'}
+                : 'Créer'}
             </Button>
           </div>
         </div>
@@ -489,7 +489,7 @@ export default function Packs() {
       >
         <div className="space-y-4">
           <p className="text-[--k-muted]">
-            Etes-vous sur de vouloir supprimer le pack{' '}
+            Êtes-vous sûr de vouloir supprimer le pack{' '}
             <span className="font-semibold text-[--k-text]">{deleteConfirm?.name}</span> ?
           </p>
           <div className="flex justify-end gap-3 pt-4">

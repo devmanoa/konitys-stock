@@ -54,7 +54,7 @@ export default function Suppliers() {
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
       setDeleteConfirm(null);
-      toast.success('Fournisseur supprime', 'Le fournisseur a ete supprime avec succes');
+      toast.success('Fournisseur supprimé', 'Le fournisseur a été supprimé avec succès');
     },
     onError: () => {
       toast.error('Erreur', 'Impossible de supprimer le fournisseur');
@@ -79,8 +79,8 @@ export default function Suppliers() {
   const handleSuccess = (isEdit: boolean) => {
     handleModalClose();
     toast.success(
-      isEdit ? 'Fournisseur modifie' : 'Fournisseur cree',
-      isEdit ? 'Le fournisseur a ete mis a jour avec succes' : 'Le fournisseur a ete cree avec succes'
+      isEdit ? 'Fournisseur modifié' : 'Fournisseur créé',
+      isEdit ? 'Le fournisseur a été mis à jour avec succès' : 'Le fournisseur a été créé avec succès'
     );
   };
 
@@ -103,7 +103,7 @@ export default function Suppliers() {
         </div>
         <div className="flex items-center gap-1">
           <Link to={`/suppliers/${supplier.id}`}>
-            <Button variant="ghost" size="sm" title="Voir details">
+            <Button variant="ghost" size="sm" title="Voir détails">
               <Eye className="h-4 w-4" />
             </Button>
           </Link>
@@ -222,7 +222,7 @@ export default function Suppliers() {
           </div>
         ) : (data?.data || []).length === 0 ? (
           <div className="py-8 text-center text-[--k-muted]">
-            Aucun fournisseur trouve
+            Aucun fournisseur trouvé
           </div>
         ) : (
           <div className="space-y-3">
@@ -259,7 +259,7 @@ export default function Suppliers() {
           </div>
         ) : (data?.data || []).length === 0 ? (
           <div className="py-12 text-center text-[--k-muted]">
-            Aucun fournisseur trouve
+            Aucun fournisseur trouvé
           </div>
         ) : (
           <div>
@@ -276,7 +276,7 @@ export default function Suppliers() {
                     Email
                   </th>
                   <th className="px-4 py-1.5 text-left text-xs font-medium bg-white">
-                    Telephone
+                    Téléphone
                   </th>
                   <th className="px-4 py-1.5 text-left text-xs font-medium bg-white">
                     Site web
@@ -365,7 +365,7 @@ export default function Suppliers() {
                     <td className="px-4 py-1.5">
                       <div className="flex items-center justify-end gap-1">
                         <Link to={`/suppliers/${supplier.id}`}>
-                          <Button variant="ghost" size="sm" title="Voir details">
+                          <Button variant="ghost" size="sm" title="Voir détails">
                             <Eye className="h-4 w-4" />
                           </Button>
                         </Link>
@@ -433,11 +433,11 @@ export default function Suppliers() {
       >
         <div className="space-y-4">
           <p className="text-[--k-muted]">
-            Etes-vous sur de vouloir supprimer le fournisseur{' '}
+            Êtes-vous sûr de vouloir supprimer le fournisseur{' '}
             <span className="font-semibold text-[--k-text]">{deleteConfirm?.name}</span> ?
           </p>
           <p className="text-[13px] text-red-600">
-            Cette action est irreversible et supprimera egalement les liens avec les produits.
+            Cette action est irréversible et supprimera également les liens avec les produits.
           </p>
           <div className="flex justify-end gap-3 pt-4">
             <Button variant="secondary" onClick={() => setDeleteConfirm(null)}>

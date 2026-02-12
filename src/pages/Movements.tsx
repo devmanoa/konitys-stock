@@ -110,7 +110,7 @@ export default function Movements() {
   const getTypeBadge = (type: string) => {
     switch (type) {
       case 'IN':
-        return <Badge variant="success">Entree</Badge>;
+        return <Badge variant="success">Entrée</Badge>;
       case 'OUT':
         return <Badge variant="danger">Sortie</Badge>;
       case 'TRANSFER':
@@ -214,7 +214,7 @@ export default function Movements() {
         </div>
         {movement.operator && (
           <div className="col-span-2">
-            <span className="text-[--k-muted]">Operateur:</span>
+            <span className="text-[--k-muted]">Opérateur:</span>
             <p className="text-[--k-text] flex items-center gap-1">
               <User className="h-3 w-3 text-[--k-muted]" />
               {movement.operator}
@@ -236,7 +236,7 @@ export default function Movements() {
       {/* Header */}
       <PageHeader
         title="Mouvements de Stock"
-        subtitle="Historique des entrees, sorties et transferts"
+        subtitle="Historique des entrées, sorties et transferts"
       >
         <Button onClick={() => setIsModalOpen(true)} className="flex-1 sm:flex-none">
           <Plus className="mr-1 h-4 w-4" />
@@ -278,7 +278,7 @@ export default function Movements() {
               value={typeFilter}
               onChange={(val) => updateParams({ type: val })}
               options={[
-                { value: 'IN', label: 'Entree' },
+                { value: 'IN', label: 'Entrée' },
                 { value: 'OUT', label: 'Sortie' },
                 { value: 'TRANSFER', label: 'Transfert' },
               ]}
@@ -299,7 +299,7 @@ export default function Movements() {
                 { value: 'NEW', label: 'Neuf' },
                 { value: 'USED', label: 'Occasion' },
               ]}
-              placeholder="Etat"
+              placeholder="État"
               className="min-w-[100px] sm:w-80"
             />
 
@@ -308,7 +308,7 @@ export default function Movements() {
               value={startDate}
               onChange={(e) => updateParams({ startDate: e.target.value })}
               className="input-field min-w-[130px]"
-              title="Date de debut"
+              title="Date de début"
             />
             <input
               type="date"
@@ -322,7 +322,7 @@ export default function Movements() {
           {hasFilters && (
             <Button variant="ghost" size="sm" onClick={resetFilters} className="whitespace-nowrap">
               <Filter className="h-4 w-4 sm:mr-1" />
-              <span className="hidden sm:inline">Reinitialiser</span>
+              <span className="hidden sm:inline">Réinitialiser</span>
             </Button>
           )}
         </div>
@@ -336,7 +336,7 @@ export default function Movements() {
           </div>
         ) : filteredMovements?.length === 0 ? (
           <div className="py-8 text-center text-[--k-muted]">
-            Aucun mouvement trouve
+            Aucun mouvement trouvé
           </div>
         ) : (
           <div className="space-y-3">
@@ -372,7 +372,7 @@ export default function Movements() {
           </div>
         ) : filteredMovements?.length === 0 ? (
           <div className="py-12 text-center text-[--k-muted]">
-            Aucun mouvement trouve
+            Aucun mouvement trouvé
           </div>
         ) : (
           <div>
@@ -389,10 +389,10 @@ export default function Movements() {
                     Produit
                   </th>
                   <th className="px-4 py-1.5 text-center text-xs font-medium bg-white">
-                    Quantite
+                    Quantité
                   </th>
                   <th className="px-4 py-1.5 text-left text-xs font-medium bg-white">
-                    Etat
+                    État
                   </th>
                   <th className="px-4 py-1.5 text-left text-xs font-medium bg-white">
                     Source
@@ -401,7 +401,7 @@ export default function Movements() {
                     Destination
                   </th>
                   <th className="px-4 py-1.5 text-left text-xs font-medium bg-white">
-                    Operateur
+                    Opérateur
                   </th>
                   <th className="px-4 py-1.5 text-left text-xs font-medium bg-white">
                     Commentaire
@@ -515,7 +515,7 @@ export default function Movements() {
         <MovementForm
           onSuccess={() => {
             setIsModalOpen(false);
-            toast.success('Mouvement cree', 'Le mouvement de stock a ete enregistre avec succes');
+            toast.success('Mouvement créé', 'Le mouvement de stock a été enregistré avec succès');
           }}
           onCancel={() => setIsModalOpen(false)}
         />
@@ -531,7 +531,7 @@ export default function Movements() {
         <PackMovementForm
           onSuccess={() => {
             setIsPackMovementModalOpen(false);
-            toast.success('Mouvement pack cree', 'Le mouvement du pack a ete enregistre avec succes');
+            toast.success('Mouvement pack créé', 'Le mouvement du pack a été enregistré avec succès');
           }}
           onCancel={() => setIsPackMovementModalOpen(false)}
         />

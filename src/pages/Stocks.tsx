@@ -289,17 +289,17 @@ export default function Stocks() {
             <img
               src={getFullImageUrl(row.product.imageUrl)}
               alt=""
-              className="h-14 w-14 rounded-lg object-cover bg-[--k-surface-2] flex-shrink-0"
+              className="h-[7rem] w-[7rem] rounded-lg object-cover bg-[--k-surface-2] flex-shrink-0"
               onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_PRODUCT_IMAGE; }}
             />
             <div className="flex-1 min-w-0">
               <Link
                 to={`/products/${row.product.id}`}
-                className="text-[15px] font-medium text-[--k-primary] hover:text-indigo-700"
+                className="text-[18px] font-medium text-[--k-primary] hover:text-indigo-700"
               >
                 {row.product.description || row.product.reference}
               </Link>
-              <p className="text-[13px] text-[--k-muted] font-mono mt-0.5">
+              <p className="text-[15px] text-[--k-muted] font-mono mt-0.5">
                 {row.product.reference}
               </p>
               {row.product.supplyRisk && (
@@ -349,12 +349,12 @@ export default function Stocks() {
               {isExpanded ? (
                 <>
                   <ChevronUp className="h-4 w-4" />
-                  Masquer les details par site
+                  Masquer les détails par site
                 </>
               ) : (
                 <>
                   <ChevronDown className="h-4 w-4" />
-                  Voir les details par site
+                  Voir les détails par site
                 </>
               )}
             </button>
@@ -463,7 +463,7 @@ export default function Stocks() {
                 onChange={(e) => setShowZeroStock(e.target.checked)}
                 className="h-4 w-4 rounded border-[--k-border] text-[--k-primary] focus:ring-[--k-primary]"
               />
-              <span className="hidden sm:inline">Afficher stocks a zero</span>
+              <span className="hidden sm:inline">Afficher stocks à zéro</span>
               <span className="sm:hidden">Stock 0</span>
             </label>
 
@@ -481,7 +481,7 @@ export default function Stocks() {
                 className="whitespace-nowrap"
               >
                 <Filter className="h-4 w-4 sm:mr-1" />
-                <span className="hidden sm:inline">Reinitialiser</span>
+                <span className="hidden sm:inline">Réinitialiser</span>
               </Button>
             )}
           </div>
@@ -496,7 +496,7 @@ export default function Stocks() {
           </div>
         ) : filteredData.length === 0 ? (
           <div className="py-8 text-center text-[--k-muted]">
-            Aucun produit trouve
+            Aucun produit trouvé
           </div>
         ) : (
           <div className="space-y-3">
@@ -516,7 +516,7 @@ export default function Stocks() {
           </div>
         ) : filteredData.length === 0 ? (
           <div className="py-12 text-center text-[--k-muted]">
-            Aucun produit trouve
+            Aucun produit trouvé
           </div>
         ) : (
           <>
@@ -594,17 +594,17 @@ export default function Stocks() {
                           <img
                             src={getFullImageUrl(row.product.imageUrl)}
                             alt=""
-                            className="h-12 w-12 rounded-lg object-cover bg-[--k-surface-2] flex-shrink-0"
+                            className="h-[7rem] w-[7rem] rounded-lg object-cover bg-[--k-surface-2] flex-shrink-0"
                             onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_PRODUCT_IMAGE; }}
                           />
                           <div className="flex flex-col min-w-0">
                             <Link
                               to={`/products/${row.product.id}`}
-                              className="text-[15px] font-medium text-[--k-primary] hover:underline truncate max-w-[250px]"
+                              className="text-[18px] font-medium text-[--k-primary] hover:underline truncate max-w-[250px]"
                             >
                               {row.product.description || row.product.reference}
                             </Link>
-                            <span className="text-[13px] text-[--k-muted] font-mono">
+                            <span className="text-[15px] text-[--k-muted] font-mono">
                               {row.product.reference}
                             </span>
                             {row.product.supplyRisk && (
