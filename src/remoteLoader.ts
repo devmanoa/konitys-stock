@@ -42,27 +42,11 @@ function ensureSharedScope() {
 
 let containerPromise: Promise<RemoteContainer> | null = null;
 
-/*
-function blockRemoteCSS() {
-  const origAppendChild = document.head.appendChild.bind(document.head);
-  document.head.appendChild = function <T extends Node>(node: T): T {
-    if (
-      node instanceof HTMLLinkElement &&
-      node.rel === 'stylesheet' &&
-      node.href?.includes(PLATEFORM_URL.replace(/^https?:\/\//, ''))
-    ) {
-      return node;
-    }
-    return origAppendChild(node);
-  };
-}
-*/
 
 function loadRemoteEntry(): Promise<RemoteContainer> {
   if (containerPromise) return containerPromise;
 
   ensureSharedScope();
-  // blockRemoteCSS();
 
   containerPromise = import(/* @vite-ignore */ `${PLATEFORM_URL}/assets/remoteEntry.js`)
     .then((container: RemoteContainer) => {
