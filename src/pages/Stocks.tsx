@@ -70,24 +70,22 @@ export default function Stocks() {
   });
 
   // Fetch assembly types for filter
-  const { data: assemblyTypesResponse } = useQuery({
+  const { data: assemblyTypesData } = useQuery({
     queryKey: ['assembly-types'],
     queryFn: async () => {
       const res = await api.get<PaginatedResponse<AssemblyType>>('/assembly-types?limit=100');
-      return res.data;
+      return res.data?.data || [];
     },
   });
-  const assemblyTypesData = assemblyTypesResponse?.data;
 
   // Fetch assemblies for filter
-  const { data: assembliesResponse } = useQuery({
+  const { data: assembliesData } = useQuery({
     queryKey: ['assemblies'],
     queryFn: async () => {
       const res = await api.get<PaginatedResponse<Assembly>>('/assemblies?limit=100');
-      return res.data;
+      return res.data?.data || [];
     },
   });
-  const assembliesData = assembliesResponse?.data;
 
   // Filter assemblies by selected type
   const filteredAssemblies = selectedAssemblyType

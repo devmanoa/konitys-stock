@@ -77,7 +77,7 @@ export default function Products() {
     queryKey: ['assembly-types'],
     queryFn: async () => {
       const res = await api.get<PaginatedResponse<AssemblyType>>('/assembly-types?limit=100');
-      return res.data;
+      return res.data?.data || [];
     },
   });
 
@@ -86,18 +86,18 @@ export default function Products() {
     queryKey: ['assemblies'],
     queryFn: async () => {
       const res = await api.get<PaginatedResponse<Assembly>>('/assemblies?limit=100');
-      return res.data;
+      return res.data?.data || [];
     },
   });
 
   // Filter assemblies by selected type
   const filteredAssemblies = assemblyTypeId
-    ? assembliesData?.data?.filter((assembly) =>
+    ? assembliesData?.filter((assembly) =>
         assembly.assemblyTypes?.some((at: any) =>
           at.assemblyTypeId === assemblyTypeId || at.id === assemblyTypeId
         )
       )
-    : assembliesData?.data;
+    : assembliesData;
 
   const hasActiveFilters = search || assemblyTypeId || assemblyId || page > 1;
 
@@ -287,7 +287,7 @@ export default function Products() {
             <SearchSelect
               value={assemblyTypeId}
               onChange={(val) => setFilter('assemblyTypeId', val)}
-              options={assemblyTypesData?.data?.map((type) => ({ value: type.id, label: type.name })) || []}
+              options={assemblyTypesData?.map((type) => ({ value: type.id, label: type.name })) || []}
               placeholder="Type borne"
               className="min-w-[140px] sm:w-[352px]"
             />
