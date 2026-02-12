@@ -119,10 +119,10 @@ export default function ProductDetail() {
       <div className="mb-5">
         <div className="flex items-end justify-between gap-4">
           <div className="flex items-center gap-4 min-w-0">
-            <Button variant="secondary" onClick={() => navigate(-1)}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Retour
-            </Button>
+            <ArrowLeft
+              className="h-5 w-5 shrink-0 cursor-pointer text-[--k-muted] hover:text-[--k-text] transition-colors"
+              onClick={() => navigate(-1)}
+            />
             <div className="min-w-0">
               <h1 className="text-2xl font-bold text-[--k-text] truncate">{data.description || data.reference}</h1>
               {data.reference !== (data.description || data.reference) && (
@@ -154,16 +154,15 @@ export default function ProductDetail() {
             <CardTitle>Informations</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="mb-6 flex justify-center">
-              <div className="h-64 w-64 overflow-hidden rounded-lg border border-[--k-border] bg-[--k-surface-2]">
+            <div className="flex gap-6">
+              <div className="shrink-0 overflow-hidden rounded-lg border border-[--k-border] bg-[--k-surface-2]">
                 <img
                   src={getFullImageUrl(data.imageUrl)}
                   alt={data.reference}
-                  className="h-full w-full object-contain"
+                  className="h-full w-auto object-contain"
                 />
               </div>
-            </div>
-            <dl className="grid grid-cols-2 gap-4">
+              <dl className="grid flex-1 grid-cols-2 gap-4 content-start">
               <div>
                 <dt className="text-[13px] font-medium text-[--k-muted]">Reference</dt>
                 <dd className="mt-1 text-[--k-text]">{data.reference}</dd>
@@ -214,7 +213,8 @@ export default function ProductDetail() {
                   <dd className="mt-1 text-[--k-text]">{data.comment}</dd>
                 </div>
               )}
-            </dl>
+              </dl>
+            </div>
           </CardContent>
         </Card>
 
