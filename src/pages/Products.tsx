@@ -396,7 +396,7 @@ export default function Products() {
                   <tr key={product.id} className="border-t border-[--k-border] hover:bg-[--k-surface-2]/30 transition-colors">
                     <td className="px-4 py-1.5">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg border border-[--k-border] bg-[--k-surface-2]">
+                        <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg border border-[--k-border] bg-[--k-surface-2]">
                           <img
                             src={getFullImageUrl(product.imageUrl)}
                             alt={product.reference}
@@ -406,7 +406,7 @@ export default function Products() {
                         <div className="flex flex-col">
                           <button
                             onClick={() => navigate(`/products/${product.id}`)}
-                            className="font-medium text-[--k-primary] hover:text-indigo-700 hover:underline text-left"
+                            className="text-[15px] font-medium text-[--k-primary] hover:text-indigo-700 hover:underline text-left"
                           >
                             {product.description || product.reference}
                           </button>

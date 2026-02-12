@@ -289,17 +289,17 @@ export default function Stocks() {
             <img
               src={getFullImageUrl(row.product.imageUrl)}
               alt=""
-              className="h-10 w-10 rounded object-cover bg-[--k-surface-2] flex-shrink-0"
+              className="h-14 w-14 rounded-lg object-cover bg-[--k-surface-2] flex-shrink-0"
               onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_PRODUCT_IMAGE; }}
             />
             <div className="flex-1 min-w-0">
               <Link
                 to={`/products/${row.product.id}`}
-                className="font-medium text-[--k-primary] hover:text-indigo-700"
+                className="text-[15px] font-medium text-[--k-primary] hover:text-indigo-700"
               >
                 {row.product.description || row.product.reference}
               </Link>
-              <p className="text-xs text-[--k-muted] font-mono mt-0.5">
+              <p className="text-[13px] text-[--k-muted] font-mono mt-0.5">
                 {row.product.reference}
               </p>
               {row.product.supplyRisk && (
@@ -594,17 +594,17 @@ export default function Stocks() {
                           <img
                             src={getFullImageUrl(row.product.imageUrl)}
                             alt=""
-                            className="h-9 w-9 rounded object-cover bg-[--k-surface-2] flex-shrink-0"
+                            className="h-12 w-12 rounded-lg object-cover bg-[--k-surface-2] flex-shrink-0"
                             onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_PRODUCT_IMAGE; }}
                           />
                           <div className="flex flex-col min-w-0">
                             <Link
                               to={`/products/${row.product.id}`}
-                              className="font-medium text-[--k-primary] hover:underline truncate max-w-[250px]"
+                              className="text-[15px] font-medium text-[--k-primary] hover:underline truncate max-w-[250px]"
                             >
                               {row.product.description || row.product.reference}
                             </Link>
-                            <span className="text-xs text-[--k-muted] font-mono">
+                            <span className="text-[13px] text-[--k-muted] font-mono">
                               {row.product.reference}
                             </span>
                             {row.product.supplyRisk && (
