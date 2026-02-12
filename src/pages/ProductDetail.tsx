@@ -148,75 +148,73 @@ export default function ProductDetail() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Image produit */}
-        <Card className="lg:col-span-1 lg:row-span-2">
-          <CardContent className="flex h-full items-center justify-center p-4">
-            <img
-              src={getFullImageUrl(data.imageUrl)}
-              alt={data.reference}
-              className="max-h-full max-w-full rounded-lg object-contain"
-            />
-          </CardContent>
-        </Card>
-
         {/* Informations principales */}
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>Informations</CardTitle>
           </CardHeader>
           <CardContent>
-            <dl className="grid grid-cols-2 gap-4">
-              <div>
-                <dt className="text-[13px] font-medium text-[--k-muted]">Reference</dt>
-                <dd className="mt-1 text-[--k-text]">{data.reference}</dd>
+            <div className="flex gap-6">
+              <div className="shrink-0 self-stretch overflow-hidden rounded-lg border border-[--k-border] bg-[--k-surface-2]">
+                <img
+                  src={getFullImageUrl(data.imageUrl)}
+                  alt={data.reference}
+                  className="h-full w-48 object-contain"
+                />
               </div>
-              <div>
-                <dt className="text-[13px] font-medium text-[--k-muted]">Quantite par unite</dt>
-                <dd className="mt-1 text-[--k-text]">{data.qtyPerUnit}</dd>
-              </div>
-              {data.supplyRisk && (
+              <dl className="grid flex-1 grid-cols-2 gap-4 content-start">
                 <div>
-                  <dt className="text-[13px] font-medium text-[--k-muted]">Risque approvisionnement</dt>
-                  <dd className="mt-1">{getRiskBadge(data.supplyRisk)}</dd>
+                  <dt className="text-[13px] font-medium text-[--k-muted]">Reference</dt>
+                  <dd className="mt-1 text-[--k-text]">{data.reference}</dd>
                 </div>
-              )}
-              {data.location && (
                 <div>
-                  <dt className="text-[13px] font-medium text-[--k-muted]">Emplacement</dt>
-                  <dd className="mt-1 text-[--k-text]">{data.location}</dd>
+                  <dt className="text-[13px] font-medium text-[--k-muted]">Quantite par unite</dt>
+                  <dd className="mt-1 text-[--k-text]">{data.qtyPerUnit}</dd>
                 </div>
-              )}
-              {data.assembly?.name && (
-                <div>
-                  <dt className="text-[13px] font-medium text-[--k-muted]">Borne</dt>
-                  <dd className="mt-1 text-[--k-text]">{data.assembly.name}</dd>
-                </div>
-              )}
-              {data.assemblyType?.name && (
-                <div>
-                  <dt className="text-[13px] font-medium text-[--k-muted]">Type borne</dt>
-                  <dd className="mt-1 text-[--k-text]">{data.assemblyType.name}</dd>
-                </div>
-              )}
-              {data.createdAt && (
-                <div>
-                  <dt className="text-[13px] font-medium text-[--k-muted]">Produit cree le</dt>
-                  <dd className="mt-1 text-[--k-text]">
-                    {new Date(data.createdAt).toLocaleDateString('fr-FR', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                    })}
-                  </dd>
-                </div>
-              )}
-              {data.comment && (
-                <div className="col-span-2">
-                  <dt className="text-[13px] font-medium text-[--k-muted]">Commentaire</dt>
-                  <dd className="mt-1 text-[--k-text]">{data.comment}</dd>
-                </div>
-              )}
-            </dl>
+                {data.supplyRisk && (
+                  <div>
+                    <dt className="text-[13px] font-medium text-[--k-muted]">Risque approvisionnement</dt>
+                    <dd className="mt-1">{getRiskBadge(data.supplyRisk)}</dd>
+                  </div>
+                )}
+                {data.location && (
+                  <div>
+                    <dt className="text-[13px] font-medium text-[--k-muted]">Emplacement</dt>
+                    <dd className="mt-1 text-[--k-text]">{data.location}</dd>
+                  </div>
+                )}
+                {data.assembly?.name && (
+                  <div>
+                    <dt className="text-[13px] font-medium text-[--k-muted]">Borne</dt>
+                    <dd className="mt-1 text-[--k-text]">{data.assembly.name}</dd>
+                  </div>
+                )}
+                {data.assemblyType?.name && (
+                  <div>
+                    <dt className="text-[13px] font-medium text-[--k-muted]">Type borne</dt>
+                    <dd className="mt-1 text-[--k-text]">{data.assemblyType.name}</dd>
+                  </div>
+                )}
+                {data.createdAt && (
+                  <div>
+                    <dt className="text-[13px] font-medium text-[--k-muted]">Produit cree le</dt>
+                    <dd className="mt-1 text-[--k-text]">
+                      {new Date(data.createdAt).toLocaleDateString('fr-FR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                      })}
+                    </dd>
+                  </div>
+                )}
+                {data.comment && (
+                  <div className="col-span-2">
+                    <dt className="text-[13px] font-medium text-[--k-muted]">Commentaire</dt>
+                    <dd className="mt-1 text-[--k-text]">{data.comment}</dd>
+                  </div>
+                )}
+              </dl>
+            </div>
           </CardContent>
         </Card>
 
