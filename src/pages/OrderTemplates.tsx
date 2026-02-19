@@ -1,14 +1,12 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate, Link as RouterLink } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   FileText,
   Truck,
   MapPin,
-  Package,
   Edit2,
   Trash2,
-  ExternalLink,
   Search,
   Plus,
 } from 'lucide-react';

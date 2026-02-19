@@ -61,7 +61,6 @@ export default function ReceiveAllForm({ order, onSuccess, onCancel }: ReceiveAl
   };
 
   const totalReceivedQty = lines.reduce((s, l) => s + l.receivedQty, 0);
-  const totalOrderedQty = lines.reduce((s, l) => s + l.orderedQty, 0);
   const hasQtyMismatch = lines.some(l => l.receivedQty !== l.orderedQty);
 
   const receiveMutation = useMutation({

@@ -378,7 +378,7 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
             type="number"
             min={0}
             value={formData.minStock != null ? formData.minStock : ''}
-            onChange={(e) => handleChange('minStock', e.target.value !== '' ? parseInt(e.target.value) : null)}
+            onChange={(e) => handleChange('minStock', e.target.value !== '' ? parseInt(e.target.value) : undefined)}
             placeholder="Pas de seuil"
           />
           <p className="mt-1 text-xs text-[--k-muted]">
