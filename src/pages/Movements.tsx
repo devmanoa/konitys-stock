@@ -8,6 +8,7 @@ import {
   ArrowDownCircle,
   ArrowUpCircle,
   ArrowLeftRight,
+  ArrowRight,
   User,
   Package,
 } from 'lucide-react';
@@ -200,17 +201,19 @@ export default function Movements() {
       </div>
 
       <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
-        <div>
-          <span className="text-[--k-muted]">Source:</span>
-          <p className="text-[--k-text]">
-            {movement.sourceSite?.name || '-'}
-          </p>
-        </div>
-        <div>
-          <span className="text-[--k-muted]">Destination:</span>
-          <p className="text-[--k-text]">
-            {movement.targetSite?.name || '-'}
-          </p>
+        <div className="col-span-2">
+          <span className="text-[--k-muted]">Sites :</span>
+          {movement.sourceSite && movement.targetSite ? (
+            <p className="text-[--k-text] flex items-center gap-1">
+              {movement.sourceSite.name}
+              <ArrowRight className="h-3 w-3 shrink-0 text-[--k-muted]" />
+              {movement.targetSite.name}
+            </p>
+          ) : (
+            <p className="text-[--k-text]">
+              {movement.targetSite?.name || movement.sourceSite?.name || '-'}
+            </p>
+          )}
         </div>
         {movement.operator && (
           <div className="col-span-2">
@@ -283,14 +286,14 @@ export default function Movements() {
                 { value: 'TRANSFER', label: 'Transfert' },
               ]}
               placeholder="Type"
-              className="min-w-[110px] sm:w-80"
+              className="min-w-[140px] sm:w-[352px]"
             />
             <SearchSelect
               value={siteFilter}
               onChange={(val) => updateParams({ site: val })}
               options={sites?.map((s) => ({ value: s.id, label: s.name })) || []}
               placeholder="Site"
-              className="min-w-[120px] sm:w-80"
+              className="min-w-[140px] sm:w-[352px]"
             />
             <SearchSelect
               value={conditionFilter}
@@ -300,7 +303,7 @@ export default function Movements() {
                 { value: 'USED', label: 'Occasion' },
               ]}
               placeholder="État"
-              className="min-w-[100px] sm:w-80"
+              className="min-w-[140px] sm:w-[352px]"
             />
 
             <input
@@ -361,7 +364,7 @@ export default function Movements() {
       {/* Desktop Movements Table */}
       <div className="hidden lg:block rounded-2xl border border-[--k-border] bg-white shadow-sm shadow-black/[0.03]">
         <div className="flex items-baseline justify-between gap-3 border-b border-[--k-border] px-4 py-2.5">
-          <div className="text-[13px] font-semibold">Historique des mouvements</div>
+          <div className="text-lg font-semibold text-[--k-text]">Historique des mouvements</div>
           <div className="text-xs text-[--k-muted]">{filteredMovements?.length || 0} éléments</div>
         </div>
 
@@ -386,6 +389,9 @@ export default function Movements() {
                     Type
                   </th>
                   <th className="px-4 py-1.5 text-left text-xs font-medium bg-white">
+                    Référence
+                  </th>
+                  <th className="px-4 py-1.5 text-left text-xs font-medium bg-white">
                     Produit
                   </th>
                   <th className="px-4 py-1.5 text-center text-xs font-medium bg-white">
@@ -395,10 +401,7 @@ export default function Movements() {
                     État
                   </th>
                   <th className="px-4 py-1.5 text-left text-xs font-medium bg-white">
-                    Source
-                  </th>
-                  <th className="px-4 py-1.5 text-left text-xs font-medium bg-white">
-                    Destination
+                    Sites
                   </th>
                   <th className="px-4 py-1.5 text-left text-xs font-medium bg-white">
                     Opérateur
@@ -433,13 +436,13 @@ export default function Movements() {
                     <td className="px-4 py-1.5">
                       <Link
                         to={`/products/${movement.productId}`}
-                        className="font-medium text-[--k-primary] hover:text-indigo-700 hover:underline"
+                        className="font-mono text-[--k-primary] hover:text-indigo-700 hover:underline"
                       >
-                        {movement.product.description || movement.product.reference}
-                      </Link>
-                      <p className="text-xs text-[--k-muted] truncate max-w-[150px]">
                         {movement.product.reference}
-                      </p>
+                      </Link>
+                    </td>
+                    <td className="px-4 py-1.5 text-[--k-text] truncate max-w-[200px]">
+                      {movement.product.description || '—'}
                     </td>
                     <td className="px-4 py-1.5 text-center">
                       <span className={`font-bold ${
@@ -457,10 +460,15 @@ export default function Movements() {
                       {getConditionBadge(movement.condition)}
                     </td>
                     <td className="px-4 py-1.5 text-[--k-muted]">
-                      {movement.sourceSite?.name || '-'}
-                    </td>
-                    <td className="px-4 py-1.5 text-[--k-muted]">
-                      {movement.targetSite?.name || '-'}
+                      {movement.sourceSite && movement.targetSite ? (
+                        <span className="flex items-center gap-1">
+                          <span className="text-[--k-text]">{movement.sourceSite.name}</span>
+                          <ArrowRight className="h-3 w-3 shrink-0 text-[--k-muted]" />
+                          <span className="text-[--k-text]">{movement.targetSite.name}</span>
+                        </span>
+                      ) : (
+                        <span>{movement.targetSite?.name || movement.sourceSite?.name || '-'}</span>
+                      )}
                     </td>
                     <td className="px-4 py-1.5">
                       {movement.operator ? (

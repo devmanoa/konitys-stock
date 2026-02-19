@@ -199,7 +199,7 @@ export default function ImportExport() {
         <div className="rounded-2xl border border-[--k-border] bg-white shadow-sm shadow-black/[0.03] overflow-hidden">
           <div className="flex items-center gap-2 border-b border-[--k-border] bg-gradient-to-r from-blue-50/60 to-indigo-50/30 px-4 py-2.5">
             <Upload className="h-4 w-4 text-[--k-primary]" />
-            <span className="text-[13px] font-semibold text-[--k-text]">Import Excel</span>
+            <span className="text-lg font-semibold text-[--k-text]">Import Excel</span>
           </div>
           <div className="space-y-4 p-4">
             {/* Drop zone */}
@@ -361,7 +361,7 @@ export default function ImportExport() {
         <div className="rounded-2xl border border-[--k-border] bg-white shadow-sm shadow-black/[0.03] overflow-hidden">
           <div className="flex items-center gap-2 border-b border-[--k-border] bg-gradient-to-r from-emerald-50/40 to-teal-50/20 px-4 py-2.5">
             <Download className="h-4 w-4 text-[--k-primary]" />
-            <span className="text-[13px] font-semibold text-[--k-text]">Export</span>
+            <span className="text-lg font-semibold text-[--k-text]">Export</span>
           </div>
           <div className="space-y-4 p-4">
             {/* Export All */}

@@ -289,13 +289,13 @@ export default function Stocks() {
             <img
               src={getFullImageUrl(row.product.imageUrl)}
               alt=""
-              className="h-[7rem] w-[7rem] rounded-lg object-cover bg-[--k-surface-2] flex-shrink-0"
+              className="h-[5rem] w-[5rem] rounded-lg object-cover bg-[--k-surface-2] flex-shrink-0"
               onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_PRODUCT_IMAGE; }}
             />
             <div className="flex-1 min-w-0">
               <Link
                 to={`/products/${row.product.id}`}
-                className="text-[18px] font-medium text-[--k-primary] hover:text-indigo-700"
+                className="text-[16px] font-medium text-[--k-primary] hover:text-indigo-700"
               >
                 {row.product.description || row.product.reference}
               </Link>
@@ -434,7 +434,7 @@ export default function Stocks() {
               onChange={(val) => setSelectedSite(val)}
               options={storageSites.map((site) => ({ value: site.id, label: site.name }))}
               placeholder="Tous sites"
-              className="min-w-[130px] sm:w-80"
+              className="min-w-[140px] sm:w-[352px]"
             />
             <SearchSelect
               value={selectedAssemblyType}
@@ -444,14 +444,14 @@ export default function Stocks() {
               }}
               options={assemblyTypesData?.filter((at) => at && at.id && at.name).map((at) => ({ value: at.id, label: at.name })) || []}
               placeholder="Type borne"
-              className="min-w-[130px] sm:w-80"
+              className="min-w-[140px] sm:w-[352px]"
             />
             <SearchSelect
               value={selectedAssembly}
               onChange={(val) => setSelectedAssembly(val)}
               options={filteredAssemblies?.filter((a) => a && a.id && a.name).map((a) => ({ value: a.id, label: a.name })) || []}
               placeholder="Borne"
-              className="min-w-[130px] sm:w-80"
+              className="min-w-[140px] sm:w-[352px]"
             />
           </div>
 
@@ -521,7 +521,7 @@ export default function Stocks() {
         ) : (
           <>
             <div className="flex items-baseline justify-between gap-3 border-b border-[--k-border] px-4 py-2.5">
-              <div className="text-[13px] font-semibold">Stock matriciel</div>
+              <div className="text-lg font-semibold text-[--k-text]">Stock matriciel</div>
               <div className="text-xs text-[--k-muted]">{filteredData.length} produits</div>
             </div>
             <div>
@@ -594,13 +594,13 @@ export default function Stocks() {
                           <img
                             src={getFullImageUrl(row.product.imageUrl)}
                             alt=""
-                            className="h-[7rem] w-[7rem] rounded-lg object-cover bg-[--k-surface-2] flex-shrink-0"
+                            className="h-[5rem] w-[5rem] rounded-lg object-cover bg-[--k-surface-2] flex-shrink-0"
                             onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_PRODUCT_IMAGE; }}
                           />
                           <div className="flex flex-col min-w-0">
                             <Link
                               to={`/products/${row.product.id}`}
-                              className="text-[18px] font-medium text-[--k-primary] hover:underline truncate max-w-[250px]"
+                              className="text-[16px] font-medium text-[--k-primary] hover:underline truncate max-w-[250px]"
                             >
                               {row.product.description || row.product.reference}
                             </Link>

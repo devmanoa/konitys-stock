@@ -17,7 +17,7 @@ export function FilterBar({ search, onSearch, placeholder = 'Rechercher…', rig
           value={search}
           onChange={(e) => onSearch(e.target.value)}
           placeholder={placeholder}
-          className="input-field pl-8"
+          className="input-field !pl-8"
         />
       </div>
       {right}

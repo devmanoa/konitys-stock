@@ -1,41 +1,42 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { MapPin, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { MapPin, CheckCircle, AlertCircle } from 'lucide-react';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import api from '../../services/api';
 import type { Supplier, ApiResponse } from '../../types';
 
-// Fonction de géocodage via Nominatim (OpenStreetMap)
-const geocodeAddress = async (address: string, postalCode: string, city: string, country: string): Promise<{ lat: number; lon: number } | null> => {
-  // Besoin d'au moins adresse + ville ou CP + ville pour une recherche fiable
-  if (!city && !postalCode) return null;
-  if (!address && !postalCode) return null;
-
-  const parts = [address, postalCode, city, country].filter(Boolean);
-  const query = parts.join(', ');
-
-  try {
-    const response = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`,
-      {
-        headers: {
-          'Accept-Language': 'fr',
-        },
-      }
-    );
-    const data = await response.json();
-    if (data && data.length > 0) {
-      return {
-        lat: parseFloat(data[0].lat),
-        lon: parseFloat(data[0].lon),
-      };
-    }
-    return null;
-  } catch (error) {
-    console.error('Erreur de géocodage:', error);
-    return null;
+// Charger le script Google Maps dynamiquement (une seule fois)
+let googleMapsLoaded = false;
+let googleMapsLoading = false;
+const loadGoogleMaps = (): Promise<void> => {
+  if (googleMapsLoaded) return Promise.resolve();
+  if (googleMapsLoading) {
+    return new Promise((resolve) => {
+      const check = setInterval(() => {
+        if (googleMapsLoaded) {
+          clearInterval(check);
+          resolve();
+        }
+      }, 100);
+    });
   }
+  googleMapsLoading = true;
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&libraries=places&language=fr`;
+    script.async = true;
+    script.onload = () => {
+      googleMapsLoaded = true;
+      googleMapsLoading = false;
+      resolve();
+    };
+    script.onerror = () => {
+      googleMapsLoading = false;
+      reject(new Error('Impossible de charger Google Maps'));
+    };
+    document.head.appendChild(script);
+  });
 };
 
 interface CreateSupplierInput {
@@ -66,6 +67,15 @@ const isMobilePhone = (phone: string): boolean => {
   return /^(?:(?:\+|00)33[\s.-]?[67]|0[67])/.test(cleanPhone);
 };
 
+// Extraire un composant d'adresse Google
+const getAddressComponent = (
+  components: google.maps.GeocoderAddressComponent[],
+  type: string
+): string => {
+  const component = components.find((c) => c.types.includes(type));
+  return component?.long_name || '';
+};
+
 export default function SupplierForm({ supplier, onSuccess, onCancel }: SupplierFormProps) {
   const queryClient = useQueryClient();
   const isEditing = !!supplier;
@@ -86,9 +96,9 @@ export default function SupplierForm({ supplier, onSuccess, onCancel }: Supplier
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isGeocoding, setIsGeocoding] = useState(false);
   const [geocodeStatus, setGeocodeStatus] = useState<'idle' | 'success' | 'error'>('idle');
-  const geocodeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const addressInputRef = useRef<HTMLInputElement>(null);
+  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
 
   useEffect(() => {
     if (supplier) {
@@ -106,48 +116,76 @@ export default function SupplierForm({ supplier, onSuccess, onCancel }: Supplier
         longitude: supplier.longitude ?? null,
         comment: supplier.comment || '',
       });
+      if (supplier.latitude && supplier.longitude) {
+        setGeocodeStatus('success');
+      }
     }
   }, [supplier]);
 
-  const createMutation = useMutation({
-    mutationFn: async (data: CreateSupplierInput) => {
-      const res = await api.post<ApiResponse<Supplier>>('/suppliers', data);
-      return res.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['suppliers'] });
-      onSuccess();
-    },
-    onError: (error: any) => {
-      if (error.response?.data?.details) {
-        const fieldErrors: Record<string, string> = {};
-        error.response.data.details.forEach((e: { field: string; message: string }) => {
-          fieldErrors[e.field] = e.message;
-        });
-        setErrors(fieldErrors);
-      }
-    },
-  });
+  // Initialiser Google Places Autocomplete
+  const initAutocomplete = useCallback(() => {
+    if (!addressInputRef.current || autocompleteRef.current) return;
 
-  const updateMutation = useMutation({
-    mutationFn: async (data: CreateSupplierInput) => {
-      const res = await api.put<ApiResponse<Supplier>>(`/suppliers/${supplier!.id}`, data);
-      return res.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['suppliers'] });
-      onSuccess();
-    },
-    onError: (error: any) => {
-      if (error.response?.data?.details) {
-        const fieldErrors: Record<string, string> = {};
-        error.response.data.details.forEach((e: { field: string; message: string }) => {
-          fieldErrors[e.field] = e.message;
-        });
-        setErrors(fieldErrors);
+    const autocomplete = new google.maps.places.Autocomplete(addressInputRef.current, {
+      types: ['address'],
+      fields: ['address_components', 'geometry', 'formatted_address'],
+    });
+
+    autocomplete.addListener('place_changed', () => {
+      const place = autocomplete.getPlace();
+
+      if (!place.address_components || !place.geometry?.location) {
+        setGeocodeStatus('error');
+        return;
       }
-    },
-  });
+
+      const components = place.address_components;
+
+      // Extraire les composants d'adresse
+      const streetNumber = getAddressComponent(components, 'street_number');
+      const route = getAddressComponent(components, 'route');
+      const postalCode = getAddressComponent(components, 'postal_code');
+      const city = getAddressComponent(components, 'locality') || getAddressComponent(components, 'administrative_area_level_2');
+      const country = getAddressComponent(components, 'country');
+
+      const streetAddress = [streetNumber, route].filter(Boolean).join(' ');
+
+      const lat = place.geometry.location.lat();
+      const lng = place.geometry.location.lng();
+
+      setFormData((prev) => ({
+        ...prev,
+        address: streetAddress || prev.address,
+        postalCode: postalCode || prev.postalCode,
+        city: city || prev.city,
+        country: country || prev.country,
+        latitude: lat,
+        longitude: lng,
+      }));
+
+      setGeocodeStatus('success');
+    });
+
+    autocompleteRef.current = autocomplete;
+  }, []);
+
+  // Charger Google Maps et initialiser l'autocomplete
+  useEffect(() => {
+    loadGoogleMaps()
+      .then(() => {
+        initAutocomplete();
+      })
+      .catch((err) => {
+        console.error('Erreur chargement Google Maps:', err);
+      });
+  }, [initAutocomplete]);
+
+  // Réinitialiser l'autocomplete si le ref change (ex: re-render)
+  useEffect(() => {
+    if (googleMapsLoaded && addressInputRef.current && !autocompleteRef.current) {
+      initAutocomplete();
+    }
+  }, [initAutocomplete]);
 
   const handleChange = (field: keyof CreateSupplierInput, value: string | number | null) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -171,59 +209,11 @@ export default function SupplierForm({ supplier, onSuccess, onCancel }: Supplier
       });
     }
 
-    // Reset geocode status when address fields change
+    // Reset geocode status when address fields change manually
     if (['address', 'postalCode', 'city', 'country'].includes(field)) {
       setGeocodeStatus('idle');
     }
   };
-
-  // Géocodage automatique quand l'adresse change (avec debounce)
-  useEffect(() => {
-    const { address, postalCode, city, country } = formData;
-
-    // Nettoyer le timeout précédent
-    if (geocodeTimeoutRef.current) {
-      clearTimeout(geocodeTimeoutRef.current);
-    }
-
-    // Vérifier si on a assez d'informations pour géocoder
-    const hasEnoughInfo = (address || postalCode) && city;
-    if (!hasEnoughInfo) {
-      return;
-    }
-
-    // Attendre 800ms après la dernière frappe avant de géocoder
-    geocodeTimeoutRef.current = setTimeout(async () => {
-      setIsGeocoding(true);
-      setGeocodeStatus('idle');
-
-      const result = await geocodeAddress(
-        address || '',
-        postalCode || '',
-        city || '',
-        country || 'France'
-      );
-
-      setIsGeocoding(false);
-
-      if (result) {
-        setFormData(prev => ({
-          ...prev,
-          latitude: result.lat,
-          longitude: result.lon,
-        }));
-        setGeocodeStatus('success');
-      } else {
-        setGeocodeStatus('error');
-      }
-    }, 800);
-
-    return () => {
-      if (geocodeTimeoutRef.current) {
-        clearTimeout(geocodeTimeoutRef.current);
-      }
-    };
-  }, [formData.address, formData.postalCode, formData.city, formData.country]);
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -279,6 +269,46 @@ export default function SupplierForm({ supplier, onSuccess, onCancel }: Supplier
       createMutation.mutate(data);
     }
   };
+
+  const createMutation = useMutation({
+    mutationFn: async (data: CreateSupplierInput) => {
+      const res = await api.post<ApiResponse<Supplier>>('/suppliers', data);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+      onSuccess();
+    },
+    onError: (error: any) => {
+      if (error.response?.data?.details) {
+        const fieldErrors: Record<string, string> = {};
+        error.response.data.details.forEach((e: { field: string; message: string }) => {
+          fieldErrors[e.field] = e.message;
+        });
+        setErrors(fieldErrors);
+      }
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async (data: CreateSupplierInput) => {
+      const res = await api.put<ApiResponse<Supplier>>(`/suppliers/${supplier!.id}`, data);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+      onSuccess();
+    },
+    onError: (error: any) => {
+      if (error.response?.data?.details) {
+        const fieldErrors: Record<string, string> = {};
+        error.response.data.details.forEach((e: { field: string; message: string }) => {
+          fieldErrors[e.field] = e.message;
+        });
+        setErrors(fieldErrors);
+      }
+    },
+  });
 
   const isLoading = createMutation.isPending || updateMutation.isPending;
 
@@ -356,7 +386,7 @@ export default function SupplierForm({ supplier, onSuccess, onCancel }: Supplier
         </div>
       </div>
 
-      {/* Adresse */}
+      {/* Adresse avec Google Places Autocomplete */}
       <div className="border-t border-[--k-border] pt-4">
         <h4 className="mb-3 text-[13px] font-medium text-[--k-text]">Adresse</h4>
 
@@ -365,10 +395,14 @@ export default function SupplierForm({ supplier, onSuccess, onCancel }: Supplier
             <label className="mb-1 block text-[13px] font-medium text-[--k-text]">
               Rue / Adresse
             </label>
-            <Input
+            <input
+              ref={addressInputRef}
+              type="text"
               value={formData.address || ''}
               onChange={(e) => handleChange('address', e.target.value)}
-              placeholder="123 rue de la Paix"
+              placeholder="Commencez à taper une adresse..."
+              className="input-field w-full"
+              style={{ padding: '0.5rem 0.75rem' }}
             />
           </div>
 
@@ -410,38 +444,29 @@ export default function SupplierForm({ supplier, onSuccess, onCancel }: Supplier
       </div>
 
       {/* Indicateur de géolocalisation */}
-      {(formData.address || formData.postalCode || formData.city) && (
+      {(geocodeStatus === 'success' && formData.latitude && formData.longitude) ? (
         <div className="flex items-center gap-2 text-[13px]">
-          {isGeocoding ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
-              <span className="text-[--k-muted]">Recherche des coordonnées GPS...</span>
-            </>
-          ) : geocodeStatus === 'success' && formData.latitude && formData.longitude ? (
-            <>
-              <CheckCircle className="h-4 w-4 text-green-500" />
-              <span className="text-green-600">
-                Coordonnées GPS trouvées
-              </span>
-              <a
-                href={`https://www.google.com/maps?q=${formData.latitude},${formData.longitude}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ml-1 text-[--k-primary] hover:underline"
-              >
-                <MapPin className="inline h-3.5 w-3.5" /> Voir sur la carte
-              </a>
-            </>
-          ) : geocodeStatus === 'error' ? (
-            <>
-              <AlertCircle className="h-4 w-4 text-yellow-500" />
-              <span className="text-yellow-600">
-                Adresse non trouvée - vérifiez les informations
-              </span>
-            </>
-          ) : null}
+          <CheckCircle className="h-4 w-4 text-green-500" />
+          <span className="text-green-600">
+            Coordonnées GPS trouvées
+          </span>
+          <a
+            href={`https://www.google.com/maps?q=${formData.latitude},${formData.longitude}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="ml-1 text-[--k-primary] hover:underline"
+          >
+            <MapPin className="inline h-3.5 w-3.5" /> Voir sur la carte
+          </a>
         </div>
-      )}
+      ) : geocodeStatus === 'error' ? (
+        <div className="flex items-center gap-2 text-[13px]">
+          <AlertCircle className="h-4 w-4 text-yellow-500" />
+          <span className="text-yellow-600">
+            Adresse non trouvée - sélectionnez une suggestion
+          </span>
+        </div>
+      ) : null}
 
       <div>
         <label className="mb-1 block text-[13px] font-medium text-[--k-text]">

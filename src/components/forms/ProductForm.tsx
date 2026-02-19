@@ -5,7 +5,7 @@ import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
 import api from '../../services/api';
-import type { Product, CreateProductInput, SupplyRisk, ApiResponse, Assembly, AssemblyType, PaginatedResponse } from '../../types';
+import type { Product, CreateProductInput, SupplyRisk, ApiResponse, Assembly, AssemblyType, PartCategory, PaginatedResponse } from '../../types';
 
 // Remove /api suffix for static files URL
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/api$/, '');
@@ -25,11 +25,13 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
     description: '',
     qtyPerUnit: 1,
     supplyRisk: undefined,
+    minStock: null,
     location: '',
     assemblyId: '',
     assemblyTypeId: '',
     comment: '',
     imageUrl: '',
+    partCategoryIds: [],
   });
 
   // Fetch assembly types for filter
@@ -48,6 +50,16 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
       const res = await api.get<PaginatedResponse<Assembly>>('/assemblies?limit=100');
       return res.data?.data || [];
     },
+  });
+
+  // Fetch part categories for selected assembly type
+  const { data: partCategoriesData } = useQuery({
+    queryKey: ['part-categories', formData.assemblyTypeId],
+    queryFn: async () => {
+      const res = await api.get<ApiResponse<PartCategory[]>>(`/assembly-types/${formData.assemblyTypeId}/part-categories`);
+      return res.data?.data || [];
+    },
+    enabled: !!formData.assemblyTypeId,
   });
 
   // Filter assemblies by selected type
@@ -70,11 +82,13 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
         description: product.description || '',
         qtyPerUnit: product.qtyPerUnit,
         supplyRisk: product.supplyRisk,
+        minStock: product.minStock ?? null,
         location: product.location || '',
         assemblyId: product.assemblyId || '',
         assemblyTypeId: product.assemblyTypeId || '',
         comment: product.comment || '',
         imageUrl: product.imageUrl || '',
+        partCategoryIds: product.partCategories?.map(pc => pc.partCategoryId) || [],
       });
     }
   }, [product]);
@@ -157,8 +171,10 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
       ...formData,
       qtyPerUnit: formData.qtyPerUnit || 1,
       supplyRisk: formData.supplyRisk || undefined,
+      minStock: formData.minStock != null && formData.minStock >= 0 ? formData.minStock : null,
       assemblyId: formData.assemblyId || undefined,
       assemblyTypeId: formData.assemblyTypeId || undefined,
+      partCategoryIds: formData.partCategoryIds?.length ? formData.partCategoryIds : undefined,
     };
 
     if (isEditing) {
@@ -284,6 +300,8 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
             value={formData.assemblyTypeId || ''}
             onChange={(e) => {
               handleChange('assemblyTypeId', e.target.value || undefined);
+              // Reset part categories when type changes
+              setFormData(prev => ({ ...prev, partCategoryIds: [] }));
               // Reset assembly if changing type filter
               if (e.target.value && formData.assemblyId) {
                 const assembly = assembliesData?.find(a => a.id === formData.assemblyId);
@@ -350,6 +368,59 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
           />
         </div>
       </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="mb-1 block text-[13px] font-medium text-[--k-text]">
+            Seuil critique
+          </label>
+          <Input
+            type="number"
+            min={0}
+            value={formData.minStock != null ? formData.minStock : ''}
+            onChange={(e) => handleChange('minStock', e.target.value !== '' ? parseInt(e.target.value) : null)}
+            placeholder="Pas de seuil"
+          />
+          <p className="mt-1 text-xs text-[--k-muted]">
+            Alerte si stock total en dessous de ce seuil
+          </p>
+        </div>
+      </div>
+
+      {/* Catégories de pièces */}
+      {formData.assemblyTypeId && partCategoriesData && partCategoriesData.length > 0 && (
+        <div>
+          <label className="mb-1 block text-[13px] font-medium text-[--k-text]">
+            Catégories de pièces
+          </label>
+          <div className="flex flex-wrap gap-2 border border-[--k-border] rounded-lg p-3">
+            {partCategoriesData.map((cat) => {
+              const isSelected = formData.partCategoryIds?.includes(cat.id) || false;
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => {
+                    setFormData(prev => ({
+                      ...prev,
+                      partCategoryIds: isSelected
+                        ? (prev.partCategoryIds || []).filter(id => id !== cat.id)
+                        : [...(prev.partCategoryIds || []), cat.id],
+                    }));
+                  }}
+                  className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium transition-colors ${
+                    isSelected
+                      ? 'bg-[--k-primary] text-white'
+                      : 'border border-[--k-border] bg-[--k-surface] text-[--k-text] hover:bg-[--k-surface-2]'
+                  }`}
+                >
+                  {cat.name}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Image Upload */}
       <div>

@@ -248,7 +248,7 @@ export default function Suppliers() {
       <div className="hidden lg:block rounded-2xl border border-[--k-border] bg-white shadow-sm shadow-black/[0.03]">
         {/* Table header bar */}
         <div className="flex items-baseline justify-between gap-3 border-b border-[--k-border] px-4 py-2.5">
-          <div className="text-[13px] font-semibold">Fournisseurs</div>
+          <div className="text-lg font-semibold text-[--k-text]">Fournisseurs</div>
           <div className="text-xs text-[--k-muted]">{(data?.data || []).length || 0} éléments</div>
         </div>
 

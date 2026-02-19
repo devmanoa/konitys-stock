@@ -5,6 +5,16 @@ import { Search, X, Loader2 } from 'lucide-react'
 import api from '../../services/api'
 import type { Product, PaginatedResponse } from '../../types'
 
+const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/api$/, '')
+const DEFAULT_PRODUCT_IMAGE = '/default-product.svg'
+
+const getFullImageUrl = (url: string | null | undefined): string => {
+  if (!url) return DEFAULT_PRODUCT_IMAGE
+  if (url.startsWith('http://') || url.startsWith('https://')) return url
+  if (url.startsWith('/uploads')) return `${API_BASE_URL}${url}`
+  return url
+}
+
 interface ProductSearchProps {
   onChange: (productId: string, product: Product | null) => void
   error?: string
@@ -107,13 +117,23 @@ export default function ProductSearch({
             className={`flex items-center justify-between rounded-lg border bg-[--k-surface] px-3 py-2 ${
               error ? 'border-[--k-danger]' : 'border-[--k-border]'
             }`}
-            title={`${selectedProduct.reference}${selectedProduct.description ? ` - ${selectedProduct.description}` : ''}`}
+            title={`${selectedProduct.description || selectedProduct.reference}${selectedProduct.description ? ` (${selectedProduct.reference})` : ''}`}
           >
-            <div className="flex-1 min-w-0 truncate">
-              <span className="font-medium text-[13px] text-[--k-text]">{selectedProduct.reference}</span>
-              {selectedProduct.description && (
-                <span className="ml-2 text-[13px] text-[--k-muted]">- {selectedProduct.description}</span>
-              )}
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <img
+                src={getFullImageUrl(selectedProduct.imageUrl)}
+                alt=""
+                className="h-8 w-8 rounded object-cover bg-[--k-surface-2] flex-shrink-0"
+                onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_PRODUCT_IMAGE }}
+              />
+              <div className="truncate">
+                <span className="font-medium text-[13px] text-[--k-text]">
+                  {selectedProduct.description || selectedProduct.reference}
+                </span>
+                {selectedProduct.description && (
+                  <span className="ml-2 text-[13px] text-[--k-muted]">({selectedProduct.reference})</span>
+                )}
+              </div>
             </div>
             {!disabled && (
               <button
@@ -136,7 +156,7 @@ export default function ProductSearch({
               onFocus={handleInputFocus}
               placeholder="Rechercher un produit..."
               disabled={disabled}
-              className={`input-field pl-10 pr-10 ${
+              className={`input-field !pl-10 pr-10 ${
                 error ? 'border-[--k-danger]' : ''
               } ${disabled ? 'bg-[--k-surface-2] cursor-not-allowed' : ''}`}
             />
@@ -174,16 +194,24 @@ export default function ProductSearch({
                       <button
                         type="button"
                         onClick={() => handleSelect(product)}
-                        className="w-full px-4 py-2 text-left hover:bg-[--k-surface-2] transition"
+                        className="flex w-full items-center gap-3 px-4 py-2 text-left hover:bg-[--k-surface-2] transition"
                       >
-                        <span className="font-medium text-[13px] text-[--k-text]">
-                          {product.reference}
-                        </span>
-                        {product.description && (
-                          <span className="ml-2 text-[13px] text-[--k-muted]">
-                            - {product.description}
+                        <img
+                          src={getFullImageUrl(product.imageUrl)}
+                          alt=""
+                          className="h-8 w-8 rounded object-cover bg-[--k-surface-2] flex-shrink-0"
+                          onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_PRODUCT_IMAGE }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <span className="font-medium text-[13px] text-[--k-text] block truncate">
+                            {product.description || product.reference}
                           </span>
-                        )}
+                          {product.description && (
+                            <span className="text-[11px] text-[--k-muted]">
+                              {product.reference}
+                            </span>
+                          )}
+                        </div>
                       </button>
                     </li>
                   ))}

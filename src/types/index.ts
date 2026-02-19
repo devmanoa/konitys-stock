@@ -4,14 +4,32 @@ export type MovementType = 'IN' | 'OUT' | 'TRANSFER';
 export type ProductCondition = 'NEW' | 'USED';
 export type OrderStatus = 'PENDING' | 'COMPLETED' | 'CANCELLED';
 export type SiteType = 'STORAGE' | 'EXIT';
-export type PackType = 'IN' | 'OUT';
 
 // Base interfaces
+export interface PartCategory {
+  id: string;
+  assemblyTypeId: string;
+  name: string;
+  description?: string;
+  createdAt: string;
+  _count?: {
+    products: number;
+  };
+}
+
+export interface ProductPartCategory {
+  id: string;
+  productId: string;
+  partCategoryId: string;
+  partCategory: PartCategory;
+}
+
 export interface AssemblyType {
   id: string;
   name: string;
   description?: string;
   createdAt: string;
+  partCategories?: PartCategory[];
   _count?: {
     assemblies: number;
   };
@@ -105,6 +123,7 @@ export interface Product {
   description?: string;
   qtyPerUnit: number;
   supplyRisk?: SupplyRisk;
+  minStock?: number | null;
   location?: string;
   assemblyId?: string;
   assembly?: Assembly;
@@ -117,6 +136,7 @@ export interface Product {
   productSuppliers?: ProductSupplier[];
   stocks?: Stock[];
   movements?: StockMovement[];
+  partCategories?: ProductPartCategory[];
 }
 
 export interface StockMovement {
@@ -210,6 +230,7 @@ export interface LowStockAlert {
   assembly?: string;
   qtyPerUnit: number;
   supplyRisk?: SupplyRisk;
+  minStock?: number | null;
   totalNew: number;
   totalUsed: number;
   total: number;
@@ -254,11 +275,13 @@ export interface CreateProductInput {
   description?: string;
   qtyPerUnit?: number;
   supplyRisk?: SupplyRisk;
+  minStock?: number | null;
   location?: string;
   assemblyId?: string;
   assemblyTypeId?: string;
   comment?: string;
   imageUrl?: string;
+  partCategoryIds?: string[];
 }
 
 export interface CreateMovementInput {
@@ -302,14 +325,31 @@ export interface PackItem {
     id: string;
     reference: string;
     description?: string;
+    imageUrl?: string;
   };
   quantity: number;
+}
+
+export interface ProductComment {
+  id: string;
+  productId: string;
+  content: string;
+  authorId: string;
+  authorUsername: string;
+  authorName: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface KnownUser {
+  authorId: string;
+  authorUsername: string;
+  authorName: string;
 }
 
 export interface Pack {
   id: string;
   name: string;
-  type: PackType;
   description?: string;
   createdAt: string;
   updatedAt: string;
@@ -321,7 +361,6 @@ export interface Pack {
 
 export interface CreatePackInput {
   name: string;
-  type: PackType;
   description?: string;
   items: { productId: string; quantity: number }[];
 }

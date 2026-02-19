@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Edit2, Trash2, PackageOpen, ArrowDownCircle, ArrowUpCircle, Search, Package } from 'lucide-react';
+import { Plus, Edit2, Trash2, PackageOpen, Search, Package } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import Input from '../components/ui/Input';
@@ -8,7 +8,7 @@ import { PageHeader } from '../components/PageHeader';
 import { useToast } from '../components/ui/Toast';
 import ProductSearch from '../components/ui/ProductSearch';
 import api from '../services/api';
-import type { Pack, PackType, Product, ApiResponse } from '../types';
+import type { Pack, Product, ApiResponse } from '../types';
 
 export default function Packs() {
   const queryClient = useQueryClient();
@@ -18,9 +18,8 @@ export default function Packs() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedPack, setSelectedPack] = useState<Pack | undefined>();
   const [packName, setPackName] = useState('');
-  const [packType, setPackType] = useState<PackType>('OUT');
   const [packDescription, setPackDescription] = useState('');
-  const [packItems, setPackItems] = useState<{ key: string; productId: string; product: { id: string; reference: string; description?: string } | null; quantity: number }[]>([]);
+  const [packItems, setPackItems] = useState<{ key: string; productId: string; product: { id: string; reference: string; description?: string; imageUrl?: string } | null; quantity: number }[]>([]);
   const [deleteConfirm, setDeleteConfirm] = useState<Pack | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -35,7 +34,7 @@ export default function Packs() {
 
   // Mutations
   const createMutation = useMutation({
-    mutationFn: async (data: { name: string; type: PackType; description?: string; items: { productId: string; quantity: number }[] }) => {
+    mutationFn: async (data: { name: string; description?: string; items: { productId: string; quantity: number }[] }) => {
       await api.post('/packs', data);
     },
     onSuccess: () => {
@@ -49,7 +48,7 @@ export default function Packs() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: { name?: string; type?: PackType; description?: string; items?: { productId: string; quantity: number }[] } }) => {
+    mutationFn: async ({ id, data }: { id: string; data: { name?: string; description?: string; items?: { productId: string; quantity: number }[] } }) => {
       await api.put(`/packs/${id}`, data);
     },
     onSuccess: () => {
@@ -80,7 +79,6 @@ export default function Packs() {
   const handleOpenModal = (pack?: Pack) => {
     setSelectedPack(pack);
     setPackName(pack?.name || '');
-    setPackType(pack?.type || 'OUT');
     setPackDescription(pack?.description || '');
     setPackItems(pack?.items?.map((item, idx) => ({
       key: `existing-${item.id}-${idx}`,
@@ -95,7 +93,6 @@ export default function Packs() {
     setIsModalOpen(false);
     setSelectedPack(undefined);
     setPackName('');
-    setPackType('OUT');
     setPackDescription('');
     setPackItems([]);
   };
@@ -114,7 +111,7 @@ export default function Packs() {
         ? {
             ...item,
             productId,
-            product: product ? { id: product.id, reference: product.reference, description: product.description } : null
+            product: product ? { id: product.id, reference: product.reference, description: product.description, imageUrl: product.imageUrl } : null
           }
         : item
     ));
@@ -135,7 +132,6 @@ export default function Packs() {
 
     const data = {
       name: packName,
-      type: packType,
       description: packDescription || undefined,
       items: validItems.map(item => ({ productId: item.productId, quantity: item.quantity })),
     };
@@ -180,8 +176,8 @@ export default function Packs() {
       {/* Packs List */}
       <div className="rounded-2xl border border-[--k-border] bg-white shadow-sm shadow-black/[0.03] overflow-hidden">
         <div className="flex items-baseline justify-between gap-3 border-b border-[--k-border] px-4 py-2.5">
-          <div className="flex items-center gap-2 text-[13px] font-semibold">
-            <PackageOpen className="h-4 w-4" />
+          <div className="flex items-center gap-2 text-lg font-semibold text-[--k-text]">
+            <PackageOpen className="h-5 w-5" />
             Liste des packs
           </div>
           <div className="text-xs text-[--k-muted]">{filteredPacks.length} pack{filteredPacks.length > 1 ? 's' : ''}</div>
@@ -215,26 +211,11 @@ export default function Packs() {
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
-                        <div className={`rounded-lg p-2 ${
-                          pack.type === 'IN'
-                            ? 'bg-green-100 text-green-600'
-                            : 'bg-orange-100 text-orange-600'
-                        }`}>
+                        <div className="rounded-lg p-2 bg-[--k-primary-2] text-[--k-primary]">
                           <Package className="h-5 w-5" />
                         </div>
                         <div>
                           <h3 className="font-semibold text-[--k-text]">{pack.name}</h3>
-                          <span className={`inline-flex items-center gap-1 text-xs font-medium ${
-                            pack.type === 'IN'
-                              ? 'text-green-600'
-                              : 'text-orange-600'
-                          }`}>
-                            {pack.type === 'IN' ? (
-                              <><ArrowDownCircle className="h-3 w-3" /> Entrée</>
-                            ) : (
-                              <><ArrowUpCircle className="h-3 w-3" /> Sortie</>
-                            )}
-                          </span>
                         </div>
                       </div>
                       <div className="flex gap-1">
@@ -275,7 +256,6 @@ export default function Packs() {
                   <thead>
                     <tr className="bg-[--k-surface-2]/50 text-[--k-muted]">
                       <th className="px-4 py-1.5 text-left text-xs font-medium">Nom</th>
-                      <th className="px-4 py-1.5 text-left text-xs font-medium">Type</th>
                       <th className="px-4 py-1.5 text-left text-xs font-medium">Description</th>
                       <th className="px-4 py-1.5 text-center text-xs font-medium">Produits</th>
                       <th className="px-4 py-1.5 text-right text-xs font-medium">Actions</th>
@@ -288,19 +268,6 @@ export default function Packs() {
                           <div className="font-medium text-[--k-text]">
                             {pack.name}
                           </div>
-                        </td>
-                        <td className="px-4 py-1.5">
-                          <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
-                            pack.type === 'IN'
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-orange-100 text-orange-800'
-                          }`}>
-                            {pack.type === 'IN' ? (
-                              <><ArrowDownCircle className="h-3.5 w-3.5" /> Entrée</>
-                            ) : (
-                              <><ArrowUpCircle className="h-3.5 w-3.5" /> Sortie</>
-                            )}
-                          </span>
                         </td>
                         <td className="px-4 py-1.5 text-[--k-muted] max-w-xs truncate">
                           {pack.description || '-'}
@@ -360,42 +327,6 @@ export default function Packs() {
             onChange={(e) => setPackName(e.target.value)}
             placeholder="ex: Tête Spherik, Kit Écran"
           />
-
-          <div className="space-y-1">
-            <label className="block text-[13px] font-medium text-[--k-text]">
-              Type
-            </label>
-            <div className="flex gap-4">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="packType"
-                  value="OUT"
-                  checked={packType === 'OUT'}
-                  onChange={() => setPackType('OUT')}
-                  className="h-4 w-4 text-[--k-primary] focus:ring-[--k-primary] border-[--k-border]"
-                />
-                <span className="inline-flex items-center gap-1 text-sm text-[--k-text]">
-                  <ArrowUpCircle className="h-4 w-4 text-orange-500" />
-                  Sortie
-                </span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="packType"
-                  value="IN"
-                  checked={packType === 'IN'}
-                  onChange={() => setPackType('IN')}
-                  className="h-4 w-4 text-[--k-primary] focus:ring-[--k-primary] border-[--k-border]"
-                />
-                <span className="inline-flex items-center gap-1 text-sm text-[--k-text]">
-                  <ArrowDownCircle className="h-4 w-4 text-green-500" />
-                  Entrée
-                </span>
-              </label>
-            </div>
-          </div>
 
           <div className="space-y-1">
             <label className="block text-[13px] font-medium text-[--k-text]">

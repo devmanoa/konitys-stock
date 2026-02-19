@@ -22,7 +22,9 @@ import Input from '../components/ui/Input';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import Modal from '../components/ui/Modal';
 import ReceiveOrderForm from '../components/forms/ReceiveOrderForm';
+import ReceiveAllForm from '../components/forms/ReceiveAllForm';
 import { useToast } from '../components/ui/Toast';
+import Comments from '../components/ProductComments';
 import api from '../services/api';
 import type { Order, OrderItem, ApiResponse } from '../types';
 
@@ -42,6 +44,7 @@ export default function OrderDetail() {
   const queryClient = useQueryClient();
   const toast = useToast();
   const [receiveItem, setReceiveItem] = useState<{ orderId: string; itemId: string } | null>(null);
+  const [isReceiveAllOpen, setIsReceiveAllOpen] = useState(false);
   const [isSaveTemplateOpen, setIsSaveTemplateOpen] = useState(false);
   const [templateName, setTemplateName] = useState('');
 
@@ -145,6 +148,7 @@ export default function OrderDetail() {
   const totalQty = data.items?.reduce((s, i) => s + i.quantity, 0) || 0;
   const receivedQty = data.items?.reduce((s, i) => s + (i.receivedQty || 0), 0) || 0;
   const estimatedTotal = data.items?.reduce((s, i) => s + i.quantity * (i.unitPrice || 0), 0) || 0;
+  const hasPendingItems = data.status === 'PENDING' && data.items?.some((i) => i.receivedQty === null || i.receivedQty === undefined);
 
   return (
     <div className="space-y-6">
@@ -166,18 +170,30 @@ export default function OrderDetail() {
             )}
           </div>
         </div>
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => {
-            setTemplateName(data.title || `Modèle - ${data.supplier?.name || ''}`);
-            setIsSaveTemplateOpen(true);
-          }}
-        >
-          <BookmarkPlus className="mr-2 h-4 w-4" />
-          <span className="hidden sm:inline">Sauvegarder comme modèle</span>
-          <span className="sm:hidden">Modèle</span>
-        </Button>
+        <div className="flex items-center gap-2">
+          {hasPendingItems && (
+            <Button
+              size="sm"
+              onClick={() => setIsReceiveAllOpen(true)}
+            >
+              <PackageCheck className="mr-2 h-4 w-4" />
+              <span className="hidden sm:inline">Tout réceptionner</span>
+              <span className="sm:hidden">Réceptionner</span>
+            </Button>
+          )}
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              setTemplateName(data.title || `Modèle - ${data.supplier?.name || ''}`);
+              setIsSaveTemplateOpen(true);
+            }}
+          >
+            <BookmarkPlus className="mr-2 h-4 w-4" />
+            <span className="hidden sm:inline">Sauvegarder comme modèle</span>
+            <span className="sm:hidden">Modèle</span>
+          </Button>
+        </div>
       </div>
 
       {/* Main grid */}
@@ -517,6 +533,9 @@ export default function OrderDetail() {
         </CardContent>
       </Card>
 
+      {/* Commentaires */}
+      <Comments entityType="orders" entityId={id!} />
+
       {/* Receive item modal */}
       {receiveItem && (
         <Modal
@@ -537,6 +556,24 @@ export default function OrderDetail() {
           />
         </Modal>
       )}
+
+      {/* Receive all modal */}
+      <Modal
+        isOpen={isReceiveAllOpen}
+        onClose={() => setIsReceiveAllOpen(false)}
+        title="Réception globale"
+      >
+        <ReceiveAllForm
+          order={data}
+          onSuccess={() => {
+            setIsReceiveAllOpen(false);
+            queryClient.invalidateQueries({ queryKey: ['order', id] });
+            queryClient.invalidateQueries({ queryKey: ['orders'] });
+            toast.success('Tous les articles ont été réceptionnés');
+          }}
+          onCancel={() => setIsReceiveAllOpen(false)}
+        />
+      </Modal>
 
       {/* Save as template modal */}
       <Modal

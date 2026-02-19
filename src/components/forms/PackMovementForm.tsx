@@ -8,11 +8,20 @@ import Select from '../ui/Select'
 import api from '../../services/api'
 import type { Pack, Site, ApiResponse } from '../../types'
 
+const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/api$/, '')
+const getFullImageUrl = (url: string | null | undefined): string => {
+  if (!url) return '/default-product.svg'
+  if (url.startsWith('http://') || url.startsWith('https://')) return url
+  if (url.startsWith('/uploads')) return `${API_BASE_URL}${url}`
+  return url
+}
+
 interface PackItem {
   id: string
   productId: string
   productReference: string
   productDescription?: string
+  productImageUrl?: string
   quantity: number
   condition: 'NEW' | 'USED'
 }
@@ -59,12 +68,11 @@ export default function PackMovementForm({ onSuccess, onCancel }: PackMovementFo
   const packQuantity = watch('packQuantity')
 
   const { data: packs } = useQuery({
-    queryKey: ['packs', movementType],
+    queryKey: ['packs'],
     queryFn: async () => {
-      const res = await api.get<ApiResponse<Pack[]>>(`/packs?type=${movementType}`)
+      const res = await api.get<ApiResponse<Pack[]>>('/packs')
       return res.data?.data
     },
-    enabled: !!movementType,
   })
 
   const { data: sites } = useQuery({
@@ -86,6 +94,7 @@ export default function PackMovementForm({ onSuccess, onCancel }: PackMovementFo
           productId: item.productId,
           productReference: item.product.reference,
           productDescription: item.product.description,
+          productImageUrl: item.product.imageUrl,
           quantity: item.quantity * (packQuantity || 1),
           condition: 'NEW',
         })
@@ -215,16 +224,27 @@ export default function PackMovementForm({ onSuccess, onCancel }: PackMovementFo
                   <input type="hidden" {...register(`items.${index}.productId`)} />
                   <input type="hidden" {...register(`items.${index}.productReference`)} />
                   <input type="hidden" {...register(`items.${index}.productDescription`)} />
+                  <input type="hidden" {...register(`items.${index}.productImageUrl`)} />
 
                   <div className="flex-1 min-w-[200px]">
                     <label className="block text-[11px] font-medium text-[--k-muted] mb-1">Produit</label>
-                    <div className="text-[13px] bg-[--k-surface-2] px-3 py-2 rounded-lg text-[--k-text]">
-                      {watch(`items.${index}.productReference`)}
-                      {watch(`items.${index}.productDescription`) && (
-                        <span className="block text-[11px] text-[--k-muted] mt-1">
-                          {watch(`items.${index}.productDescription`)}
+                    <div className="flex items-center gap-3 bg-[--k-surface-2] px-3 py-2 rounded-lg">
+                      <img
+                        src={watch(`items.${index}.productImageUrl`) ? getFullImageUrl(watch(`items.${index}.productImageUrl`)) : '/default-product.svg'}
+                        alt={watch(`items.${index}.productReference`)}
+                        className="h-10 w-10 rounded-lg object-cover bg-white flex-shrink-0"
+                        onError={(e) => { (e.target as HTMLImageElement).src = '/default-product.svg' }}
+                      />
+                      <div>
+                        {watch(`items.${index}.productDescription`) && (
+                          <span className="block text-[13px] font-medium text-[--k-text]">
+                            {watch(`items.${index}.productDescription`)}
+                          </span>
+                        )}
+                        <span className="block text-[11px] text-[--k-muted]">
+                          {watch(`items.${index}.productReference`)}
                         </span>
-                      )}
+                      </div>
                     </div>
                   </div>
 

@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Package, Truck, Warehouse,
   Layers, ArrowLeftRight, ShoppingCart, Upload,
   Settings, ChevronsLeft, ChevronsRight, HelpCircle,
-  Boxes,
+  Boxes, FileText,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -40,6 +40,7 @@ const SECTIONS: SidebarSection[] = [
     label: 'Commandes',
     items: [
       { label: 'Commandes', icon: ShoppingCart, to: '/orders' },
+      { label: 'Modèles', icon: FileText, to: '/order-templates' },
       { label: 'Packs', icon: Boxes, to: '/packs' },
       { label: 'Import / Export', icon: Upload, to: '/import-export' },
     ],

@@ -132,7 +132,7 @@ export default function Dashboard() {
         <KpiCard title="Stock total" value={formatNumber(stats?.totalItems || 0)} icon={Building2} colorIndex={2} />
         <KpiCard title="Unités possibles" value={formatNumber(stats?.totalPossibleUnits || 0)} icon={TrendingUp} colorIndex={3} />
         <KpiCard title="Valeur stock" value={formatCurrency(stats?.totalStockValue || 0)} icon={Euro} colorIndex={5} />
-        <KpiCard title="Alertes" value={stats?.highRiskProducts || 0} icon={AlertTriangle} colorIndex={1} />
+        <KpiCard title="Alertes" value={lowStockAlerts?.length || 0} icon={AlertTriangle} colorIndex={1} />
       </div>
 
       {/* Content: Commandes + Alertes */}
@@ -143,7 +143,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between border-b border-[--k-border] bg-gradient-to-r from-blue-50/60 to-indigo-50/30 px-4 py-2.5">
             <div className="flex items-center gap-2">
               <ShoppingCart className="h-4 w-4 text-[--k-primary]" />
-              <span className="text-[13px] font-semibold text-[--k-text]">Commandes en cours</span>
+              <span className="text-lg font-semibold text-[--k-text]">Commandes en cours</span>
             </div>
             <button
               onClick={() => navigate('/orders')}
@@ -202,7 +202,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between border-b border-[--k-border] bg-gradient-to-r from-amber-50/50 to-orange-50/30 px-4 py-2.5 rounded-t-2xl">
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-amber-500" />
-              <span className="text-[13px] font-semibold text-[--k-text]">Alertes stock</span>
+              <span className="text-lg font-semibold text-[--k-text]">Alertes stock</span>
             </div>
             <span className="text-[11px] font-medium text-amber-600 bg-amber-100/60 rounded-full px-2 py-0.5">
               {lowStockAlerts?.length || 0}
@@ -211,11 +211,11 @@ export default function Dashboard() {
           <div className="divide-y divide-[--k-border]">
             {lowStockAlerts && lowStockAlerts.length > 0 ? (
               lowStockAlerts.slice(0, 5).map((alert) => {
-                const maxStock = Math.max(alert.total, 10)
-                const pct = Math.min(Math.round((alert.total / maxStock) * 100), 100)
+                const threshold = alert.minStock || 10
+                const pct = Math.min(Math.round((alert.total / threshold) * 100), 100)
                 const level = alert.supplyRisk === 'HIGH' ? 'critical' : 'low'
                 return (
-                  <div key={alert.id} className="px-4 py-2.5">
+                  <div key={alert.id} className="px-4 py-2.5 cursor-pointer hover:bg-[--k-surface-2]/30 transition-colors" onClick={() => navigate(`/products/${alert.id}`)}>
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-[12px] font-medium text-[--k-text] truncate">
                         {alert.reference}
@@ -224,7 +224,7 @@ export default function Dashboard() {
                         'rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums',
                         level === 'critical' ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600'
                       )}>
-                        {alert.total} ({alert.totalNew}N/{alert.totalUsed}O)
+                        {alert.total}{alert.minStock != null ? `/${alert.minStock}` : ''} ({alert.totalNew}N/{alert.totalUsed}O)
                       </span>
                     </div>
                     <div className="flex items-center justify-between gap-3">
@@ -258,7 +258,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between border-b border-[--k-border] bg-gradient-to-r from-indigo-50/50 to-blue-50/30 px-4 py-2.5 rounded-t-2xl">
             <div className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-[--k-primary]" />
-              <span className="text-[13px] font-semibold text-[--k-text]">Top produits</span>
+              <span className="text-lg font-semibold text-[--k-text]">Top produits</span>
             </div>
             <span className="text-[11px] text-[--k-muted]">Par volume de stock</span>
           </div>
@@ -305,7 +305,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between border-b border-[--k-border] bg-gradient-to-r from-emerald-50/40 to-teal-50/20 px-4 py-2.5">
             <div className="flex items-center gap-2">
               <Truck className="h-4 w-4 text-[--k-primary]" />
-              <span className="text-[13px] font-semibold text-[--k-text]">Derniers mouvements</span>
+              <span className="text-lg font-semibold text-[--k-text]">Derniers mouvements</span>
             </div>
             <button
               onClick={() => navigate('/movements')}

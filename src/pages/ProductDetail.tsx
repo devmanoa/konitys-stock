@@ -17,6 +17,7 @@ import {
   ZoomIn,
   Download,
   X,
+  AlertTriangle,
 } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
@@ -25,6 +26,7 @@ import Modal from '../components/ui/Modal';
 import ProductForm from '../components/forms/ProductForm';
 import ProductSupplierForm from '../components/forms/ProductSupplierForm';
 import MovementForm from '../components/forms/MovementForm';
+import Comments from '../components/ProductComments';
 import api from '../services/api';
 import type { Product, ApiResponse } from '../types';
 
@@ -207,6 +209,20 @@ export default function ProductDetail() {
                     <dd className="mt-1 text-[--k-text]">{data.assemblyType.name}</dd>
                   </div>
                 )}
+                {data.minStock != null && (
+                  <div>
+                    <dt className="text-[13px] font-medium text-[--k-muted]">Seuil critique</dt>
+                    <dd className="mt-1 flex items-center gap-2">
+                      <span className="text-[--k-text]">{data.minStock}</span>
+                      {stockInfo.total <= data.minStock && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
+                          <AlertTriangle className="h-3 w-3" />
+                          Stock bas
+                        </span>
+                      )}
+                    </dd>
+                  </div>
+                )}
                 {data.createdAt && (
                   <div>
                     <dt className="text-[13px] font-medium text-[--k-muted]">Produit créé le</dt>
@@ -216,6 +232,21 @@ export default function ProductDetail() {
                         month: '2-digit',
                         year: 'numeric',
                       })}
+                    </dd>
+                  </div>
+                )}
+                {data.partCategories && data.partCategories.length > 0 && (
+                  <div className="col-span-2">
+                    <dt className="text-[13px] font-medium text-[--k-muted]">Catégories de pièces</dt>
+                    <dd className="mt-1 flex flex-wrap gap-1.5">
+                      {data.partCategories.map((pc) => (
+                        <span
+                          key={pc.id}
+                          className="inline-flex items-center rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-800"
+                        >
+                          {pc.partCategory.name}
+                        </span>
+                      ))}
                     </dd>
                   </div>
                 )}
@@ -285,7 +316,14 @@ export default function ProductDetail() {
                 <tbody className="divide-y divide-[--k-border]">
                   {data.productSuppliers.map((ps) => (
                     <tr key={ps.id}>
-                      <td className="py-2 font-medium text-[--k-text]">{ps.supplier.name}</td>
+                      <td className="py-2 font-medium">
+                        <RouterLink
+                          to={`/suppliers/${ps.supplier.id}`}
+                          className="text-[--k-primary] hover:underline"
+                        >
+                          {ps.supplier.name}
+                        </RouterLink>
+                      </td>
                       <td className="py-2 text-[--k-muted]">{ps.supplierRef || '-'}</td>
                       <td className="py-2 text-[--k-muted]">
                         {ps.unitPrice ? `${Number(ps.unitPrice).toFixed(2)} \u20AC` : '-'}
@@ -463,6 +501,9 @@ export default function ProductDetail() {
         </CardContent>
       </Card>
 
+      {/* Commentaires */}
+      <Comments entityType="products" entityId={id!} />
+
       {/* Edit Modal */}
       <Modal
         isOpen={isEditModalOpen}
@@ -525,7 +566,7 @@ export default function ProductDetail() {
             <img
               src={getFullImageUrl(data.imageUrl)}
               alt={data.reference}
-              className="max-h-[85vh] max-w-[85vw] rounded-lg object-contain"
+              className="max-h-[85vh] max-w-[85vw] rounded-lg object-contain bg-white p-4"
             />
             <div className="absolute top-3 right-3 flex items-center gap-2">
               <a

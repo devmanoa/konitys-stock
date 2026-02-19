@@ -17,6 +17,8 @@ import Sites from './pages/Sites'
 import Packs from './pages/Packs'
 import ImportExport from './pages/ImportExport'
 import Settings from './pages/Settings'
+import OrderTemplates from './pages/OrderTemplates'
+import OrderTemplateDetail from './pages/OrderTemplateDetail'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -54,6 +56,8 @@ function App() {
                 <Route path="sites" element={<Sites />} />
                 <Route path="packs" element={<Packs />} />
                 <Route path="import-export" element={<ImportExport />} />
+                <Route path="order-templates" element={<OrderTemplates />} />
+                <Route path="order-templates/:id" element={<OrderTemplateDetail />} />
                 <Route path="settings" element={<Settings />} />
               </Route>
             </Routes>

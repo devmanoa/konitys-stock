@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link as RouterLink } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { Plus, Search, Edit2, Trash2, Eye, Link, X } from 'lucide-react';
 import Button from '../components/ui/Button';
@@ -214,8 +214,15 @@ export default function Products() {
         </div>
         <div>
           <span className="text-[--k-muted]">Fournisseur:</span>
-          <p className="text-[--k-text] truncate">
-            {product.productSuppliers?.[0]?.supplier.name || '-'}
+          <p className="truncate">
+            {product.productSuppliers?.[0]?.supplier ? (
+              <RouterLink
+                to={`/suppliers/${product.productSuppliers[0].supplier.id}`}
+                className="text-[--k-primary] hover:underline"
+              >
+                {product.productSuppliers[0].supplier.name}
+              </RouterLink>
+            ) : '-'}
           </p>
         </div>
       </div>
@@ -347,7 +354,7 @@ export default function Products() {
       <div className="hidden lg:block rounded-2xl border border-[--k-border] bg-white shadow-sm shadow-black/[0.03]">
         {/* Table header bar */}
         <div className="flex items-baseline justify-between gap-3 border-b border-[--k-border] px-4 py-2.5">
-          <div className="text-[13px] font-semibold">Produits</div>
+          <div className="text-lg font-semibold text-[--k-text]">Produits</div>
           <div className="text-xs text-[--k-muted]">{totalCount} {totalCount > 1 ? 'éléments' : 'élément'}</div>
         </div>
 
@@ -396,7 +403,7 @@ export default function Products() {
                   <tr key={product.id} className="border-t border-[--k-border] hover:bg-[--k-surface-2]/30 transition-colors">
                     <td className="px-4 py-1.5">
                       <div className="flex items-center gap-3">
-                        <div className="h-[7rem] w-[7rem] flex-shrink-0 overflow-hidden rounded-lg border border-[--k-border] bg-[--k-surface-2]">
+                        <div className="h-[5rem] w-[5rem] flex-shrink-0 overflow-hidden rounded-lg border border-[--k-border] bg-[--k-surface-2]">
                           <img
                             src={getFullImageUrl(product.imageUrl)}
                             alt={product.reference}
@@ -406,7 +413,7 @@ export default function Products() {
                         <div className="flex flex-col">
                           <button
                             onClick={() => navigate(`/products/${product.id}`)}
-                            className="text-[18px] font-medium text-[--k-primary] hover:text-indigo-700 hover:underline text-left"
+                            className="text-[16px] font-medium text-[--k-primary] hover:text-indigo-700 hover:underline text-left"
                           >
                             {product.description || product.reference}
                           </button>
@@ -429,9 +436,16 @@ export default function Products() {
                       </div>
                     </td>
                     <td className="whitespace-nowrap px-4 py-1.5">
-                      <span className="text-[--k-muted]">
-                        {product.productSuppliers?.[0]?.supplier.name || '-'}
-                      </span>
+                      {product.productSuppliers?.[0]?.supplier ? (
+                        <RouterLink
+                          to={`/suppliers/${product.productSuppliers[0].supplier.id}`}
+                          className="text-[--k-primary] hover:underline"
+                        >
+                          {product.productSuppliers[0].supplier.name}
+                        </RouterLink>
+                      ) : (
+                        <span className="text-[--k-muted]">-</span>
+                      )}
                     </td>
                     <td className="whitespace-nowrap px-4 py-1.5">
                       {getRiskBadge(product.supplyRisk)}

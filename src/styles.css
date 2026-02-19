@@ -88,6 +88,72 @@ select.input-field {
 .toast-enter { animation: toast-in 0.2s ease-out forwards; }
 .toast-exit { animation: toast-out 0.15s ease-in forwards; }
 
+/* Google Places Autocomplete dropdown above modals */
+.pac-container {
+  z-index: 10000 !important;
+}
+
+/* TipTap editor */
+.tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--k-muted);
+  opacity: 0.5;
+  pointer-events: none;
+  height: 0;
+}
+
+.tiptap {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.tiptap p { margin: 0; }
+.tiptap p + p { margin-top: 0.25em; }
+.tiptap strong { font-weight: 600; }
+.tiptap em { font-style: italic; }
+.tiptap s { text-decoration: line-through; }
+.tiptap code {
+  background: var(--k-surface-2);
+  border-radius: 3px;
+  padding: 1px 4px;
+  font-size: 0.85em;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+}
+.tiptap ul { list-style: disc; padding-left: 1.25em; margin: 0.25em 0; }
+.tiptap ol { list-style: decimal; padding-left: 1.25em; margin: 0.25em 0; }
+.tiptap li { margin: 1px 0; }
+
+.tiptap .mention,
+.comment-content .mention {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 4px;
+  background: #dbeafe;
+  padding: 0 4px;
+  font-size: 0.85em;
+  font-weight: 500;
+  color: #1d4ed8;
+  white-space: nowrap;
+}
+
+/* Comment rendered content */
+.comment-content p { margin: 0; }
+.comment-content p + p { margin-top: 0.25em; }
+.comment-content strong { font-weight: 600; }
+.comment-content em { font-style: italic; }
+.comment-content s { text-decoration: line-through; }
+.comment-content code {
+  background: var(--k-surface-2);
+  border-radius: 3px;
+  padding: 1px 4px;
+  font-size: 0.85em;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+}
+.comment-content ul { list-style: disc; padding-left: 1.25em; margin: 0.25em 0; }
+.comment-content ol { list-style: decimal; padding-left: 1.25em; margin: 0.25em 0; }
+.comment-content li { margin: 1px 0; }
+
 /* Scrollbar styling */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }

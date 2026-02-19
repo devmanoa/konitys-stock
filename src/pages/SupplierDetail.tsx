@@ -40,6 +40,7 @@ interface SupplierWithRelations extends Supplier {
       reference: string;
       description?: string;
       imageUrl?: string;
+      assemblyType?: { id: string; name: string };
     };
   })[];
   orders: Order[];
@@ -217,101 +218,108 @@ export default function SupplierDetail() {
             <CardTitle>Informations</CardTitle>
           </CardHeader>
           <CardContent>
-            <dl className="grid grid-cols-2 gap-4">
-              {data.name && (
-                <div>
-                  <dt className="text-[13px] font-medium text-[--k-muted]">Nom</dt>
-                  <dd className="mt-1 text-[--k-text]">{data.name}</dd>
-                </div>
-              )}
-              {data.contact && (
-                <div>
-                  <dt className="text-[13px] font-medium text-[--k-muted]">Contact</dt>
-                  <dd className="mt-1 text-[--k-text]">{data.contact}</dd>
-                </div>
-              )}
-              {data.email && (
-                <div>
-                  <dt className="text-[13px] font-medium text-[--k-muted]">Email</dt>
-                  <dd className="mt-1">
-                    <a
-                      href={`mailto:${data.email}`}
-                      className="flex items-center gap-1 text-[--k-primary] hover:underline"
-                    >
-                      <Mail className="h-4 w-4" />
-                      {data.email}
-                    </a>
-                  </dd>
-                </div>
-              )}
-              {data.phone && (
-                <div>
-                  <dt className="text-[13px] font-medium text-[--k-muted]">Téléphone</dt>
-                  <dd className="mt-1">
-                    <a
-                      href={`tel:${data.phone}`}
-                      className="flex items-center gap-1 text-[--k-primary] hover:underline"
-                    >
-                      <Phone className="h-4 w-4" />
-                      {data.phone}
-                    </a>
-                  </dd>
-                </div>
-              )}
-              {data.website && (
-                <div className="min-w-0">
-                  <dt className="text-[13px] font-medium text-[--k-muted]">Site web</dt>
-                  <dd className="mt-1">
-                    <a
-                      href={data.website.startsWith('http') ? data.website : `https://${data.website}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-[--k-primary] hover:underline min-w-0"
-                    >
-                      <Globe className="h-4 w-4 flex-shrink-0" />
-                      <span className="truncate">{data.website.replace(/^https?:\/\//, '')}</span>
-                      <ExternalLink className="h-3 w-3 flex-shrink-0" />
-                    </a>
-                  </dd>
-                </div>
-              )}
-              {(data.address || data.postalCode || data.city || data.country) && (
-                <div>
-                  <dt className="text-[13px] font-medium text-[--k-muted]">Adresse</dt>
-                  <dd className="mt-1">
-                    <div className="flex items-start gap-1 text-[--k-text]">
-                      <MapPin className="h-4 w-4 text-[--k-muted] mt-0.5 flex-shrink-0" />
-                      <div>
-                        {data.address && <div>{data.address}</div>}
-                        {(data.postalCode || data.city) && (
-                          <div>
-                            {data.postalCode} {data.city}
-                          </div>
-                        )}
-                        {data.country && <div>{data.country}</div>}
+            <div className="flex gap-6">
+              {/* Infos à gauche */}
+              <dl className="grid grid-cols-2 gap-4 flex-1 min-w-0">
+                {data.name && (
+                  <div>
+                    <dt className="text-[13px] font-medium text-[--k-muted]">Nom</dt>
+                    <dd className="mt-1 text-[--k-text]">{data.name}</dd>
+                  </div>
+                )}
+                {data.contact && (
+                  <div>
+                    <dt className="text-[13px] font-medium text-[--k-muted]">Contact</dt>
+                    <dd className="mt-1 text-[--k-text]">{data.contact}</dd>
+                  </div>
+                )}
+                {data.email && (
+                  <div>
+                    <dt className="text-[13px] font-medium text-[--k-muted]">Email</dt>
+                    <dd className="mt-1">
+                      <a
+                        href={`mailto:${data.email}`}
+                        className="flex items-center gap-1 text-[--k-primary] hover:underline"
+                      >
+                        <Mail className="h-4 w-4" />
+                        {data.email}
+                      </a>
+                    </dd>
+                  </div>
+                )}
+                {data.phone && (
+                  <div>
+                    <dt className="text-[13px] font-medium text-[--k-muted]">Téléphone</dt>
+                    <dd className="mt-1">
+                      <a
+                        href={`tel:${data.phone}`}
+                        className="flex items-center gap-1 text-[--k-primary] hover:underline"
+                      >
+                        <Phone className="h-4 w-4" />
+                        {data.phone}
+                      </a>
+                    </dd>
+                  </div>
+                )}
+                {data.website && (
+                  <div className="min-w-0">
+                    <dt className="text-[13px] font-medium text-[--k-muted]">Site web</dt>
+                    <dd className="mt-1">
+                      <a
+                        href={data.website.startsWith('http') ? data.website : `https://${data.website}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-[--k-primary] hover:underline min-w-0"
+                      >
+                        <Globe className="h-4 w-4 flex-shrink-0" />
+                        <span className="truncate">{data.website.replace(/^https?:\/\//, '')}</span>
+                        <ExternalLink className="h-3 w-3 flex-shrink-0" />
+                      </a>
+                    </dd>
+                  </div>
+                )}
+                {(data.address || data.postalCode || data.city || data.country) && (
+                  <div className="col-span-2">
+                    <dt className="text-[13px] font-medium text-[--k-muted]">Adresse</dt>
+                    <dd className="mt-1">
+                      <div className="flex items-center gap-1 text-[--k-text]">
+                        <MapPin className="h-4 w-4 text-[--k-muted] flex-shrink-0" />
+                        <span>
+                          {[data.address, data.postalCode, data.city, data.country].filter(Boolean).join(', ')}
+                        </span>
                       </div>
-                    </div>
-                  </dd>
+                    </dd>
+                  </div>
+                )}
+              </dl>
+
+              {/* Map à droite */}
+              {(data.latitude && data.longitude) ? (
+                <div className="w-[280px] flex-shrink-0 overflow-hidden rounded-lg border border-[--k-border]">
+                  <iframe
+                    title="Localisation fournisseur"
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0, minHeight: '200px' }}
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    src={`https://www.google.com/maps/embed/v1/place?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&q=${data.latitude},${data.longitude}&zoom=15`}
+                  />
                 </div>
-              )}
-              {(data.latitude !== null && data.latitude !== undefined) || (data.longitude !== null && data.longitude !== undefined) ? (
-                <div>
-                  <dt className="text-[13px] font-medium text-[--k-muted]">Coordonnées GPS</dt>
-                  <dd className="mt-1">
-                    <a
-                      href={`https://www.google.com/maps?q=${data.latitude},${data.longitude}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-[--k-primary] hover:underline"
-                    >
-                      <MapPin className="h-4 w-4" />
-                      {Number(data.latitude).toFixed(6)}, {Number(data.longitude).toFixed(6)}
-                      <ExternalLink className="h-3 w-3" />
-                    </a>
-                  </dd>
+              ) : (data.address || data.city) ? (
+                <div className="w-[280px] flex-shrink-0 overflow-hidden rounded-lg border border-[--k-border]">
+                  <iframe
+                    title="Localisation fournisseur"
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0, minHeight: '200px' }}
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    src={`https://www.google.com/maps/embed/v1/place?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&q=${encodeURIComponent([data.address, data.postalCode, data.city, data.country].filter(Boolean).join(', '))}`}
+                  />
                 </div>
               ) : null}
-            </dl>
+            </div>
           </CardContent>
         </Card>
 
@@ -513,6 +521,7 @@ export default function SupplierDetail() {
                   <tr className="border-b border-[--k-border] text-left text-xs font-medium uppercase text-[--k-muted]">
                     <th className="pb-2">Description</th>
                     <th className="pb-2">Référence</th>
+                    <th className="pb-2">Borne</th>
                     <th className="pb-2">Ref. fournisseur</th>
                     <th className="pb-2 text-right">Prix HT</th>
                     <th className="pb-2">Délai</th>
@@ -530,18 +539,21 @@ export default function SupplierDetail() {
                           <img
                             src={getFullImageUrl(ps.product.imageUrl)}
                             alt={ps.product.description || ps.product.reference}
-                            className="h-10 w-10 rounded-lg object-cover bg-[--k-surface-2] flex-shrink-0"
+                            className="h-[5rem] w-[5rem] rounded-lg object-cover bg-[--k-surface-2] flex-shrink-0"
                             onError={(e) => {
                               (e.target as HTMLImageElement).src = DEFAULT_PRODUCT_IMAGE;
                             }}
                           />
-                          <span className="font-medium text-[--k-primary] group-hover:underline">
+                          <span className="text-[16px] font-medium text-[--k-primary] group-hover:underline">
                             {ps.product.description || ps.product.reference}
                           </span>
                         </RouterLink>
                       </td>
-                      <td className="py-2 text-[--k-muted]">
+                      <td className="py-2 text-[15px] text-[--k-muted]">
                         {ps.product.reference}
+                      </td>
+                      <td className="py-2 text-[--k-muted]">
+                        {ps.product.assemblyType?.name || '-'}
                       </td>
                       <td className="py-2 text-[--k-muted]">{ps.supplierRef || '-'}</td>
                       <td className="py-2 text-right text-[--k-text]">

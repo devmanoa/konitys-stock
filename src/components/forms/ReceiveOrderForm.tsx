@@ -4,12 +4,13 @@ import Button from '../ui/Button'
 import Input from '../ui/Input'
 import Select from '../ui/Select'
 import api from '../../services/api'
-import type { Order, OrderItem, ApiResponse } from '../../types'
+import type { Order, OrderItem, Site, ApiResponse } from '../../types'
 
 interface ReceiveItemFormData {
   receivedDate: string
   receivedQty: number
   condition: 'NEW' | 'USED'
+  siteId: string
   comment?: string
 }
 
@@ -31,6 +32,15 @@ export default function ReceiveOrderForm({ orderId, itemId, onSuccess, onCancel 
     },
   })
 
+  const { data: sites } = useQuery({
+    queryKey: ['sites'],
+    queryFn: async () => {
+      const res = await api.get<ApiResponse<Site[]>>('/sites')
+      return res.data?.data
+    },
+  })
+
+  const storageSites = sites?.filter(s => s.type === 'STORAGE' && s.isActive) || []
   const item = order?.items?.find((i: OrderItem) => i.id === itemId)
 
   const {
@@ -43,19 +53,24 @@ export default function ReceiveOrderForm({ orderId, itemId, onSuccess, onCancel 
       receivedDate: new Date().toISOString().split('T')[0],
       receivedQty: item?.quantity || 1,
       condition: 'NEW',
+      siteId: order?.destinationSiteId || '',
       comment: '',
     },
   })
 
   const receivedQty = watch('receivedQty')
   const condition = watch('condition')
+  const siteId = watch('siteId')
+
+  const selectedSite = storageSites.find(s => s.id === siteId)
 
   const receiveMutation = useMutation({
     mutationFn: async (data: ReceiveItemFormData) => {
       const payload = {
-        ...data,
         receivedQty: Number(data.receivedQty),
         receivedDate: new Date(data.receivedDate).toISOString(),
+        condition: data.condition,
+        siteId: data.siteId || undefined,
         comment: data.comment || undefined,
       }
       const res = await api.post(`/orders/${orderId}/items/${itemId}/receive`, payload)
@@ -112,8 +127,6 @@ export default function ReceiveOrderForm({ orderId, itemId, onSuccess, onCancel 
               <span className="font-medium text-blue-900">{Number(item.unitPrice).toFixed(2)} €</span>
             </>
           )}
-          <span className="text-blue-700">Destination :</span>
-          <span className="font-medium text-blue-900">{order.destinationSite?.name || 'Non définie'}</span>
         </div>
       </div>
 
@@ -124,6 +137,18 @@ export default function ReceiveOrderForm({ orderId, itemId, onSuccess, onCancel 
         error={errors.receivedDate?.message}
         {...register('receivedDate', { required: 'Date requise' })}
       />
+
+      <Select
+        id="siteId"
+        label="Site de destination *"
+        error={errors.siteId?.message}
+        {...register('siteId', { required: 'Site requis' })}
+      >
+        <option value="">Sélectionner un site</option>
+        {storageSites.map(s => (
+          <option key={s.id} value={s.id}>{s.name}</option>
+        ))}
+      </Select>
 
       <Input
         id="receivedQty"
@@ -174,7 +199,7 @@ export default function ReceiveOrderForm({ orderId, itemId, onSuccess, onCancel 
           <li>
             Créer un mouvement d'<strong>entrée</strong> de {receivedQty || item.quantity} unité(s)
             {condition === 'NEW' ? ' (neuf)' : ' (occasion)'}
-            vers <strong>{order.destinationSite?.name || 'le site de destination'}</strong>
+            vers <strong>{selectedSite?.name || 'le site sélectionné'}</strong>
           </li>
           <li>Mettre à jour le <strong>stock</strong> en conséquence</li>
           <li>Si tous les articles sont reçus, la commande sera marquée <strong>terminée</strong></li>

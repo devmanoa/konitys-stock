@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, Link as RouterLink } from 'react-router-dom';
 import {
   Plus,
   Search,
@@ -300,9 +300,15 @@ export default function Orders() {
         <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
           <div>
             <span className="text-[--k-muted]">Fournisseur:</span>
-            <p className="text-[--k-text] truncate flex items-center gap-1">
+            <p className="truncate flex items-center gap-1">
               <Truck className="h-3 w-3 text-[--k-muted]" />
-              {order.supplier.name}
+              <RouterLink
+                to={`/suppliers/${order.supplierId}`}
+                className="text-[--k-primary] hover:underline"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {order.supplier.name}
+              </RouterLink>
             </p>
           </div>
           <div>
@@ -468,7 +474,7 @@ export default function Orders() {
         ) : (
           <>
             <div className="flex items-baseline justify-between gap-3 border-b border-[--k-border] px-4 py-2.5">
-              <div className="text-[13px] font-semibold">Liste des commandes</div>
+              <div className="text-lg font-semibold text-[--k-text]">Liste des commandes</div>
               <div className="text-xs text-[--k-muted]">{filteredOrders?.length || 0} éléments</div>
             </div>
             <div>
@@ -538,9 +544,13 @@ export default function Orders() {
                         <td className="px-4 py-1.5">
                           <div className="flex items-center gap-2">
                             <Truck className="h-4 w-4 text-[--k-muted]" />
-                            <span className="text-[--k-text]">
+                            <RouterLink
+                              to={`/suppliers/${order.supplierId}`}
+                              className="text-[--k-primary] hover:underline"
+                              onClick={(e) => e.stopPropagation()}
+                            >
                               {order.supplier.name}
-                            </span>
+                            </RouterLink>
                           </div>
                         </td>
                         <td className="px-4 py-1.5 text-center text-[--k-muted]">

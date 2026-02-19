@@ -138,7 +138,7 @@ export default function SupplierSearch({
               onFocus={handleInputFocus}
               placeholder="Rechercher un fournisseur..."
               disabled={disabled}
-              className={`input-field pl-10 pr-10 ${
+              className={`input-field !pl-10 pr-10 ${
                 error ? 'border-[--k-danger]' : ''
               } ${disabled ? 'bg-[--k-surface-2] cursor-not-allowed' : ''}`}
             />
