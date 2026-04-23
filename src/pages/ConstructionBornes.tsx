@@ -4,6 +4,7 @@ import { Plus, Edit2, Trash2, Search, Wrench, Package } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import Input from '../components/ui/Input';
+import Select from '../components/ui/Select';
 import { PageHeader } from '../components/PageHeader';
 import { useToast } from '../components/ui/Toast';
 import ProductSearch from '../components/ui/ProductSearch';
@@ -11,6 +12,7 @@ import api from '../services/api';
 import type {
   ConstructionBorne,
   CreateConstructionBorneInput,
+  BorneSection,
   Product,
   ApiResponse,
 } from '../types';
@@ -20,7 +22,7 @@ type BorneItemDraft = {
   productId: string;
   product: { id: string; reference: string; description?: string; imageUrl?: string } | null;
   quantity: number;
-  section: string;
+  sectionId: string;
 };
 
 export default function ConstructionBornes() {
@@ -41,6 +43,26 @@ export default function ConstructionBornes() {
       const res = await api.get<ApiResponse<ConstructionBorne[]>>('/construction-bornes');
       return res.data;
     },
+  });
+
+  const { data: sectionsData } = useQuery({
+    queryKey: ['borne-sections'],
+    queryFn: async () => {
+      const res = await api.get<ApiResponse<BorneSection[]>>('/borne-sections');
+      return res.data?.data || [];
+    },
+  });
+  const sections = sectionsData || [];
+
+  const createSectionMutation = useMutation({
+    mutationFn: async (sectionName: string) => {
+      const res = await api.post<ApiResponse<BorneSection>>('/borne-sections', { name: sectionName });
+      return res.data.data!;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['borne-sections'] });
+    },
+    onError: () => toast.error('Erreur', 'Impossible de créer la section'),
   });
 
   const createMutation = useMutation({
@@ -92,7 +114,7 @@ export default function ConstructionBornes() {
         productId: item.productId,
         product: item.product,
         quantity: item.quantity,
-        section: item.section || '',
+        sectionId: item.sectionId || '',
       })) || []
     );
     setIsModalOpen(true);
@@ -109,7 +131,7 @@ export default function ConstructionBornes() {
   const handleAddItem = () => {
     setItems((prev) => [
       ...prev,
-      { key: `new-${Date.now()}-${Math.random()}`, productId: '', product: null, quantity: 1, section: '' },
+      { key: `new-${Date.now()}-${Math.random()}`, productId: '', product: null, quantity: 1, sectionId: '' },
     ]);
   };
 
@@ -133,8 +155,19 @@ export default function ConstructionBornes() {
     );
   };
 
-  const handleItemFieldChange = (index: number, field: 'quantity' | 'section', value: number | string) => {
+  const handleItemFieldChange = (index: number, field: 'quantity' | 'sectionId', value: number | string) => {
     setItems((prev) => prev.map((item, i) => (i === index ? { ...item, [field]: value } : item)));
+  };
+
+  const handleCreateSectionInline = async (index: number) => {
+    const promptName = window.prompt('Nom de la nouvelle section');
+    if (!promptName || !promptName.trim()) return;
+    try {
+      const section = await createSectionMutation.mutateAsync(promptName.trim());
+      setItems((prev) => prev.map((item, i) => (i === index ? { ...item, sectionId: section.id } : item)));
+    } catch {
+      // error toast already shown by mutation
+    }
   };
 
   const handleSave = () => {
@@ -150,7 +183,7 @@ export default function ConstructionBornes() {
       items: validItems.map((item) => ({
         productId: item.productId,
         quantity: item.quantity,
-        section: item.section ? item.section : null,
+        sectionId: item.sectionId || null,
       })),
     };
 
@@ -338,13 +371,26 @@ export default function ConstructionBornes() {
                       />
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="w-28">
-                        <Input
-                          type="text"
-                          value={item.section}
-                          onChange={(e) => handleItemFieldChange(index, 'section', e.target.value)}
-                          placeholder="Section"
-                        />
+                      <div className="w-36 flex gap-1">
+                        <Select
+                          value={item.sectionId}
+                          onChange={(e) => handleItemFieldChange(index, 'sectionId', e.target.value)}
+                        >
+                          <option value="">— Section —</option>
+                          {sections.map((s) => (
+                            <option key={s.id} value={s.id}>
+                              {s.name}
+                            </option>
+                          ))}
+                        </Select>
+                        <button
+                          type="button"
+                          onClick={() => handleCreateSectionInline(index)}
+                          title="Créer une nouvelle section"
+                          className="flex-shrink-0 rounded-lg border border-[--k-border] bg-[--k-surface] px-2 text-[--k-muted] hover:border-[--k-primary] hover:text-[--k-primary]"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </button>
                       </div>
                       <div className="w-20 sm:w-24">
                         <Input

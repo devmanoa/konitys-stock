@@ -366,6 +366,13 @@ export interface CreatePackInput {
 }
 
 // Construction Bornes (bill of materials for bornes)
+export interface BorneSection {
+  id: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ConstructionBorneItem {
   id: string;
   borneId: string;
@@ -377,7 +384,8 @@ export interface ConstructionBorneItem {
     imageUrl?: string;
   };
   quantity: number;
-  section?: string | null;
+  sectionId?: string | null;
+  section?: { id: string; name: string } | null;
 }
 
 export interface ConstructionBorne {
@@ -394,7 +402,7 @@ export interface CreateConstructionBorneInput {
   name: string;
   description?: string | null;
   imageUrl?: string | null;
-  items: { productId: string; quantity: number; section?: string | null }[];
+  items: { productId: string; quantity: number; sectionId?: string | null }[];
 }
 
 export interface BuildableComponent {
