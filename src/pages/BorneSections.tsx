@@ -29,7 +29,7 @@ export default function BorneSections() {
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ['borne-sections'] });
-    queryClient.invalidateQueries({ queryKey: ['construction-bornes'] });
+    queryClient.invalidateQueries({ queryKey: ['assembly-types'] });
     queryClient.invalidateQueries({ queryKey: ['buildable-bornes'] });
   };
 

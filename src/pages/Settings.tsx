@@ -6,9 +6,19 @@ import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import { PageHeader } from '../components/PageHeader';
 import Input from '../components/ui/Input';
+import Select from '../components/ui/Select';
+import ProductSearch from '../components/ui/ProductSearch';
 import { useToast } from '../components/ui/Toast';
 import api from '../services/api';
-import type { AssemblyType, Assembly, PartCategory, PaginatedResponse } from '../types';
+import type { AssemblyType, Assembly, PartCategory, PaginatedResponse, BorneSection, ApiResponse, Product } from '../types';
+
+type AssemblyTypeItemDraft = {
+  key: string;
+  productId: string;
+  product: { id: string; reference: string; description?: string; imageUrl?: string } | null;
+  quantity: number;
+  sectionId: string;
+};
 
 export default function Settings() {
   const queryClient = useQueryClient();
@@ -19,6 +29,7 @@ export default function Settings() {
   const [selectedAssemblyType, setSelectedAssemblyType] = useState<AssemblyType | undefined>();
   const [assemblyTypeName, setAssemblyTypeName] = useState('');
   const [assemblyTypeDescription, setAssemblyTypeDescription] = useState('');
+  const [assemblyTypeItems, setAssemblyTypeItems] = useState<AssemblyTypeItemDraft[]>([]);
   const [deleteAssemblyTypeConfirm, setDeleteAssemblyTypeConfirm] = useState<AssemblyType | null>(null);
 
 
@@ -56,15 +67,47 @@ export default function Settings() {
     },
   });
 
+  // Fetch borne sections for the composant select
+  const { data: sectionsData } = useQuery({
+    queryKey: ['borne-sections'],
+    queryFn: async () => {
+      const res = await api.get<ApiResponse<BorneSection[]>>('/borne-sections');
+      return res.data?.data || [];
+    },
+  });
+  const sections = sectionsData || [];
+
+  const createSectionMutation = useMutation({
+    mutationFn: async (sectionName: string) => {
+      const res = await api.post<ApiResponse<BorneSection>>('/borne-sections', { name: sectionName });
+      return res.data.data!;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['borne-sections'] });
+    },
+    onError: () => toast.error('Erreur', 'Impossible de créer la section'),
+  });
+
 
 
   // Assembly Type mutations
+  type AssemblyTypePayload = {
+    name: string;
+    description?: string;
+    items?: { productId: string; quantity: number; sectionId?: string | null }[];
+  };
+
+  const invalidateBuildable = () => {
+    queryClient.invalidateQueries({ queryKey: ['assembly-types'], refetchType: 'all' });
+    queryClient.invalidateQueries({ queryKey: ['buildable-bornes'] });
+  };
+
   const createAssemblyTypeMutation = useMutation({
-    mutationFn: async (data: { name: string; description?: string }) => {
+    mutationFn: async (data: AssemblyTypePayload) => {
       await api.post('/assembly-types', data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['assembly-types'], refetchType: 'all' });
+      invalidateBuildable();
       handleCloseAssemblyTypeModal();
       toast.success('Type borne créé', 'Le type borne a été créé avec succès');
     },
@@ -74,11 +117,11 @@ export default function Settings() {
   });
 
   const updateAssemblyTypeMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: { name: string; description?: string } }) => {
+    mutationFn: async ({ id, data }: { id: string; data: AssemblyTypePayload }) => {
       await api.put(`/assembly-types/${id}`, data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['assembly-types'], refetchType: 'all' });
+      invalidateBuildable();
       handleCloseAssemblyTypeModal();
       toast.success('Type borne modifié', 'Le type borne a été mis à jour');
     },
@@ -198,6 +241,15 @@ export default function Settings() {
     setSelectedAssemblyType(assemblyType);
     setAssemblyTypeName(assemblyType?.name || '');
     setAssemblyTypeDescription(assemblyType?.description || '');
+    setAssemblyTypeItems(
+      assemblyType?.items?.map((item, idx) => ({
+        key: `existing-${item.id}-${idx}`,
+        productId: item.productId,
+        product: item.product,
+        quantity: item.quantity,
+        sectionId: item.sectionId || '',
+      })) || []
+    );
     setIsAssemblyTypeModalOpen(true);
   };
 
@@ -206,12 +258,67 @@ export default function Settings() {
     setSelectedAssemblyType(undefined);
     setAssemblyTypeName('');
     setAssemblyTypeDescription('');
+    setAssemblyTypeItems([]);
+  };
+
+  const handleAddAssemblyTypeItem = () => {
+    setAssemblyTypeItems((prev) => [
+      ...prev,
+      { key: `new-${Date.now()}-${Math.random()}`, productId: '', product: null, quantity: 1, sectionId: '' },
+    ]);
+  };
+
+  const handleRemoveAssemblyTypeItem = (index: number) => {
+    setAssemblyTypeItems((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleAssemblyTypeItemProductChange = (index: number, productId: string, product: Product | null) => {
+    setAssemblyTypeItems((prev) =>
+      prev.map((item, i) =>
+        i === index
+          ? {
+              ...item,
+              productId,
+              product: product
+                ? { id: product.id, reference: product.reference, description: product.description, imageUrl: product.imageUrl }
+                : null,
+            }
+          : item
+      )
+    );
+  };
+
+  const handleAssemblyTypeItemFieldChange = (
+    index: number,
+    field: 'quantity' | 'sectionId',
+    value: number | string,
+  ) => {
+    setAssemblyTypeItems((prev) => prev.map((item, i) => (i === index ? { ...item, [field]: value } : item)));
+  };
+
+  const handleCreateSectionInline = async (index: number) => {
+    const promptName = window.prompt('Nom de la nouvelle section');
+    if (!promptName || !promptName.trim()) return;
+    try {
+      const section = await createSectionMutation.mutateAsync(promptName.trim());
+      setAssemblyTypeItems((prev) =>
+        prev.map((item, i) => (i === index ? { ...item, sectionId: section.id } : item)),
+      );
+    } catch {
+      // toast already shown
+    }
   };
 
   const handleSaveAssemblyType = () => {
-    const data = {
+    const validItems = assemblyTypeItems.filter((it) => it.productId && it.quantity > 0);
+    const data: AssemblyTypePayload = {
       name: assemblyTypeName,
       description: assemblyTypeDescription || undefined,
+      items: validItems.map((it) => ({
+        productId: it.productId,
+        quantity: it.quantity,
+        sectionId: it.sectionId || null,
+      })),
     };
 
     if (selectedAssemblyType) {
@@ -684,7 +791,7 @@ export default function Settings() {
         isOpen={isAssemblyTypeModalOpen}
         onClose={handleCloseAssemblyTypeModal}
         title={selectedAssemblyType ? 'Modifier le type borne' : 'Nouveau type borne'}
-        size="md"
+        size="lg"
       >
         <div className="space-y-4">
           <Input
@@ -706,6 +813,85 @@ export default function Settings() {
               style={{ height: 'auto', padding: '0.5rem 0.75rem' }}
             />
           </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="block text-[13px] font-medium text-[--k-text]">
+                Composants nécessaires pour la construction
+              </label>
+              <Button size="sm" variant="secondary" onClick={handleAddAssemblyTypeItem}>
+                <Plus className="mr-1 h-4 w-4" />
+                Ajouter
+              </Button>
+            </div>
+            <p className="text-xs text-[--k-muted]">
+              Liste des pièces et quantités nécessaires pour construire une unité de ce type de borne.
+            </p>
+
+            {assemblyTypeItems.length === 0 ? (
+              <p className="text-sm text-[--k-muted] italic py-4 text-center border border-dashed border-[--k-border] rounded-lg">
+                Aucun composant. Cliquez sur "Ajouter" pour commencer.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {assemblyTypeItems.map((item, index) => (
+                  <div
+                    key={item.key}
+                    className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-3 p-3 bg-[--k-surface-2] rounded-lg"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <ProductSearch
+                        label=""
+                        onChange={(productId, product) => handleAssemblyTypeItemProductChange(index, productId, product)}
+                        initialProduct={item.product as Product | null}
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-36 flex gap-1">
+                        <Select
+                          value={item.sectionId}
+                          onChange={(e) => handleAssemblyTypeItemFieldChange(index, 'sectionId', e.target.value)}
+                        >
+                          <option value="">— Section —</option>
+                          {sections.map((s) => (
+                            <option key={s.id} value={s.id}>
+                              {s.name}
+                            </option>
+                          ))}
+                        </Select>
+                        <button
+                          type="button"
+                          onClick={() => handleCreateSectionInline(index)}
+                          title="Créer une nouvelle section"
+                          className="flex-shrink-0 rounded-lg border border-[--k-border] bg-[--k-surface] px-2 text-[--k-muted] hover:border-[--k-primary] hover:text-[--k-primary]"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </button>
+                      </div>
+                      <div className="w-20 sm:w-24">
+                        <Input
+                          type="number"
+                          min="1"
+                          value={item.quantity}
+                          onChange={(e) => handleAssemblyTypeItemFieldChange(index, 'quantity', parseInt(e.target.value) || 1)}
+                          placeholder="Qté"
+                        />
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveAssemblyTypeItem(index)}
+                        className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div className="flex justify-end gap-3 pt-4">
             <Button variant="secondary" onClick={handleCloseAssemblyTypeModal}>
               Annuler

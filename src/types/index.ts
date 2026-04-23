@@ -24,12 +24,28 @@ export interface ProductPartCategory {
   partCategory: PartCategory;
 }
 
+export interface AssemblyTypeItem {
+  id: string;
+  assemblyTypeId: string;
+  productId: string;
+  product: {
+    id: string;
+    reference: string;
+    description?: string;
+    imageUrl?: string;
+  };
+  quantity: number;
+  sectionId?: string | null;
+  section?: { id: string; name: string } | null;
+}
+
 export interface AssemblyType {
   id: string;
   name: string;
   description?: string;
   createdAt: string;
   partCategories?: PartCategory[];
+  items?: AssemblyTypeItem[];
   _count?: {
     assemblies: number;
   };
@@ -371,38 +387,6 @@ export interface BorneSection {
   name: string;
   createdAt: string;
   updatedAt: string;
-}
-
-export interface ConstructionBorneItem {
-  id: string;
-  borneId: string;
-  productId: string;
-  product: {
-    id: string;
-    reference: string;
-    description?: string;
-    imageUrl?: string;
-  };
-  quantity: number;
-  sectionId?: string | null;
-  section?: { id: string; name: string } | null;
-}
-
-export interface ConstructionBorne {
-  id: string;
-  name: string;
-  description?: string | null;
-  imageUrl?: string | null;
-  createdAt: string;
-  updatedAt: string;
-  items: ConstructionBorneItem[];
-}
-
-export interface CreateConstructionBorneInput {
-  name: string;
-  description?: string | null;
-  imageUrl?: string | null;
-  items: { productId: string; quantity: number; sectionId?: string | null }[];
 }
 
 export interface BuildableComponent {

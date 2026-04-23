@@ -13,7 +13,6 @@ import {
   Upload,
   Settings,
   Factory,
-  Wrench,
   Layers as LayersIcon,
 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
@@ -47,7 +46,6 @@ const SIDEBAR_SECTIONS = [
     label: 'Construction',
     items: [
       { icon: Factory, label: 'Bornes constructibles', path: '/buildable-bornes' },
-      { icon: Wrench, label: 'Nomenclatures', path: '/construction-bornes' },
       { icon: LayersIcon, label: 'Sections', path: '/borne-sections' },
     ],
   },

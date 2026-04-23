@@ -19,7 +19,6 @@ import ImportExport from './pages/ImportExport'
 import Settings from './pages/Settings'
 import OrderTemplates from './pages/OrderTemplates'
 import OrderTemplateDetail from './pages/OrderTemplateDetail'
-import ConstructionBornes from './pages/ConstructionBornes'
 import BuildableBornes from './pages/BuildableBornes'
 import BorneSections from './pages/BorneSections'
 
@@ -58,7 +57,6 @@ function App() {
                 <Route path="movements" element={<Movements />} />
                 <Route path="sites" element={<Sites />} />
                 <Route path="packs" element={<Packs />} />
-                <Route path="construction-bornes" element={<ConstructionBornes />} />
                 <Route path="buildable-bornes" element={<BuildableBornes />} />
                 <Route path="borne-sections" element={<BorneSections />} />
                 <Route path="import-export" element={<ImportExport />} />

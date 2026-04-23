@@ -247,7 +247,7 @@ export default function BuildableBornes() {
   const { data, isLoading } = useQuery({
     queryKey: ['buildable-bornes'],
     queryFn: async () => {
-      const res = await api.get<ApiResponse<BuildableBorne[]>>('/construction-bornes/buildable');
+      const res = await api.get<ApiResponse<BuildableBorne[]>>('/assembly-types/buildable');
       return res.data;
     },
   });
