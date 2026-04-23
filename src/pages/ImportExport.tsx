@@ -127,9 +127,9 @@ export default function ImportExport() {
       const totalCreated = getTotalCreated(data);
       const totalErrors = getTotalErrors(data);
       if (totalErrors > 0) {
-        toast.warning('Import termin\u00e9 avec avertissements', `${totalCreated} \u00e9l\u00e9ments import\u00e9s, ${totalErrors} erreurs`);
+        toast.warning('Import terminé avec avertissements', `${totalCreated} éléments importés, ${totalErrors} erreurs`);
       } else {
-        toast.success('Import r\u00e9ussi', `${totalCreated} \u00e9l\u00e9ments ont \u00e9t\u00e9 import\u00e9s`);
+        toast.success('Import réussi', `${totalCreated} éléments ont été importés`);
       }
     },
     onError: () => {
@@ -183,16 +183,16 @@ export default function ImportExport() {
       document.body.appendChild(link);
       link.click();
       link.remove();
-      toast.success('Export r\u00e9ussi', `Fichier ${filename}.${format} t\u00e9l\u00e9charg\u00e9`);
+      toast.success('Export réussi', `Fichier ${filename}.${format} téléchargé`);
     } catch {
-      toast.error('Erreur d\'export', 'Impossible de g\u00e9n\u00e9rer le fichier');
+      toast.error('Erreur d\'export', 'Impossible de générer le fichier');
     }
   };
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <PageHeader title="Import / Export" subtitle="Importez vos donn\u00e9es depuis Excel ou exportez vos donn\u00e9es actuelles" />
+      <PageHeader title="Import / Export" subtitle="Importez vos données depuis Excel ou exportez vos données actuelles" />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Import Section */}
@@ -215,7 +215,7 @@ export default function ImportExport() {
             >
               <FileSpreadsheet className="h-12 w-12 mx-auto text-[--k-muted] mb-4" />
               <p className="text-[--k-muted] mb-2">
-                Glissez-d\u00e9posez votre fichier Excel ici
+                Glissez-déposez votre fichier Excel ici
               </p>
               <p className="text-sm text-[--k-muted] mb-4">
                 ou
@@ -232,7 +232,7 @@ export default function ImportExport() {
                 </span>
               </label>
               <p className="text-xs text-[--k-muted] mt-4">
-                Formats support\u00e9s: .xlsx, .xls, .csv (max 10 Mo)
+                Formats supportés: .xlsx, .xls, .csv (max 10 Mo)
               </p>
             </div>
 
@@ -259,7 +259,7 @@ export default function ImportExport() {
             {/* Preview */}
             {preview && (
               <div className="space-y-3">
-                <h4 className="font-medium text-[--k-text]">Aper\u00e7u du fichier</h4>
+                <h4 className="font-medium text-[--k-text]">Aperçu du fichier</h4>
                 <div className="space-y-2 max-h-60 overflow-y-auto">
                   {preview.availableSheets.map(sheetName => {
                     const sheet = preview.sheets[sheetName];
@@ -306,15 +306,15 @@ export default function ImportExport() {
                       <CheckCircle className="h-5 w-5 text-green-600" />
                     )}
                     <span className="font-medium text-[--k-text]">
-                      Import termin\u00e9
+                      Import terminé
                     </span>
                   </div>
                   <div className="grid grid-cols-3 gap-2 text-sm">
                     <div className="text-green-600">
-                      {getTotalCreated(importResult)} cr\u00e9\u00e9(s)
+                      {getTotalCreated(importResult)} créé(s)
                     </div>
                     <div className="text-blue-600">
-                      {getTotalUpdated(importResult)} mis \u00e0 jour
+                      {getTotalUpdated(importResult)} mis à jour
                     </div>
                     <div className="text-red-600">
                       {getTotalErrors(importResult)} erreur(s)
@@ -348,7 +348,7 @@ export default function ImportExport() {
             <div className="pt-4 border-t border-[--k-border]">
               <Button variant="outline" onClick={handleDownloadTemplate} className="w-full">
                 <FileDown className="h-4 w-4 mr-2" />
-                T\u00e9l\u00e9charger le mod\u00e8le Excel
+                Télécharger le modèle Excel
               </Button>
               <p className="text-xs text-[--k-muted] text-center mt-2">
                 Structure compatible avec le fichier Excel original (SYNTHESE, REF FOURNISSEURS, MVT CLASSIK, COMMANDES CLASSIK)
@@ -370,7 +370,7 @@ export default function ImportExport() {
                 Export complet
               </h4>
               <p className="text-sm text-indigo-700 mb-3">
-                Exportez toutes les donn\u00e9es (produits, stocks, mouvements, commandes) dans un fichier Excel multi-feuilles compatible avec l'import
+                Exportez toutes les données (produits, stocks, mouvements, commandes) dans un fichier Excel multi-feuilles compatible avec l'import
               </p>
               <Button onClick={() => handleExport('all', `export_complet_${new Date().toISOString().split('T')[0]}`)}>
                 <FileSpreadsheet className="h-4 w-4 mr-2" />
@@ -384,7 +384,7 @@ export default function ImportExport() {
 
               <ExportCard
                 icon={Package}
-                title="Produits (Synth\u00e8se)"
+                title="Produits (Synthèse)"
                 description="Produits avec stocks et infos fournisseurs"
                 onExportXlsx={() => handleExport('products', 'produits', 'xlsx')}
                 onExportCsv={() => handleExport('products', 'produits', 'csv')}
