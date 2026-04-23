@@ -19,6 +19,8 @@ import ImportExport from './pages/ImportExport'
 import Settings from './pages/Settings'
 import OrderTemplates from './pages/OrderTemplates'
 import OrderTemplateDetail from './pages/OrderTemplateDetail'
+import ConstructionBornes from './pages/ConstructionBornes'
+import BuildableBornes from './pages/BuildableBornes'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -55,6 +57,8 @@ function App() {
                 <Route path="movements" element={<Movements />} />
                 <Route path="sites" element={<Sites />} />
                 <Route path="packs" element={<Packs />} />
+                <Route path="construction-bornes" element={<ConstructionBornes />} />
+                <Route path="buildable-bornes" element={<BuildableBornes />} />
                 <Route path="import-export" element={<ImportExport />} />
                 <Route path="order-templates" element={<OrderTemplates />} />
                 <Route path="order-templates/:id" element={<OrderTemplateDetail />} />

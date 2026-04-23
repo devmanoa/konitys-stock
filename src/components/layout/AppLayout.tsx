@@ -12,6 +12,8 @@ import {
   Boxes,
   Upload,
   Settings,
+  Factory,
+  Wrench,
 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { loadRemoteComponent } from '../../remoteLoader'
@@ -38,6 +40,13 @@ const SIDEBAR_SECTIONS = [
     items: [
       { icon: Layers, label: 'Stocks', path: '/stocks' },
       { icon: ArrowLeftRight, label: 'Mouvements', path: '/movements' },
+    ],
+  },
+  {
+    label: 'Construction',
+    items: [
+      { icon: Factory, label: 'Bornes constructibles', path: '/buildable-bornes' },
+      { icon: Wrench, label: 'Nomenclatures', path: '/construction-bornes' },
     ],
   },
   {

@@ -8,6 +8,8 @@ import {
   Truck,
   Building2,
   Euro,
+  Factory,
+  ChevronRight,
 } from 'lucide-react'
 import { KpiCard } from '../components/KpiCard'
 import { PageHeader } from '../components/PageHeader'
@@ -19,6 +21,8 @@ import type {
   Order,
   LowStockAlert,
   TopProductStock,
+  BuildableBorne,
+  ApiResponse,
 } from '../types'
 
 const ORDER_STATUT_COLORS: Record<string, string> = {
@@ -98,6 +102,14 @@ export default function Dashboard() {
     },
   })
 
+  const { data: buildableBornes } = useQuery({
+    queryKey: ['buildable-bornes'],
+    queryFn: async () => {
+      const res = await api.get<ApiResponse<BuildableBorne[]>>('/construction-bornes/buildable')
+      return res.data?.data || []
+    },
+  })
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
@@ -134,6 +146,46 @@ export default function Dashboard() {
         <KpiCard title="Valeur stock" value={formatCurrency(stats?.totalStockValue || 0)} icon={Euro} colorIndex={5} />
         <KpiCard title="Alertes" value={lowStockAlerts?.length || 0} icon={AlertTriangle} colorIndex={1} />
       </div>
+
+      {/* Buildable bornes */}
+      {buildableBornes && buildableBornes.length > 0 && (
+        <div className="rounded-2xl border border-[--k-border] bg-white shadow-sm shadow-black/[0.03] overflow-hidden">
+          <div className="flex items-center justify-between border-b border-[--k-border] bg-gradient-to-r from-amber-50/60 to-orange-50/30 px-4 py-2.5">
+            <div className="flex items-center gap-2">
+              <Factory className="h-4 w-4 text-amber-500" />
+              <span className="text-lg font-semibold text-[--k-text]">Bornes constructibles</span>
+            </div>
+            <button
+              onClick={() => navigate('/buildable-bornes')}
+              className="flex items-center gap-1 text-[11px] font-medium text-[--k-primary] hover:underline"
+            >
+              Voir le détail <ChevronRight className="h-3 w-3" />
+            </button>
+          </div>
+          <div className="p-4">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+              {buildableBornes.map((b) => (
+                <button
+                  key={b.id}
+                  onClick={() => navigate('/buildable-bornes')}
+                  className="text-left rounded-xl border border-[--k-border] bg-white p-3 transition hover:border-[--k-primary] hover:shadow-sm"
+                >
+                  <div className="text-xs text-[--k-muted] truncate">{b.name}</div>
+                  <div
+                    className={cn(
+                      'text-2xl font-bold',
+                      b.maxBuildable > 0 ? 'text-green-600' : 'text-red-600'
+                    )}
+                  >
+                    {b.maxBuildable}
+                  </div>
+                  <div className="text-xs text-[--k-muted]">constructibles</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Content: Commandes + Alertes */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">

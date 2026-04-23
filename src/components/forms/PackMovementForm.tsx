@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Trash2 } from 'lucide-react'
@@ -45,11 +45,13 @@ interface PackMovementFormProps {
 export default function PackMovementForm({ onSuccess, onCancel }: PackMovementFormProps) {
   const queryClient = useQueryClient()
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const dirtyItemsRef = useRef<Set<string>>(new Set())
 
   const {
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
     control,
   } = useForm<PackMovementFormData>({
@@ -87,6 +89,7 @@ export default function PackMovementForm({ onSuccess, onCancel }: PackMovementFo
 
   useEffect(() => {
     if (selectedPack && selectedPack.items) {
+      dirtyItemsRef.current = new Set()
       while (fields.length > 0) remove(0)
       selectedPack.items.forEach((item) => {
         append({
@@ -102,25 +105,32 @@ export default function PackMovementForm({ onSuccess, onCancel }: PackMovementFo
     }
   }, [selectedPack, packId])
 
+  // Recalc quantities when packQuantity changes, but skip items the user manually edited
+  useEffect(() => {
+    if (!selectedPack?.items) return
+    fields.forEach((field, index) => {
+      if (dirtyItemsRef.current.has(field.productId)) return
+      const baseItem = selectedPack.items.find((it) => it.productId === field.productId)
+      if (!baseItem) return
+      setValue(`items.${index}.quantity`, baseItem.quantity * (packQuantity || 1))
+    })
+  }, [packQuantity, fields, selectedPack, setValue])
+
   const createMovementsMutation = useMutation({
     mutationFn: async (data: PackMovementFormData) => {
-      const baseItems = selectedPack?.items || []
-      const movements = data.items.map((item) => {
-        const baseItem = baseItems.find((bi) => bi.productId === item.productId)
-        const calculatedQuantity = (baseItem?.quantity || 1) * (data.packQuantity || 1)
-        return {
-          productId: item.productId,
-          type: data.type,
-          quantity: calculatedQuantity,
-          condition: item.condition,
-          movementDate: new Date(data.movementDate).toISOString(),
-          operator: data.operator || undefined,
-          comment: data.comment
-            ? `[Pack: ${selectedPack?.name}] ${data.comment}`
-            : `[Pack: ${selectedPack?.name}]`,
-          ...(data.type === 'IN' ? { targetSiteId: data.siteId } : { sourceSiteId: data.siteId }),
-        }
-      })
+      // Use the user-entered quantity per item
+      const movements = data.items.map((item) => ({
+        productId: item.productId,
+        type: data.type,
+        quantity: item.quantity,
+        condition: item.condition,
+        movementDate: new Date(data.movementDate).toISOString(),
+        operator: data.operator || undefined,
+        comment: data.comment
+          ? `[Pack: ${selectedPack?.name}] ${data.comment}`
+          : `[Pack: ${selectedPack?.name}]`,
+        ...(data.type === 'IN' ? { targetSiteId: data.siteId } : { sourceSiteId: data.siteId }),
+      }))
       for (const movement of movements) {
         await api.post('/movements', movement)
       }
@@ -217,7 +227,9 @@ export default function PackMovementForm({ onSuccess, onCancel }: PackMovementFo
           <div className="space-y-3 bg-[--k-surface-2] rounded-xl p-4 border border-[--k-border]">
             {fields.map((field, index) => {
               const baseQuantity = selectedPack?.items?.find((item) => item.productId === field.productId)?.quantity || 0
-              const calculatedQuantity = baseQuantity * (packQuantity || 1)
+              const suggestedQuantity = baseQuantity * (packQuantity || 1)
+              const currentQuantity = watch(`items.${index}.quantity`)
+              const isDirty = dirtyItemsRef.current.has(field.productId)
               return (
                 <div key={field.id} className="flex gap-3 items-start bg-[--k-surface] p-3 rounded-lg border border-[--k-border]">
                   <input type="hidden" {...register(`items.${index}.id`)} />
@@ -250,13 +262,23 @@ export default function PackMovementForm({ onSuccess, onCancel }: PackMovementFo
 
                   <div className="flex-1 min-w-[120px]">
                     <label className="block text-[11px] font-medium text-[--k-muted] mb-1">Quantité</label>
-                    <div className="text-[13px] bg-[--k-surface-2] px-3 py-2 rounded-lg text-[--k-text] font-medium">
-                      {calculatedQuantity}
-                      <span className="text-[11px] text-[--k-muted] block mt-1">
-                        ({baseQuantity} × {packQuantity})
-                      </span>
-                    </div>
-                    <input type="hidden" {...register(`items.${index}.quantity`, { valueAsNumber: true })} />
+                    <Input
+                      type="number"
+                      min="1"
+                      {...register(`items.${index}.quantity`, {
+                        required: true,
+                        min: 1,
+                        valueAsNumber: true,
+                        onChange: () => {
+                          dirtyItemsRef.current.add(field.productId)
+                        },
+                      })}
+                    />
+                    <span className="text-[11px] text-[--k-muted] block mt-1">
+                      {isDirty && currentQuantity !== suggestedQuantity
+                        ? `modifié (suggéré : ${suggestedQuantity} = ${baseQuantity} × ${packQuantity})`
+                        : `${baseQuantity} × ${packQuantity}`}
+                    </span>
                   </div>
 
                   <div className="flex-1 min-w-[120px]">

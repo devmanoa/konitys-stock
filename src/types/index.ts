@@ -365,6 +365,61 @@ export interface CreatePackInput {
   items: { productId: string; quantity: number }[];
 }
 
+// Construction Bornes (bill of materials for bornes)
+export interface ConstructionBorneItem {
+  id: string;
+  borneId: string;
+  productId: string;
+  product: {
+    id: string;
+    reference: string;
+    description?: string;
+    imageUrl?: string;
+  };
+  quantity: number;
+  section?: string | null;
+}
+
+export interface ConstructionBorne {
+  id: string;
+  name: string;
+  description?: string | null;
+  imageUrl?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  items: ConstructionBorneItem[];
+}
+
+export interface CreateConstructionBorneInput {
+  name: string;
+  description?: string | null;
+  imageUrl?: string | null;
+  items: { productId: string; quantity: number; section?: string | null }[];
+}
+
+export interface BuildableComponent {
+  id: string;
+  productId: string;
+  product: {
+    id: string;
+    reference: string;
+    description?: string;
+    imageUrl?: string;
+  };
+  required: number;
+  currentStock: number;
+  section?: string | null;
+}
+
+export interface BuildableBorne {
+  id: string;
+  name: string;
+  description?: string | null;
+  imageUrl?: string | null;
+  maxBuildable: number;
+  components: BuildableComponent[];
+}
+
 // Order Templates
 export interface OrderTemplateItem {
   id: string;
