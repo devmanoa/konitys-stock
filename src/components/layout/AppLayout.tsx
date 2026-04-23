@@ -54,7 +54,7 @@ const SIDEBAR_SECTIONS = [
     items: [
       { icon: ShoppingCart, label: 'Commandes', path: '/orders' },
       { icon: FileText, label: 'Modèles', path: '/order-templates' },
-      { icon: Boxes, label: 'Packs', path: '/packs' },
+      { icon: Boxes, label: 'Packs de commande', path: '/packs' },
       { icon: Upload, label: 'Import / Export', path: '/import-export' },
     ],
   },

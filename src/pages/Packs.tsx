@@ -40,10 +40,10 @@ export default function Packs() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['packs'], refetchType: 'all' });
       handleCloseModal();
-      toast.success('Pack créé', 'Le pack a été créé avec succès');
+      toast.success('Pack de commande créé', 'Le pack de commande a été créé avec succès');
     },
     onError: () => {
-      toast.error('Erreur', 'Impossible de créer le pack');
+      toast.error('Erreur', 'Impossible de créer le pack de commande');
     },
   });
 
@@ -54,10 +54,10 @@ export default function Packs() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['packs'], refetchType: 'all' });
       handleCloseModal();
-      toast.success('Pack modifié', 'Le pack a été mis à jour');
+      toast.success('Pack de commande modifié', 'Le pack de commande a été mis à jour');
     },
     onError: () => {
-      toast.error('Erreur', 'Impossible de modifier le pack');
+      toast.error('Erreur', 'Impossible de modifier le pack de commande');
     },
   });
 
@@ -68,10 +68,10 @@ export default function Packs() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['packs'], refetchType: 'all' });
       setDeleteConfirm(null);
-      toast.success('Pack supprimé', 'Le pack a été supprimé');
+      toast.success('Pack de commande supprimé', 'Le pack de commande a été supprimé');
     },
     onError: () => {
-      toast.error('Erreur', 'Impossible de supprimer le pack');
+      toast.error('Erreur', 'Impossible de supprimer le pack de commande');
     },
   });
 
@@ -126,7 +126,7 @@ export default function Packs() {
   const handleSave = () => {
     const validItems = packItems.filter(item => item.productId && item.quantity > 0);
     if (validItems.length === 0) {
-      toast.error('Erreur', 'Ajoutez au moins un produit au pack');
+      toast.error('Erreur', 'Ajoutez au moins un produit au pack de commande');
       return;
     }
 
@@ -152,10 +152,10 @@ export default function Packs() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <PageHeader title="Packs" subtitle="Groupes de produits pour entrées/sorties rapides">
+      <PageHeader title="Packs de commande" subtitle="Groupes de produits pour entrées/sorties rapides">
         <Button onClick={() => handleOpenModal()}>
           <Plus className="mr-2 h-4 w-4" />
-          Nouveau pack
+          Nouveau pack de commande
         </Button>
       </PageHeader>
 
@@ -165,7 +165,7 @@ export default function Packs() {
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[--k-muted]" />
           <input
             type="text"
-            placeholder="Rechercher un pack..."
+            placeholder="Rechercher un pack de commande..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="input-field !pl-10"
@@ -178,9 +178,9 @@ export default function Packs() {
         <div className="flex items-baseline justify-between gap-3 border-b border-[--k-border] px-4 py-2.5">
           <div className="flex items-center gap-2 text-lg font-semibold text-[--k-text]">
             <PackageOpen className="h-5 w-5" />
-            Liste des packs
+            Liste des packs de commande
           </div>
-          <div className="text-xs text-[--k-muted]">{filteredPacks.length} pack{filteredPacks.length > 1 ? 's' : ''}</div>
+          <div className="text-xs text-[--k-muted]">{filteredPacks.length} pack{filteredPacks.length > 1 ? 's' : ''} de commande</div>
         </div>
         <div>
           {isLoading ? (
@@ -191,12 +191,12 @@ export default function Packs() {
             <div className="py-8 text-center">
               <PackageOpen className="mx-auto h-12 w-12 text-[--k-muted]" />
               <p className="mt-2 text-[--k-muted]">
-                {searchTerm ? 'Aucun pack trouvé' : 'Aucun pack créé'}
+                {searchTerm ? 'Aucun pack de commande trouvé' : 'Aucun pack de commande créé'}
               </p>
               {!searchTerm && (
                 <Button className="mt-4" onClick={() => handleOpenModal()}>
                   <Plus className="mr-2 h-4 w-4" />
-                  Créer un pack
+                  Créer un pack de commande
                 </Button>
               )}
             </div>
@@ -317,12 +317,12 @@ export default function Packs() {
       <Modal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
-        title={selectedPack ? 'Modifier le pack' : 'Nouveau pack'}
+        title={selectedPack ? 'Modifier le pack de commande' : 'Nouveau pack de commande'}
         size="lg"
       >
         <div className="space-y-4">
           <Input
-            label="Nom du pack"
+            label="Nom du pack de commande"
             value={packName}
             onChange={(e) => setPackName(e.target.value)}
             placeholder="ex: Tête Spherik, Kit Écran"
@@ -420,7 +420,7 @@ export default function Packs() {
       >
         <div className="space-y-4">
           <p className="text-[--k-muted]">
-            Êtes-vous sûr de vouloir supprimer le pack{' '}
+            Êtes-vous sûr de vouloir supprimer le pack de commande{' '}
             <span className="font-semibold text-[--k-text]">{deleteConfirm?.name}</span> ?
           </p>
           <div className="flex justify-end gap-3 pt-4">
