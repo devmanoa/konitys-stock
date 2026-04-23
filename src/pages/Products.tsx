@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams, Link as RouterLink } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
-import { Plus, Search, Edit2, Trash2, Eye, Link, X } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Eye, Link, X, ZoomIn, Download } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
 import SearchSelect from '../components/ui/SearchSelect';
@@ -105,6 +105,7 @@ export default function Products() {
   const [selectedProduct, setSelectedProduct] = useState<Product | undefined>();
   const [deleteConfirm, setDeleteConfirm] = useState<Product | null>(null);
   const [supplierModalProduct, setSupplierModalProduct] = useState<Product | null>(null);
+  const [lightboxProduct, setLightboxProduct] = useState<Product | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['products', page, search, assemblyTypeId, assemblyId],
@@ -182,13 +183,23 @@ export default function Products() {
   const ProductCard = ({ product }: { product: Product }) => (
     <div className="rounded-2xl border border-[--k-border] bg-[--k-surface] p-4">
       <div className="flex items-start gap-3">
-        <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border border-[--k-border] bg-[--k-surface-2]">
+        <button
+          type="button"
+          onClick={() => product.imageUrl && setLightboxProduct(product)}
+          disabled={!product.imageUrl}
+          className={`group relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border border-[--k-border] bg-[--k-surface-2] ${product.imageUrl ? 'cursor-zoom-in' : 'cursor-default'}`}
+        >
           <img
             src={getFullImageUrl(product.imageUrl)}
             alt={product.reference}
             className="h-full w-full object-cover"
           />
-        </div>
+          {product.imageUrl && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-colors">
+              <ZoomIn className="h-5 w-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
+          )}
+        </button>
         <div className="flex-1 min-w-0">
           <button
             onClick={() => navigate(`/products/${product.id}`)}
@@ -403,13 +414,23 @@ export default function Products() {
                   <tr key={product.id} className="border-t border-[--k-border] hover:bg-[--k-surface-2]/30 transition-colors">
                     <td className="px-4 py-1.5">
                       <div className="flex items-center gap-3">
-                        <div className="h-[5rem] w-[5rem] flex-shrink-0 overflow-hidden rounded-lg border border-[--k-border] bg-[--k-surface-2]">
+                        <button
+                          type="button"
+                          onClick={() => product.imageUrl && setLightboxProduct(product)}
+                          disabled={!product.imageUrl}
+                          className={`group relative h-[5rem] w-[5rem] flex-shrink-0 overflow-hidden rounded-lg border border-[--k-border] bg-[--k-surface-2] ${product.imageUrl ? 'cursor-zoom-in' : 'cursor-default'}`}
+                        >
                           <img
                             src={getFullImageUrl(product.imageUrl)}
                             alt={product.reference}
                             className="h-full w-full object-cover"
                           />
-                        </div>
+                          {product.imageUrl && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-colors">
+                              <ZoomIn className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </div>
+                          )}
+                        </button>
                         <div className="flex flex-col">
                           <button
                             onClick={() => navigate(`/products/${product.id}`)}
@@ -569,6 +590,44 @@ export default function Products() {
           />
         )}
       </Modal>
+
+      {/* Image Lightbox */}
+      {lightboxProduct && lightboxProduct.imageUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          onClick={() => setLightboxProduct(null)}
+        >
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px]" />
+          <div
+            className="relative max-h-[90vh] max-w-[90vw]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={getFullImageUrl(lightboxProduct.imageUrl)}
+              alt={lightboxProduct.reference}
+              className="max-h-[85vh] max-w-[85vw] rounded-lg object-contain bg-white p-4"
+            />
+            <div className="absolute top-3 right-3 flex items-center gap-2">
+              <a
+                href={getFullImageUrl(lightboxProduct.imageUrl)}
+                download={`${lightboxProduct.reference}.png`}
+                className="rounded-lg bg-black/50 p-2 text-white hover:bg-black/70 transition-colors"
+                title="Télécharger"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Download className="h-5 w-5" />
+              </a>
+              <button
+                onClick={() => setLightboxProduct(null)}
+                className="rounded-lg bg-black/50 p-2 text-white hover:bg-black/70 transition-colors"
+                title="Fermer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
