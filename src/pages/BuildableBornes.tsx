@@ -1,6 +1,6 @@
 import { Fragment, useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Factory, AlertTriangle, CheckCircle2, ChevronRight, ArrowLeft, Package } from 'lucide-react';
+import { Factory, AlertTriangle, CheckCircle2, ChevronRight, ArrowLeft, Package, ZoomIn, Download, X } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import { PageHeader } from '../components/PageHeader';
@@ -89,7 +89,15 @@ function BorneCard({ borne, onSelect }: { borne: BuildableBorne; onSelect: () =>
   );
 }
 
-function BorneDetail({ borne, onBack }: { borne: BuildableBorne; onBack: () => void }) {
+function BorneDetail({
+  borne,
+  onBack,
+  onImageClick,
+}: {
+  borne: BuildableBorne;
+  onBack: () => void;
+  onImageClick: (component: BuildableComponent) => void;
+}) {
   const [target, setTarget] = useState<number>(Math.max(borne.maxBuildable, 0));
 
   useEffect(() => {
@@ -167,17 +175,27 @@ function BorneDetail({ borne, onBack }: { borne: BuildableBorne; onBack: () => v
                       >
                         <td className="px-4 py-2">
                           <div className="flex items-center gap-2">
-                            <div className="h-8 w-8 flex-shrink-0 rounded-lg bg-[--k-surface-2] flex items-center justify-center overflow-hidden">
+                            <button
+                              type="button"
+                              onClick={() => c.product.imageUrl && onImageClick(c)}
+                              disabled={!c.product.imageUrl}
+                              className={`group relative h-10 w-10 flex-shrink-0 rounded-lg bg-[--k-surface-2] flex items-center justify-center overflow-hidden ${c.product.imageUrl ? 'cursor-zoom-in' : 'cursor-default'}`}
+                            >
                               {c.product.imageUrl ? (
-                                <img
-                                  src={getFullImageUrl(c.product.imageUrl)}
-                                  alt={c.product.reference}
-                                  className="h-full w-full object-cover"
-                                />
+                                <>
+                                  <img
+                                    src={getFullImageUrl(c.product.imageUrl)}
+                                    alt={c.product.reference}
+                                    className="h-full w-full object-cover"
+                                  />
+                                  <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-colors">
+                                    <ZoomIn className="h-4 w-4 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                                  </div>
+                                </>
                               ) : (
                                 <Package className="h-4 w-4 text-[--k-muted]" />
                               )}
-                            </div>
+                            </button>
                             <div className="min-w-0">
                               <div className="font-medium text-[--k-text]">
                                 {c.product.description || c.product.reference}
@@ -243,6 +261,7 @@ function BorneDetail({ borne, onBack }: { borne: BuildableBorne; onBack: () => v
 
 export default function BuildableBornes() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [lightboxComponent, setLightboxComponent] = useState<BuildableComponent | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['buildable-bornes'],
@@ -263,8 +282,54 @@ export default function BuildableBornes() {
     );
   }
 
+  const lightbox = lightboxComponent && lightboxComponent.product.imageUrl ? (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      onClick={() => setLightboxComponent(null)}
+    >
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px]" />
+      <div
+        className="relative max-h-[90vh] max-w-[90vw]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <img
+          src={getFullImageUrl(lightboxComponent.product.imageUrl)}
+          alt={lightboxComponent.product.reference}
+          className="max-h-[85vh] max-w-[85vw] rounded-lg object-contain bg-white p-4"
+        />
+        <div className="absolute top-3 right-3 flex items-center gap-2">
+          <a
+            href={getFullImageUrl(lightboxComponent.product.imageUrl)}
+            download={`${lightboxComponent.product.reference}.png`}
+            className="rounded-lg bg-black/50 p-2 text-white hover:bg-black/70 transition-colors"
+            title="Télécharger"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Download className="h-5 w-5" />
+          </a>
+          <button
+            onClick={() => setLightboxComponent(null)}
+            className="rounded-lg bg-black/50 p-2 text-white hover:bg-black/70 transition-colors"
+            title="Fermer"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+      </div>
+    </div>
+  ) : null;
+
   if (selected) {
-    return <BorneDetail borne={selected} onBack={() => setSelectedId(null)} />;
+    return (
+      <>
+        <BorneDetail
+          borne={selected}
+          onBack={() => setSelectedId(null)}
+          onImageClick={(c) => setLightboxComponent(c)}
+        />
+        {lightbox}
+      </>
+    );
   }
 
   return (
