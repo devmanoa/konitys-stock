@@ -180,11 +180,11 @@ function BorneDetail({ borne, onBack }: { borne: BuildableBorne; onBack: () => v
                             </div>
                             <div className="min-w-0">
                               <div className="font-medium text-[--k-text]">
-                                {c.product.reference}
+                                {c.product.description || c.product.reference}
                               </div>
                               {c.product.description && (
                                 <div className="text-xs text-[--k-muted] truncate">
-                                  {c.product.description}
+                                  {c.product.reference}
                                 </div>
                               )}
                             </div>
