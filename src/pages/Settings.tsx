@@ -707,7 +707,57 @@ export default function Settings() {
         </div>
       </div>
 
-      {/* Bornes */}
+      {/* Sections de borne */}
+      <div className="rounded-2xl border border-[--k-border] bg-white shadow-sm shadow-black/[0.03] overflow-hidden">
+        <div className="flex items-center justify-between border-b border-[--k-border] px-4 py-2.5">
+          <div className="flex items-center gap-2">
+            <Layers className="h-4 w-4 text-[--k-primary]" />
+            <span className="text-lg font-semibold text-[--k-text]">Sections de borne</span>
+          </div>
+          <Button size="sm" onClick={() => handleOpenSectionModal()}>
+            <Plus className="mr-1 h-4 w-4" />
+            Ajouter
+          </Button>
+        </div>
+        <div className="p-4">
+          <p className="text-sm text-[--k-muted] mb-4">
+            Catégories utilisées pour regrouper les composants d'une borne (ex: Tête, Pied, Électronique).
+          </p>
+          {sections.length === 0 ? (
+            <p className="text-[--k-muted] italic py-4">Aucune section définie</p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {sections.map((section) => (
+                <span
+                  key={section.id}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-indigo-100 pl-3 pr-1.5 py-1 text-xs font-medium text-indigo-800"
+                >
+                  {section.name}
+                  <button
+                    type="button"
+                    onClick={() => handleOpenSectionModal(section)}
+                    className="hover:text-indigo-600 p-0.5"
+                    title="Renommer"
+                  >
+                    <Edit2 className="h-3 w-3" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDeleteSectionConfirm(section)}
+                    className="hover:text-red-600 p-0.5"
+                    title="Supprimer"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Bornes — masqué temporairement */}
+      {false && (
       <div className="rounded-2xl border border-[--k-border] bg-white shadow-sm shadow-black/[0.03] overflow-hidden">
         <div className="flex items-center justify-between border-b border-[--k-border] px-4 py-2.5">
           <div className="flex items-center gap-2">
@@ -735,7 +785,7 @@ export default function Settings() {
             <>
               {/* Mobile Cards */}
               <div className="space-y-3 lg:hidden">
-                {assembliesData.map((assembly) => (
+                {(assembliesData ?? []).map((assembly) => (
                   <div
                     key={assembly.id}
                     className="rounded-2xl border border-[--k-border] bg-[--k-surface] p-3"
@@ -799,7 +849,7 @@ export default function Settings() {
                     </tr>
                   </thead>
                   <tbody>
-                    {assembliesData.map((assembly) => (
+                    {(assembliesData ?? []).map((assembly) => (
                       <tr key={assembly.id} className="border-t border-[--k-border] hover:bg-[--k-surface-2]/30 transition-colors">
                         <td className="px-4 py-1.5 font-medium text-[--k-text]">
                           {assembly.name}
@@ -856,55 +906,7 @@ export default function Settings() {
           )}
         </div>
       </div>
-
-      {/* Sections de borne */}
-      <div className="rounded-2xl border border-[--k-border] bg-white shadow-sm shadow-black/[0.03] overflow-hidden">
-        <div className="flex items-center justify-between border-b border-[--k-border] px-4 py-2.5">
-          <div className="flex items-center gap-2">
-            <Layers className="h-4 w-4 text-[--k-primary]" />
-            <span className="text-lg font-semibold text-[--k-text]">Sections de borne</span>
-          </div>
-          <Button size="sm" onClick={() => handleOpenSectionModal()}>
-            <Plus className="mr-1 h-4 w-4" />
-            Ajouter
-          </Button>
-        </div>
-        <div className="p-4">
-          <p className="text-sm text-[--k-muted] mb-4">
-            Catégories utilisées pour regrouper les composants d'une borne (ex: Tête, Pied, Électronique).
-          </p>
-          {sections.length === 0 ? (
-            <p className="text-[--k-muted] italic py-4">Aucune section définie</p>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {sections.map((section) => (
-                <span
-                  key={section.id}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-indigo-100 pl-3 pr-1.5 py-1 text-xs font-medium text-indigo-800"
-                >
-                  {section.name}
-                  <button
-                    type="button"
-                    onClick={() => handleOpenSectionModal(section)}
-                    className="hover:text-indigo-600 p-0.5"
-                    title="Renommer"
-                  >
-                    <Edit2 className="h-3 w-3" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDeleteSectionConfirm(section)}
-                    className="hover:text-red-600 p-0.5"
-                    title="Supprimer"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+      )}
 
       {/* Assembly Type Modal */}
       <Modal
