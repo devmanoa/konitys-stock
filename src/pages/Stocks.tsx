@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Search, Package, MapPin, Filter, ArrowUpDown, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, Package, MapPin, Filter, ArrowUpDown, ChevronDown, ChevronUp, ZoomIn, Download, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Badge from '../components/ui/Badge';
 import Button from '../components/ui/Button';
@@ -50,6 +50,7 @@ export default function Stocks() {
   const [sortField, setSortField] = useState<SortField>('reference');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [lightboxProduct, setLightboxProduct] = useState<ProductWithAssembly | null>(null);
 
   // Fetch stocks
   const { data: stocksData, isLoading: stocksLoading } = useQuery({
@@ -286,12 +287,24 @@ export default function Stocks() {
       <div className="rounded-2xl border border-[--k-border] bg-[--k-surface]">
         <div className="p-4">
           <div className="flex items-start gap-3">
-            <img
-              src={getFullImageUrl(row.product.imageUrl)}
-              alt=""
-              className="h-[5rem] w-[5rem] rounded-lg object-cover bg-[--k-surface-2] flex-shrink-0"
-              onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_PRODUCT_IMAGE; }}
-            />
+            <button
+              type="button"
+              onClick={() => row.product.imageUrl && setLightboxProduct(row.product)}
+              disabled={!row.product.imageUrl}
+              className={`group relative h-[5rem] w-[5rem] flex-shrink-0 overflow-hidden rounded-lg bg-[--k-surface-2] ${row.product.imageUrl ? 'cursor-zoom-in' : 'cursor-default'}`}
+            >
+              <img
+                src={getFullImageUrl(row.product.imageUrl)}
+                alt=""
+                className="h-full w-full object-cover"
+                onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_PRODUCT_IMAGE; }}
+              />
+              {row.product.imageUrl && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-colors">
+                  <ZoomIn className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+              )}
+            </button>
             <div className="flex-1 min-w-0">
               <Link
                 to={`/products/${row.product.id}`}
@@ -591,12 +604,24 @@ export default function Stocks() {
                     >
                       <td className="sticky left-0 z-10 bg-inherit px-4 py-1.5">
                         <div className="flex items-center gap-3">
-                          <img
-                            src={getFullImageUrl(row.product.imageUrl)}
-                            alt=""
-                            className="h-[5rem] w-[5rem] rounded-lg object-cover bg-[--k-surface-2] flex-shrink-0"
-                            onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_PRODUCT_IMAGE; }}
-                          />
+                          <button
+                            type="button"
+                            onClick={() => row.product.imageUrl && setLightboxProduct(row.product)}
+                            disabled={!row.product.imageUrl}
+                            className={`group relative h-[5rem] w-[5rem] flex-shrink-0 overflow-hidden rounded-lg bg-[--k-surface-2] ${row.product.imageUrl ? 'cursor-zoom-in' : 'cursor-default'}`}
+                          >
+                            <img
+                              src={getFullImageUrl(row.product.imageUrl)}
+                              alt=""
+                              className="h-full w-full object-cover"
+                              onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_PRODUCT_IMAGE; }}
+                            />
+                            {row.product.imageUrl && (
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-colors">
+                                <ZoomIn className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                              </div>
+                            )}
+                          </button>
                           <div className="flex flex-col min-w-0">
                             <Link
                               to={`/products/${row.product.id}`}
@@ -701,6 +726,44 @@ export default function Stocks() {
           </>
         )}
       </div>
+
+      {/* Image Lightbox */}
+      {lightboxProduct && lightboxProduct.imageUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          onClick={() => setLightboxProduct(null)}
+        >
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px]" />
+          <div
+            className="relative max-h-[90vh] max-w-[90vw]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={getFullImageUrl(lightboxProduct.imageUrl)}
+              alt={lightboxProduct.reference}
+              className="max-h-[85vh] max-w-[85vw] rounded-lg object-contain bg-white p-4"
+            />
+            <div className="absolute top-3 right-3 flex items-center gap-2">
+              <a
+                href={getFullImageUrl(lightboxProduct.imageUrl)}
+                download={`${lightboxProduct.reference}.png`}
+                className="rounded-lg bg-black/50 p-2 text-white hover:bg-black/70 transition-colors"
+                title="Télécharger"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Download className="h-5 w-5" />
+              </a>
+              <button
+                onClick={() => setLightboxProduct(null)}
+                className="rounded-lg bg-black/50 p-2 text-white hover:bg-black/70 transition-colors"
+                title="Fermer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
