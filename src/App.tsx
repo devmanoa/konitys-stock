@@ -20,7 +20,6 @@ import Settings from './pages/Settings'
 import OrderTemplates from './pages/OrderTemplates'
 import OrderTemplateDetail from './pages/OrderTemplateDetail'
 import BuildableBornes from './pages/BuildableBornes'
-import BorneSections from './pages/BorneSections'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -58,7 +57,6 @@ function App() {
                 <Route path="sites" element={<Sites />} />
                 <Route path="packs" element={<Packs />} />
                 <Route path="buildable-bornes" element={<BuildableBornes />} />
-                <Route path="borne-sections" element={<BorneSections />} />
                 <Route path="import-export" element={<ImportExport />} />
                 <Route path="order-templates" element={<OrderTemplates />} />
                 <Route path="order-templates/:id" element={<OrderTemplateDetail />} />

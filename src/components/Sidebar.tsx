@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Package, Truck, Warehouse,
   Layers, ArrowLeftRight, ShoppingCart, Upload,
   Settings, ChevronsLeft, ChevronsRight, HelpCircle,
-  Boxes, FileText,
+  Boxes, FileText, Factory,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -21,17 +21,9 @@ interface SidebarSection {
 
 const SECTIONS: SidebarSection[] = [
   {
-    label: 'Catalogue',
+    label: 'Stocks',
     items: [
       { label: 'Tableau de bord', icon: LayoutDashboard, to: '/' },
-      { label: 'Produits', icon: Package, to: '/products' },
-      { label: 'Fournisseurs', icon: Truck, to: '/suppliers' },
-      { label: 'Sites', icon: Warehouse, to: '/sites' },
-    ],
-  },
-  {
-    label: 'Inventaire',
-    items: [
       { label: 'Stocks', icon: Layers, to: '/stocks' },
       { label: 'Mouvements', icon: ArrowLeftRight, to: '/movements' },
     ],
@@ -41,14 +33,23 @@ const SECTIONS: SidebarSection[] = [
     items: [
       { label: 'Commandes', icon: ShoppingCart, to: '/orders' },
       { label: 'Modèles', icon: FileText, to: '/order-templates' },
-      { label: 'Packs', icon: Boxes, to: '/packs' },
-      { label: 'Import / Export', icon: Upload, to: '/import-export' },
+      { label: 'Packs de commande', icon: Boxes, to: '/packs' },
+    ],
+  },
+  {
+    label: 'Bornes',
+    items: [
+      { label: 'Bornes constructibles', icon: Factory, to: '/buildable-bornes' },
     ],
   },
   {
     label: 'Configuration',
     items: [
+      { label: 'Produits', icon: Package, to: '/products' },
+      { label: 'Fournisseurs', icon: Truck, to: '/suppliers' },
+      { label: 'Sites', icon: Warehouse, to: '/sites' },
       { label: 'Paramètres', icon: Settings, to: '/settings' },
+      { label: 'Import / Export', icon: Upload, to: '/import-export' },
     ],
   },
 ]

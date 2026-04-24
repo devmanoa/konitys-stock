@@ -13,7 +13,6 @@ import {
   Upload,
   Settings,
   Factory,
-  Layers as LayersIcon,
 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { loadRemoteComponent } from '../../remoteLoader'
@@ -27,26 +26,11 @@ const RemoteSidebar = React.lazy(() => loadRemoteComponent('./Sidebar'))
 // Sidebar sections for this app
 const SIDEBAR_SECTIONS = [
   {
-    label: 'Catalogue',
+    label: 'Stocks',
     items: [
       { icon: LayoutDashboard, label: 'Tableau de bord', path: '/' },
-      { icon: Package, label: 'Produits', path: '/products' },
-      { icon: Truck, label: 'Fournisseurs', path: '/suppliers' },
-      { icon: Warehouse, label: 'Sites', path: '/sites' },
-    ],
-  },
-  {
-    label: 'Inventaire',
-    items: [
       { icon: Layers, label: 'Stocks', path: '/stocks' },
       { icon: ArrowLeftRight, label: 'Mouvements', path: '/movements' },
-    ],
-  },
-  {
-    label: 'Construction',
-    items: [
-      { icon: Factory, label: 'Bornes constructibles', path: '/buildable-bornes' },
-      { icon: LayersIcon, label: 'Sections', path: '/borne-sections' },
     ],
   },
   {
@@ -55,13 +39,22 @@ const SIDEBAR_SECTIONS = [
       { icon: ShoppingCart, label: 'Commandes', path: '/orders' },
       { icon: FileText, label: 'Modèles', path: '/order-templates' },
       { icon: Boxes, label: 'Packs de commande', path: '/packs' },
-      { icon: Upload, label: 'Import / Export', path: '/import-export' },
+    ],
+  },
+  {
+    label: 'Bornes',
+    items: [
+      { icon: Factory, label: 'Bornes constructibles', path: '/buildable-bornes' },
     ],
   },
   {
     label: 'Configuration',
     items: [
+      { icon: Package, label: 'Produits', path: '/products' },
+      { icon: Truck, label: 'Fournisseurs', path: '/suppliers' },
+      { icon: Warehouse, label: 'Sites', path: '/sites' },
       { icon: Settings, label: 'Paramètres', path: '/settings' },
+      { icon: Upload, label: 'Import / Export', path: '/import-export' },
     ],
   },
 ]
