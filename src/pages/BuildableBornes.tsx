@@ -284,7 +284,7 @@ export default function BuildableBornes() {
 
   const lightbox = lightboxComponent && lightboxComponent.product.imageUrl ? (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
+      className="fixed inset-0 z-[9999] flex items-center justify-center"
       onClick={() => setLightboxComponent(null)}
     >
       <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px]" />
