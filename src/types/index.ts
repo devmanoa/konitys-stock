@@ -35,8 +35,8 @@ export interface AssemblyTypeItem {
     imageUrl?: string;
   };
   quantity: number;
-  sectionId?: string | null;
-  section?: { id: string; name: string } | null;
+  partCategoryId?: string | null;
+  partCategory?: { id: string; name: string } | null;
 }
 
 export interface AssemblyType {
@@ -381,14 +381,7 @@ export interface CreatePackInput {
   items: { productId: string; quantity: number }[];
 }
 
-// Construction Bornes (bill of materials for bornes)
-export interface BorneSection {
-  id: string;
-  name: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
+// Buildable bornes (live computation per AssemblyType)
 export interface BuildableComponent {
   id: string;
   productId: string;

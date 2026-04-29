@@ -10,14 +10,14 @@ import Select from '../components/ui/Select';
 import ProductSearch from '../components/ui/ProductSearch';
 import { useToast } from '../components/ui/Toast';
 import api from '../services/api';
-import type { AssemblyType, Assembly, PartCategory, PaginatedResponse, BorneSection, ApiResponse, Product } from '../types';
+import type { AssemblyType, Assembly, PartCategory, PaginatedResponse, Product } from '../types';
 
 type AssemblyTypeItemDraft = {
   key: string;
   productId: string;
   product: { id: string; reference: string; description?: string; imageUrl?: string } | null;
   quantity: number;
-  sectionId: string;
+  partCategoryId: string;
 };
 
 export default function Settings() {
@@ -49,11 +49,6 @@ export default function Settings() {
   const [assemblyTypeIds, setAssemblyTypeIds] = useState<string[]>([]);
   const [deleteAssemblyConfirm, setDeleteAssemblyConfirm] = useState<Assembly | null>(null);
 
-  // Borne sections (ex: Tête, Pied) — modale CRUD dans /settings
-  const [isSectionModalOpen, setIsSectionModalOpen] = useState(false);
-  const [selectedSection, setSelectedSection] = useState<BorneSection | undefined>();
-  const [sectionName, setSectionName] = useState('');
-  const [deleteSectionConfirm, setDeleteSectionConfirm] = useState<BorneSection | null>(null);
 
   // Fetch assembly types
   const { data: assemblyTypesData, isLoading: assemblyTypesLoading } = useQuery({
@@ -73,101 +68,11 @@ export default function Settings() {
     },
   });
 
-  // Fetch borne sections for the composant select
-  const { data: sectionsData } = useQuery({
-    queryKey: ['borne-sections'],
-    queryFn: async () => {
-      const res = await api.get<ApiResponse<BorneSection[]>>('/borne-sections');
-      return res.data?.data || [];
-    },
-  });
-  const sections = sectionsData || [];
-
-  const invalidateSections = () => {
-    queryClient.invalidateQueries({ queryKey: ['borne-sections'] });
-    queryClient.invalidateQueries({ queryKey: ['assembly-types'] });
-    queryClient.invalidateQueries({ queryKey: ['buildable-bornes'] });
-  };
-
-  const createSectionMutation = useMutation({
-    mutationFn: async (sectionName: string) => {
-      const res = await api.post<ApiResponse<BorneSection>>('/borne-sections', { name: sectionName });
-      return res.data.data!;
-    },
-    onSuccess: () => {
-      invalidateSections();
-    },
-    onError: () => toast.error('Erreur', 'Impossible de créer la section'),
-  });
-
-  const createSectionFromModalMutation = useMutation({
-    mutationFn: async (payload: { name: string }) => {
-      await api.post('/borne-sections', payload);
-    },
-    onSuccess: () => {
-      invalidateSections();
-      handleCloseSectionModal();
-      toast.success('Section créée', 'La section a été créée');
-    },
-    onError: () => toast.error('Erreur', 'Impossible de créer la section'),
-  });
-
-  const updateSectionMutation = useMutation({
-    mutationFn: async ({ id, payload }: { id: string; payload: { name: string } }) => {
-      await api.put(`/borne-sections/${id}`, payload);
-    },
-    onSuccess: () => {
-      invalidateSections();
-      handleCloseSectionModal();
-      toast.success('Section modifiée', 'La section a été mise à jour');
-    },
-    onError: () => toast.error('Erreur', 'Impossible de modifier la section'),
-  });
-
-  const deleteSectionMutation = useMutation({
-    mutationFn: async (id: string) => {
-      await api.delete(`/borne-sections/${id}`);
-    },
-    onSuccess: () => {
-      invalidateSections();
-      setDeleteSectionConfirm(null);
-      toast.success('Section supprimée', 'La section a été supprimée');
-    },
-    onError: () => toast.error('Erreur', 'Impossible de supprimer la section'),
-  });
-
-  const handleOpenSectionModal = (section?: BorneSection) => {
-    setSelectedSection(section);
-    setSectionName(section?.name || '');
-    setIsSectionModalOpen(true);
-  };
-
-  const handleCloseSectionModal = () => {
-    setIsSectionModalOpen(false);
-    setSelectedSection(undefined);
-    setSectionName('');
-  };
-
-  const handleSaveSection = () => {
-    const trimmed = sectionName.trim();
-    if (!trimmed) {
-      toast.error('Erreur', 'Le nom est requis');
-      return;
-    }
-    if (selectedSection) {
-      updateSectionMutation.mutate({ id: selectedSection.id, payload: { name: trimmed } });
-    } else {
-      createSectionFromModalMutation.mutate({ name: trimmed });
-    }
-  };
-
-
-
   // Assembly Type mutations
   type AssemblyTypePayload = {
     name: string;
     description?: string;
-    items?: { productId: string; quantity: number; sectionId?: string | null }[];
+    items?: { productId: string; quantity: number; partCategoryId?: string | null }[];
   };
 
   const invalidateBuildable = () => {
@@ -320,7 +225,7 @@ export default function Settings() {
         productId: item.productId,
         product: item.product,
         quantity: item.quantity,
-        sectionId: item.sectionId || '',
+        partCategoryId: item.partCategoryId || '',
       })) || []
     );
     setIsAssemblyTypeModalOpen(true);
@@ -337,7 +242,7 @@ export default function Settings() {
   const handleAddAssemblyTypeItem = () => {
     setAssemblyTypeItems((prev) => [
       ...prev,
-      { key: `new-${Date.now()}-${Math.random()}`, productId: '', product: null, quantity: 1, sectionId: '' },
+      { key: `new-${Date.now()}-${Math.random()}`, productId: '', product: null, quantity: 1, partCategoryId: '' },
     ]);
   };
 
@@ -363,23 +268,10 @@ export default function Settings() {
 
   const handleAssemblyTypeItemFieldChange = (
     index: number,
-    field: 'quantity' | 'sectionId',
+    field: 'quantity' | 'partCategoryId',
     value: number | string,
   ) => {
     setAssemblyTypeItems((prev) => prev.map((item, i) => (i === index ? { ...item, [field]: value } : item)));
-  };
-
-  const handleCreateSectionInline = async (index: number) => {
-    const promptName = window.prompt('Nom de la nouvelle section');
-    if (!promptName || !promptName.trim()) return;
-    try {
-      const section = await createSectionMutation.mutateAsync(promptName.trim());
-      setAssemblyTypeItems((prev) =>
-        prev.map((item, i) => (i === index ? { ...item, sectionId: section.id } : item)),
-      );
-    } catch {
-      // toast already shown
-    }
   };
 
   const handleSaveAssemblyType = () => {
@@ -390,7 +282,7 @@ export default function Settings() {
       items: validItems.map((it) => ({
         productId: it.productId,
         quantity: it.quantity,
-        sectionId: it.sectionId || null,
+        partCategoryId: it.partCategoryId || null,
       })),
     };
 
@@ -707,55 +599,6 @@ export default function Settings() {
         </div>
       </div>
 
-      {/* Sections de borne */}
-      <div className="rounded-2xl border border-[--k-border] bg-white shadow-sm shadow-black/[0.03] overflow-hidden">
-        <div className="flex items-center justify-between border-b border-[--k-border] px-4 py-2.5">
-          <div className="flex items-center gap-2">
-            <Layers className="h-4 w-4 text-[--k-primary]" />
-            <span className="text-lg font-semibold text-[--k-text]">Sections de borne</span>
-          </div>
-          <Button size="sm" onClick={() => handleOpenSectionModal()}>
-            <Plus className="mr-1 h-4 w-4" />
-            Ajouter
-          </Button>
-        </div>
-        <div className="p-4">
-          <p className="text-sm text-[--k-muted] mb-4">
-            Catégories utilisées pour regrouper les composants d'une borne (ex: Tête, Pied, Électronique).
-          </p>
-          {sections.length === 0 ? (
-            <p className="text-[--k-muted] italic py-4">Aucune section définie</p>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {sections.map((section) => (
-                <span
-                  key={section.id}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-indigo-100 pl-3 pr-1.5 py-1 text-xs font-medium text-indigo-800"
-                >
-                  {section.name}
-                  <button
-                    type="button"
-                    onClick={() => handleOpenSectionModal(section)}
-                    className="hover:text-indigo-600 p-0.5"
-                    title="Renommer"
-                  >
-                    <Edit2 className="h-3 w-3" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDeleteSectionConfirm(section)}
-                    className="hover:text-red-600 p-0.5"
-                    title="Supprimer"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
       {/* Bornes — masqué temporairement */}
       {false && (
       <div className="rounded-2xl border border-[--k-border] bg-white shadow-sm shadow-black/[0.03] overflow-hidden">
@@ -969,26 +812,19 @@ export default function Settings() {
                       />
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="w-36 flex gap-1">
+                      <div className="w-36">
                         <Select
-                          value={item.sectionId}
-                          onChange={(e) => handleAssemblyTypeItemFieldChange(index, 'sectionId', e.target.value)}
+                          value={item.partCategoryId}
+                          onChange={(e) => handleAssemblyTypeItemFieldChange(index, 'partCategoryId', e.target.value)}
+                          disabled={!selectedAssemblyType?.partCategories?.length}
                         >
-                          <option value="">— Section —</option>
-                          {sections.map((s) => (
-                            <option key={s.id} value={s.id}>
-                              {s.name}
+                          <option value="">— Catégorie —</option>
+                          {(selectedAssemblyType?.partCategories || []).map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.name}
                             </option>
                           ))}
                         </Select>
-                        <button
-                          type="button"
-                          onClick={() => handleCreateSectionInline(index)}
-                          title="Créer une nouvelle section"
-                          className="flex-shrink-0 rounded-lg border border-[--k-border] bg-[--k-surface] px-2 text-[--k-muted] hover:border-[--k-primary] hover:text-[--k-primary]"
-                        >
-                          <Plus className="h-4 w-4" />
-                        </button>
                       </div>
                       <div className="w-20 sm:w-24">
                         <Input
@@ -1229,71 +1065,6 @@ export default function Settings() {
         </div>
       </Modal>
 
-      {/* Section Modal */}
-      <Modal
-        isOpen={isSectionModalOpen}
-        onClose={handleCloseSectionModal}
-        title={selectedSection ? 'Modifier la section' : 'Nouvelle section'}
-        size="sm"
-      >
-        <div className="space-y-4">
-          <Input
-            label="Nom de la section"
-            value={sectionName}
-            onChange={(e) => setSectionName(e.target.value)}
-            placeholder="ex: Tête, Pied, Électronique"
-          />
-          <div className="flex justify-end gap-3 pt-4">
-            <Button variant="secondary" onClick={handleCloseSectionModal}>
-              Annuler
-            </Button>
-            <Button
-              onClick={handleSaveSection}
-              disabled={
-                !sectionName.trim() ||
-                createSectionFromModalMutation.isPending ||
-                updateSectionMutation.isPending
-              }
-            >
-              {createSectionFromModalMutation.isPending || updateSectionMutation.isPending
-                ? 'Enregistrement...'
-                : selectedSection
-                ? 'Modifier'
-                : 'Créer'}
-            </Button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Delete Section Confirmation */}
-      <Modal
-        isOpen={!!deleteSectionConfirm}
-        onClose={() => setDeleteSectionConfirm(null)}
-        title="Confirmer la suppression"
-        size="sm"
-      >
-        <div className="space-y-4">
-          <p className="text-[--k-muted]">
-            Êtes-vous sûr de vouloir supprimer la section{' '}
-            <span className="font-semibold text-[--k-text]">{deleteSectionConfirm?.name}</span> ?
-          </p>
-          <p className="text-xs text-[--k-muted]">
-            Les composants qui utilisent cette section garderont leur référence vide.
-          </p>
-          <div className="flex justify-end gap-3 pt-4">
-            <Button variant="secondary" onClick={() => setDeleteSectionConfirm(null)}>
-              Annuler
-            </Button>
-            <Button
-              variant="danger"
-              onClick={() => deleteSectionConfirm && deleteSectionMutation.mutate(deleteSectionConfirm.id)}
-              disabled={deleteSectionMutation.isPending}
-            >
-              {deleteSectionMutation.isPending ? 'Suppression...' : 'Supprimer'}
-            </Button>
-          </div>
-        </div>
-      </Modal>
     </div>
   );
 }
