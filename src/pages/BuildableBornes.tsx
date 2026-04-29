@@ -263,15 +263,13 @@ export default function BuildableBornes() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [lightboxComponent, setLightboxComponent] = useState<BuildableComponent | null>(null);
 
-  const { data, isLoading } = useQuery({
+  const { data: bornes = [], isLoading } = useQuery({
     queryKey: ['buildable-bornes'],
     queryFn: async () => {
       const res = await api.get<ApiResponse<BuildableBorne[]>>('/assembly-types/buildable');
-      return res.data;
+      return res.data?.data || [];
     },
   });
-
-  const bornes = data?.data || [];
   const selected = selectedId ? bornes.find((b) => b.id === selectedId) : null;
 
   if (isLoading) {
