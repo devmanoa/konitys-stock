@@ -394,10 +394,10 @@ export default function Stocks() {
                     <div className="flex items-center gap-3 text-sm">
                       <span className="font-bold text-[--k-text]">{siteTotal}</span>
                       {siteStock?.quantityNew ? (
-                        <span className="text-green-600">{siteStock.quantityNew}N</span>
+                        <span className="text-green-600">{siteStock.quantityNew} N</span>
                       ) : null}
                       {siteStock?.quantityUsed ? (
-                        <span className="text-orange-600">{siteStock.quantityUsed}O</span>
+                        <span className="text-orange-600">{siteStock.quantityUsed} O</span>
                       ) : null}
                     </div>
                   </div>

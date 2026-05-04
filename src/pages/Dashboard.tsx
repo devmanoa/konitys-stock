@@ -276,7 +276,7 @@ export default function Dashboard() {
                         'rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums',
                         level === 'critical' ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600'
                       )}>
-                        {alert.total}{alert.minStock != null ? `/${alert.minStock}` : ''} ({alert.totalNew}N/{alert.totalUsed}O)
+                        {alert.total}{alert.minStock != null ? `/${alert.minStock}` : ''} ({alert.totalNew} N / {alert.totalUsed} O)
                       </span>
                     </div>
                     <div className="flex items-center justify-between gap-3">
@@ -336,10 +336,10 @@ export default function Dashboard() {
                   </span>
                   <div className="flex items-center gap-1">
                     <span className="inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-medium tabular-nums bg-emerald-50 text-emerald-600">
-                      {p.totalNew}N
+                      {p.totalNew} N
                     </span>
                     <span className="inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-medium tabular-nums bg-amber-50 text-amber-600">
-                      {p.totalUsed}O
+                      {p.totalUsed} O
                     </span>
                   </div>
                 </div>
