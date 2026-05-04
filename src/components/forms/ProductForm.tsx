@@ -32,6 +32,7 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
     comment: '',
     imageUrl: '',
     partCategoryIds: [],
+    hasSerialNumber: false,
   });
 
   // Fetch assembly types for filter
@@ -88,6 +89,7 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
         comment: product.comment || '',
         imageUrl: product.imageUrl || '',
         partCategoryIds: product.partCategories?.map(pc => pc.partCategoryId) || [],
+        hasSerialNumber: product.hasSerialNumber || false,
       });
     }
   }, [product]);
@@ -134,7 +136,7 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
     },
   });
 
-  const handleChange = (field: keyof CreateProductInput, value: string | number | undefined) => {
+  const handleChange = (field: keyof CreateProductInput, value: string | number | boolean | undefined) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors(prev => {
@@ -382,6 +384,31 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
             Alerte si stock total en dessous de ce seuil
           </p>
         </div>
+      </div>
+
+      {/* Suivi par numéro de série */}
+      <div>
+        <label className="flex items-start gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={formData.hasSerialNumber || false}
+            onChange={(e) => handleChange('hasSerialNumber', e.target.checked)}
+            className="mt-0.5 h-4 w-4 rounded border-[--k-border] text-[--k-primary] focus:ring-[--k-primary]"
+          />
+          <div>
+            <span className="text-[13px] font-medium text-[--k-text]">
+              Suivi par numéro de série
+            </span>
+            <p className="text-xs text-[--k-muted] mt-0.5">
+              Chaque exemplaire est tracé individuellement (n° de série, état, statut, client final).
+              {isEditing && product?.hasSerialNumber === false && (
+                <span className="block mt-1 text-amber-600">
+                  ⚠️ Activer cette option créera des exemplaires "à compléter" pour chaque unité actuellement en stock.
+                </span>
+              )}
+            </p>
+          </div>
+        </label>
       </div>
 
       {/* Catégories de pièces */}

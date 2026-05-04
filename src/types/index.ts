@@ -145,12 +145,32 @@ export interface Product {
   assemblyType?: AssemblyType;
   comment?: string;
   imageUrl?: string;
+  hasSerialNumber?: boolean;
   createdAt: string;
   updatedAt: string;
   productSuppliers?: ProductSupplier[];
   stocks?: Stock[];
   movements?: StockMovement[];
   partCategories?: ProductPartCategory[];
+}
+
+export type SerialStatus = 'IN_STOCK' | 'OUT' | 'IN_REPAIR' | 'SCRAPPED' | 'LOST';
+
+export interface ProductSerialItem {
+  id: string;
+  productId: string;
+  serialNumber?: string | null;
+  condition: ProductCondition;
+  siteId?: string | null;
+  site?: { id: string; name: string } | null;
+  status: SerialStatus;
+  enteredAt: string;
+  exitedAt?: string | null;
+  customerName?: string | null;
+  comment?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  product?: { id: string; reference: string; description?: string };
 }
 
 export interface StockMovement {
@@ -308,6 +328,7 @@ export interface CreateProductInput {
   comment?: string;
   imageUrl?: string;
   partCategoryIds?: string[];
+  hasSerialNumber?: boolean;
 }
 
 export interface CreateMovementInput {

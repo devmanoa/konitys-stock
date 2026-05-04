@@ -19,6 +19,7 @@ import {
   X,
   AlertTriangle,
   TrendingUp,
+  Hash,
 } from 'lucide-react';
 import {
   LineChart,
@@ -38,6 +39,7 @@ import ProductForm from '../components/forms/ProductForm';
 import ProductSupplierForm from '../components/forms/ProductSupplierForm';
 import MovementForm from '../components/forms/MovementForm';
 import Comments from '../components/ProductComments';
+import SerialItemsPanel from '../components/SerialItemsPanel';
 import api from '../services/api';
 import type { Product, ApiResponse, ProductPriceHistoryEntry } from '../types';
 
@@ -486,6 +488,21 @@ export default function ProductDetail() {
                 </tbody>
               </table>
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Numéros de série */}
+      {data.hasSerialNumber && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Hash className="h-5 w-5" />
+              Numéros de série
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <SerialItemsPanel productId={data.id} />
           </CardContent>
         </Card>
       )}
