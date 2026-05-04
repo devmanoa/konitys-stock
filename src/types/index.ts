@@ -8,7 +8,6 @@ export type SiteType = 'STORAGE' | 'EXIT';
 // Base interfaces
 export interface PartCategory {
   id: string;
-  assemblyTypeId: string;
   name: string;
   description?: string;
   createdAt: string;
@@ -44,7 +43,6 @@ export interface AssemblyType {
   name: string;
   description?: string;
   createdAt: string;
-  partCategories?: PartCategory[];
   items?: AssemblyTypeItem[];
   _count?: {
     assemblies: number;

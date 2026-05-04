@@ -52,14 +52,13 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
     },
   });
 
-  // Fetch part categories for selected assembly type
+  // Fetch all part categories (global, no longer scoped per assembly type)
   const { data: partCategoriesData } = useQuery({
-    queryKey: ['part-categories', formData.assemblyTypeId],
+    queryKey: ['part-categories'],
     queryFn: async () => {
-      const res = await api.get<ApiResponse<PartCategory[]>>(`/assembly-types/${formData.assemblyTypeId}/part-categories`);
+      const res = await api.get<ApiResponse<PartCategory[]>>('/part-categories');
       return res.data?.data || [];
     },
-    enabled: !!formData.assemblyTypeId,
   });
 
   // Filter assemblies by selected type
@@ -300,8 +299,6 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
             value={formData.assemblyTypeId || ''}
             onChange={(e) => {
               handleChange('assemblyTypeId', e.target.value || undefined);
-              // Reset part categories when type changes
-              setFormData(prev => ({ ...prev, partCategoryIds: [] }));
               // Reset assembly if changing type filter
               if (e.target.value && formData.assemblyId) {
                 const assembly = assembliesData?.find(a => a.id === formData.assemblyId);
@@ -388,7 +385,7 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
       </div>
 
       {/* Catégories de pièces */}
-      {formData.assemblyTypeId && partCategoriesData && partCategoriesData.length > 0 && (
+      {partCategoriesData && partCategoriesData.length > 0 && (
         <div>
           <label className="mb-1 block text-[13px] font-medium text-[--k-text]">
             Catégories de pièces

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Edit2, Trash2, Boxes, Tag, X, ChevronDown, ChevronRight, Layers } from 'lucide-react';
+import { Plus, Edit2, Trash2, Boxes, Tag, X, Layers } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import { PageHeader } from '../components/PageHeader';
@@ -35,9 +35,7 @@ export default function Settings() {
 
 
   // Part Categories state
-  const [expandedAssemblyType, setExpandedAssemblyType] = useState<string | null>(null);
   const [newCategoryName, setNewCategoryName] = useState('');
-  const [newCategoryAssemblyTypeId, setNewCategoryAssemblyTypeId] = useState<string | null>(null);
   const [editingCategory, setEditingCategory] = useState<PartCategory | null>(null);
   const [editCategoryName, setEditCategoryName] = useState('');
   const [deleteCategoryConfirm, setDeleteCategoryConfirm] = useState<PartCategory | null>(null);
@@ -65,6 +63,15 @@ export default function Settings() {
     queryKey: ['assemblies'],
     queryFn: async () => {
       const res = await api.get<PaginatedResponse<Assembly>>('/assemblies?limit=100');
+      return res.data?.data || [];
+    },
+  });
+
+  // Fetch part categories (global)
+  const { data: partCategoriesData } = useQuery({
+    queryKey: ['part-categories'],
+    queryFn: async () => {
+      const res = await api.get<{ success: boolean; data: PartCategory[] }>('/part-categories');
       return res.data?.data || [];
     },
   });
@@ -171,15 +178,20 @@ export default function Settings() {
   });
 
 
-  // Part Category mutations
+  // Part Category mutations (global, no longer scoped per assembly type)
+  const invalidatePartCategories = () => {
+    queryClient.invalidateQueries({ queryKey: ['part-categories'] });
+    queryClient.invalidateQueries({ queryKey: ['assembly-types'], refetchType: 'all' });
+    queryClient.invalidateQueries({ queryKey: ['buildable-bornes'] });
+  };
+
   const createPartCategoryMutation = useMutation({
-    mutationFn: async ({ assemblyTypeId, name }: { assemblyTypeId: string; name: string }) => {
-      await api.post(`/assembly-types/${assemblyTypeId}/part-categories`, { name });
+    mutationFn: async (name: string) => {
+      await api.post('/part-categories', { name });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['assembly-types'], refetchType: 'all' });
+      invalidatePartCategories();
       setNewCategoryName('');
-      setNewCategoryAssemblyTypeId(null);
       toast.success('Catégorie créée', 'La catégorie de pièces a été créée');
     },
     onError: () => {
@@ -192,7 +204,7 @@ export default function Settings() {
       await api.put(`/part-categories/${id}`, { name });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['assembly-types'], refetchType: 'all' });
+      invalidatePartCategories();
       setEditingCategory(null);
       setEditCategoryName('');
       toast.success('Catégorie modifiée', 'La catégorie a été renommée');
@@ -207,7 +219,7 @@ export default function Settings() {
       await api.delete(`/part-categories/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['assembly-types'], refetchType: 'all' });
+      invalidatePartCategories();
       setDeleteCategoryConfirm(null);
       toast.success('Catégorie supprimée', 'La catégorie a été supprimée');
     },
@@ -382,20 +394,8 @@ export default function Settings() {
                           </p>
                         )}
                         <p className="mt-2 text-xs text-[--k-muted]">
-                          {assemblyType._count?.assemblies || 0} borne(s) · {assemblyType.partCategories?.length || 0} catégorie(s)
+                          {assemblyType._count?.assemblies || 0} borne(s)
                         </p>
-                        {assemblyType.partCategories && assemblyType.partCategories.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-2">
-                            {assemblyType.partCategories.map((cat) => (
-                              <span
-                                key={cat.id}
-                                className="inline-flex items-center rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-800"
-                              >
-                                {cat.name}
-                              </span>
-                            ))}
-                          </div>
-                        )}
                       </div>
                       <div className="flex gap-1 shrink-0">
                         <Button
@@ -427,171 +427,43 @@ export default function Settings() {
                       <th className="px-4 py-1.5 text-left text-xs font-medium text-[--k-muted]">Nom</th>
                       <th className="px-4 py-1.5 text-left text-xs font-medium text-[--k-muted]">Description</th>
                       <th className="px-4 py-1.5 text-center text-xs font-medium text-[--k-muted]">Bornes</th>
-                      <th className="px-4 py-1.5 text-center text-xs font-medium text-[--k-muted]">Catégories</th>
                       <th className="px-4 py-1.5 text-right text-xs font-medium text-[--k-muted]">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {assemblyTypesData.map((assemblyType) => (
-                      <>
-                        <tr key={assemblyType.id} className="border-t border-[--k-border] hover:bg-[--k-surface-2]/30 transition-colors">
-                          <td className="px-4 py-1.5 font-medium text-[--k-text]">
-                            <button
-                              type="button"
-                              onClick={() => setExpandedAssemblyType(expandedAssemblyType === assemblyType.id ? null : assemblyType.id)}
-                              className="flex items-center gap-1.5 hover:text-[--k-primary] transition-colors"
+                      <tr key={assemblyType.id} className="border-t border-[--k-border] hover:bg-[--k-surface-2]/30 transition-colors">
+                        <td className="px-4 py-1.5 font-medium text-[--k-text]">
+                          {assemblyType.name}
+                        </td>
+                        <td className="px-4 py-1.5 text-[--k-muted]">
+                          {assemblyType.description || '-'}
+                        </td>
+                        <td className="px-4 py-1.5 text-center text-[--k-muted]">
+                          {assemblyType._count?.assemblies || 0}
+                        </td>
+                        <td className="px-4 py-1.5">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleOpenAssemblyTypeModal(assemblyType)}
+                              title="Modifier"
                             >
-                              {expandedAssemblyType === assemblyType.id ? (
-                                <ChevronDown className="h-3.5 w-3.5" />
-                              ) : (
-                                <ChevronRight className="h-3.5 w-3.5" />
-                              )}
-                              {assemblyType.name}
-                            </button>
-                          </td>
-                          <td className="px-4 py-1.5 text-[--k-muted]">
-                            {assemblyType.description || '-'}
-                          </td>
-                          <td className="px-4 py-1.5 text-center text-[--k-muted]">
-                            {assemblyType._count?.assemblies || 0}
-                          </td>
-                          <td className="px-4 py-1.5 text-center text-[--k-muted]">
-                            {assemblyType.partCategories?.length || 0}
-                          </td>
-                          <td className="px-4 py-1.5">
-                            <div className="flex items-center justify-end gap-1">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleOpenAssemblyTypeModal(assemblyType)}
-                                title="Modifier"
-                              >
-                                <Edit2 className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setDeleteAssemblyTypeConfirm(assemblyType)}
-                                title="Supprimer"
-                                className="text-red-600 hover:bg-red-50 hover:text-red-700"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                        {expandedAssemblyType === assemblyType.id && (
-                          <tr key={`${assemblyType.id}-categories`}>
-                            <td colSpan={5} className="px-4 py-3 bg-[--k-surface-2]/30">
-                              <div className="ml-6">
-                                <div className="flex items-center gap-2 mb-2">
-                                  <Layers className="h-3.5 w-3.5 text-[--k-primary]" />
-                                  <span className="text-xs font-semibold text-[--k-text] uppercase">Catégories de pièces</span>
-                                </div>
-                                {assemblyType.partCategories && assemblyType.partCategories.length > 0 ? (
-                                  <div className="flex flex-wrap gap-2 mb-3">
-                                    {assemblyType.partCategories.map((cat) => (
-                                      <span
-                                        key={cat.id}
-                                        className="inline-flex items-center gap-1.5 rounded-full bg-indigo-100 pl-3 pr-1.5 py-1 text-xs font-medium text-indigo-800"
-                                      >
-                                        {editingCategory?.id === cat.id ? (
-                                          <input
-                                            type="text"
-                                            value={editCategoryName}
-                                            onChange={(e) => setEditCategoryName(e.target.value)}
-                                            onKeyDown={(e) => {
-                                              if (e.key === 'Enter' && editCategoryName.trim()) {
-                                                updatePartCategoryMutation.mutate({ id: cat.id, name: editCategoryName.trim() });
-                                              }
-                                              if (e.key === 'Escape') {
-                                                setEditingCategory(null);
-                                                setEditCategoryName('');
-                                              }
-                                            }}
-                                            onBlur={() => {
-                                              if (editCategoryName.trim() && editCategoryName !== cat.name) {
-                                                updatePartCategoryMutation.mutate({ id: cat.id, name: editCategoryName.trim() });
-                                              } else {
-                                                setEditingCategory(null);
-                                                setEditCategoryName('');
-                                              }
-                                            }}
-                                            className="bg-transparent border-none outline-none w-20 text-xs"
-                                            autoFocus
-                                          />
-                                        ) : (
-                                          <>
-                                            {cat.name}
-                                            {cat._count?.products != null && (
-                                              <span className="text-indigo-500">({cat._count.products})</span>
-                                            )}
-                                          </>
-                                        )}
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            setEditingCategory(cat);
-                                            setEditCategoryName(cat.name);
-                                          }}
-                                          className="hover:text-indigo-600 p-0.5"
-                                          title="Renommer"
-                                        >
-                                          <Edit2 className="h-3 w-3" />
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={() => setDeleteCategoryConfirm(cat)}
-                                          className="hover:text-red-600 p-0.5"
-                                          title="Supprimer"
-                                        >
-                                          <X className="h-3 w-3" />
-                                        </button>
-                                      </span>
-                                    ))}
-                                  </div>
-                                ) : (
-                                  <p className="text-xs text-[--k-muted] italic mb-3">Aucune catégorie</p>
-                                )}
-                                <div className="flex items-center gap-2">
-                                  <input
-                                    type="text"
-                                    value={newCategoryName}
-                                    onChange={(e) => setNewCategoryName(e.target.value)}
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Enter' && newCategoryName.trim()) {
-                                        createPartCategoryMutation.mutate({
-                                          assemblyTypeId: assemblyType.id,
-                                          name: newCategoryName.trim(),
-                                        });
-                                      }
-                                    }}
-                                    placeholder="Nouvelle catégorie..."
-                                    className="input-field text-xs"
-                                    style={{ height: '28px', padding: '0 0.5rem', maxWidth: '200px' }}
-                                  />
-                                  <Button
-                                    size="sm"
-                                    variant="secondary"
-                                    onClick={() => {
-                                      if (newCategoryName.trim()) {
-                                        createPartCategoryMutation.mutate({
-                                          assemblyTypeId: assemblyType.id,
-                                          name: newCategoryName.trim(),
-                                        });
-                                      }
-                                    }}
-                                    disabled={!newCategoryName.trim() || createPartCategoryMutation.isPending}
-                                  >
-                                    <Plus className="h-3 w-3 mr-1" />
-                                    Ajouter
-                                  </Button>
-                                </div>
-                              </div>
-                            </td>
-                          </tr>
-                        )}
-                      </>
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setDeleteAssemblyTypeConfirm(assemblyType)}
+                              title="Supprimer"
+                              className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
                     ))}
                   </tbody>
                 </table>
@@ -601,7 +473,7 @@ export default function Settings() {
         </div>
       </div>
 
-      {/* Catégories de pièces — vue globale par type de borne */}
+      {/* Catégories de pièces — globales */}
       <div className="rounded-2xl border border-[--k-border] bg-white shadow-sm shadow-black/[0.03] overflow-hidden">
         <div className="flex items-center justify-between border-b border-[--k-border] px-4 py-2.5">
           <div className="flex items-center gap-2">
@@ -611,140 +483,101 @@ export default function Settings() {
         </div>
         <div className="p-4">
           <p className="text-sm text-[--k-muted] mb-4">
-            Catégories utilisées pour regrouper les composants par type de borne (ex: Tête, Pied, Électronique). Chaque catégorie est propre à un type de borne.
+            Catégories partagées entre tous les types de bornes pour regrouper les composants (ex: Tête, Pied, Électronique).
           </p>
-          {assemblyTypesLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-[--k-primary] border-t-transparent" />
-            </div>
-          ) : !assemblyTypesData?.length ? (
-            <p className="text-[--k-muted] italic py-4">
-              Créez d'abord un type de borne ci-dessus.
-            </p>
-          ) : (
-            <div className="space-y-4">
-              {assemblyTypesData.map((assemblyType) => (
-                <div
-                  key={assemblyType.id}
-                  className="rounded-xl border border-[--k-border] bg-[--k-surface-2]/30 p-3"
+          {partCategoriesData && partCategoriesData.length > 0 ? (
+            <div className="flex flex-wrap gap-2 mb-3">
+              {partCategoriesData.map((cat) => (
+                <span
+                  key={cat.id}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-indigo-100 pl-3 pr-1.5 py-1 text-xs font-medium text-indigo-800"
                 >
-                  <div className="mb-2 flex items-center gap-2">
-                    <Boxes className="h-3.5 w-3.5 text-[--k-primary]" />
-                    <span className="text-sm font-semibold text-[--k-text]">{assemblyType.name}</span>
-                  </div>
-                  {assemblyType.partCategories && assemblyType.partCategories.length > 0 ? (
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {assemblyType.partCategories.map((cat) => (
-                        <span
-                          key={cat.id}
-                          className="inline-flex items-center gap-1.5 rounded-full bg-indigo-100 pl-3 pr-1.5 py-1 text-xs font-medium text-indigo-800"
-                        >
-                          {editingCategory?.id === cat.id ? (
-                            <input
-                              type="text"
-                              value={editCategoryName}
-                              onChange={(e) => setEditCategoryName(e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter' && editCategoryName.trim()) {
-                                  updatePartCategoryMutation.mutate({ id: cat.id, name: editCategoryName.trim() });
-                                }
-                                if (e.key === 'Escape') {
-                                  setEditingCategory(null);
-                                  setEditCategoryName('');
-                                }
-                              }}
-                              onBlur={() => {
-                                if (editCategoryName.trim() && editCategoryName !== cat.name) {
-                                  updatePartCategoryMutation.mutate({ id: cat.id, name: editCategoryName.trim() });
-                                } else {
-                                  setEditingCategory(null);
-                                  setEditCategoryName('');
-                                }
-                              }}
-                              className="bg-transparent border-none outline-none w-20 text-xs"
-                              autoFocus
-                            />
-                          ) : (
-                            <>
-                              {cat.name}
-                              {cat._count?.products != null && (
-                                <span className="text-indigo-500">({cat._count.products})</span>
-                              )}
-                            </>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setEditingCategory(cat);
-                              setEditCategoryName(cat.name);
-                            }}
-                            className="hover:text-indigo-600 p-0.5"
-                            title="Renommer"
-                          >
-                            <Edit2 className="h-3 w-3" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setDeleteCategoryConfirm(cat)}
-                            className="hover:text-red-600 p-0.5"
-                            title="Supprimer"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-[--k-muted] italic mb-3">Aucune catégorie</p>
-                  )}
-                  <div className="flex items-center gap-2">
+                  {editingCategory?.id === cat.id ? (
                     <input
                       type="text"
-                      value={newCategoryAssemblyTypeId === assemblyType.id ? newCategoryName : ''}
-                      onFocus={() => setNewCategoryAssemblyTypeId(assemblyType.id)}
-                      onChange={(e) => {
-                        setNewCategoryAssemblyTypeId(assemblyType.id);
-                        setNewCategoryName(e.target.value);
-                      }}
+                      value={editCategoryName}
+                      onChange={(e) => setEditCategoryName(e.target.value)}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter' && newCategoryName.trim() && newCategoryAssemblyTypeId === assemblyType.id) {
-                          createPartCategoryMutation.mutate({
-                            assemblyTypeId: assemblyType.id,
-                            name: newCategoryName.trim(),
-                          });
-                          setNewCategoryAssemblyTypeId(null);
+                        if (e.key === 'Enter' && editCategoryName.trim()) {
+                          updatePartCategoryMutation.mutate({ id: cat.id, name: editCategoryName.trim() });
+                        }
+                        if (e.key === 'Escape') {
+                          setEditingCategory(null);
+                          setEditCategoryName('');
                         }
                       }}
-                      placeholder="Nouvelle catégorie..."
-                      className="input-field text-xs"
-                      style={{ height: '28px', padding: '0 0.5rem', maxWidth: '200px' }}
+                      onBlur={() => {
+                        if (editCategoryName.trim() && editCategoryName !== cat.name) {
+                          updatePartCategoryMutation.mutate({ id: cat.id, name: editCategoryName.trim() });
+                        } else {
+                          setEditingCategory(null);
+                          setEditCategoryName('');
+                        }
+                      }}
+                      className="bg-transparent border-none outline-none w-20 text-xs"
+                      autoFocus
                     />
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={() => {
-                        if (newCategoryName.trim() && newCategoryAssemblyTypeId === assemblyType.id) {
-                          createPartCategoryMutation.mutate({
-                            assemblyTypeId: assemblyType.id,
-                            name: newCategoryName.trim(),
-                          });
-                          setNewCategoryAssemblyTypeId(null);
-                        }
-                      }}
-                      disabled={
-                        !newCategoryName.trim() ||
-                        newCategoryAssemblyTypeId !== assemblyType.id ||
-                        createPartCategoryMutation.isPending
-                      }
-                    >
-                      <Plus className="h-3 w-3 mr-1" />
-                      Ajouter
-                    </Button>
-                  </div>
-                </div>
+                  ) : (
+                    <>
+                      {cat.name}
+                      {cat._count?.products != null && (
+                        <span className="text-indigo-500">({cat._count.products})</span>
+                      )}
+                    </>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingCategory(cat);
+                      setEditCategoryName(cat.name);
+                    }}
+                    className="hover:text-indigo-600 p-0.5"
+                    title="Renommer"
+                  >
+                    <Edit2 className="h-3 w-3" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDeleteCategoryConfirm(cat)}
+                    className="hover:text-red-600 p-0.5"
+                    title="Supprimer"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
               ))}
             </div>
+          ) : (
+            <p className="text-xs text-[--k-muted] italic mb-3">Aucune catégorie</p>
           )}
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={newCategoryName}
+              onChange={(e) => setNewCategoryName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && newCategoryName.trim()) {
+                  createPartCategoryMutation.mutate(newCategoryName.trim());
+                }
+              }}
+              placeholder="Nouvelle catégorie..."
+              className="input-field text-xs"
+              style={{ height: '28px', padding: '0 0.5rem', maxWidth: '200px' }}
+            />
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => {
+                if (newCategoryName.trim()) {
+                  createPartCategoryMutation.mutate(newCategoryName.trim());
+                }
+              }}
+              disabled={!newCategoryName.trim() || createPartCategoryMutation.isPending}
+            >
+              <Plus className="h-3 w-3 mr-1" />
+              Ajouter
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -965,10 +798,10 @@ export default function Settings() {
                         <Select
                           value={item.partCategoryId}
                           onChange={(e) => handleAssemblyTypeItemFieldChange(index, 'partCategoryId', e.target.value)}
-                          disabled={!selectedAssemblyType?.partCategories?.length}
+                          disabled={!partCategoriesData?.length}
                         >
                           <option value="">— Catégorie —</option>
-                          {(selectedAssemblyType?.partCategories || []).map((c) => (
+                          {(partCategoriesData || []).map((c) => (
                             <option key={c.id} value={c.id}>
                               {c.name}
                             </option>
