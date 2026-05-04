@@ -56,10 +56,7 @@ export default function MovementForm({ onSuccess, onCancel, preselectedProductId
 
   const movementType = watch('type')
   const sourceSiteId = watch('sourceSiteId')
-  const targetSiteId = watch('targetSiteId')
-  const quantity = watch('quantity')
   const condition = watch('condition')
-  const movementDate = watch('movementDate')
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(preselectedProduct || null)
 
   const { data: sites } = useQuery({
@@ -118,15 +115,6 @@ export default function MovementForm({ onSuccess, onCancel, preselectedProductId
       setValue('sourceSiteId', '')
     }
   }, [condition, setValue, movementType])
-
-  const getTypeLabel = (type: string) => {
-    switch (type) {
-      case 'IN': return 'Entrée'
-      case 'OUT': return 'Sortie'
-      case 'TRANSFER': return 'Transfert'
-      default: return type
-    }
-  }
 
   const showSourceSite = movementType === 'OUT' || movementType === 'TRANSFER'
   const showTargetSite = movementType === 'IN' || movementType === 'TRANSFER'
@@ -241,44 +229,6 @@ export default function MovementForm({ onSuccess, onCancel, preselectedProductId
           {(createMutation.error as any)?.response?.data?.error || 'Erreur lors de la création'}
         </div>
       )}
-
-      <div className="rounded-xl bg-[--k-surface-2] p-4 text-[13px] space-y-2">
-        <p className="font-medium text-[--k-text]">Résumé du mouvement :</p>
-        <div className="grid grid-cols-2 gap-2 text-[--k-muted]">
-          <span>Produit :</span>
-          <span className="font-medium text-[--k-text]">
-            {selectedProduct ? selectedProduct.reference : <span className="italic text-[--k-muted]">Non sélectionné</span>}
-          </span>
-          <span>Type :</span>
-          <span className={`font-medium ${movementType === 'IN' ? 'text-emerald-600' : movementType === 'OUT' ? 'text-red-600' : 'text-blue-600'}`}>
-            {getTypeLabel(movementType)}
-          </span>
-          <span>Quantité :</span>
-          <span className="font-medium text-[--k-text]">
-            {quantity || 0} {condition === 'NEW' ? '(Neuf)' : '(Occasion)'}
-          </span>
-          {showSourceSite && (
-            <>
-              <span>Site source :</span>
-              <span className="font-medium text-[--k-text]">
-                {sourceSiteId ? sites?.find((s) => s.id === sourceSiteId)?.name : <span className="italic text-[--k-muted]">Non sélectionné</span>}
-              </span>
-            </>
-          )}
-          {showTargetSite && (
-            <>
-              <span>Site cible :</span>
-              <span className="font-medium text-[--k-text]">
-                {targetSiteId ? sites?.find((s) => s.id === targetSiteId)?.name : <span className="italic text-[--k-muted]">Non sélectionné</span>}
-              </span>
-            </>
-          )}
-          <span>Date :</span>
-          <span className="font-medium text-[--k-text]">
-            {movementDate ? new Date(movementDate).toLocaleDateString('fr-FR') : '-'}
-          </span>
-        </div>
-      </div>
 
       <div className="flex justify-end gap-3 pt-4">
         <Button type="button" variant="secondary" onClick={onCancel}>
