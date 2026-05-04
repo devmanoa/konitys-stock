@@ -246,16 +246,39 @@ function BorneDetail({
               {missingParts.map((p) => (
                 <li
                   key={p.id}
-                  className="flex items-center justify-between rounded-lg border border-orange-200 bg-orange-50 px-3 py-2 text-sm"
+                  className="flex items-center gap-3 rounded-lg border border-orange-200 bg-orange-50 px-3 py-2 text-sm"
                 >
+                  <button
+                    type="button"
+                    onClick={() => p.product.imageUrl && onImageClick(p)}
+                    disabled={!p.product.imageUrl}
+                    className={`group relative h-10 w-10 flex-shrink-0 rounded-lg bg-white flex items-center justify-center overflow-hidden border border-orange-200 ${p.product.imageUrl ? 'cursor-zoom-in' : 'cursor-default'}`}
+                  >
+                    {p.product.imageUrl ? (
+                      <>
+                        <img
+                          src={getFullImageUrl(p.product.imageUrl)}
+                          alt={p.product.reference}
+                          className="h-full w-full object-cover"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-colors">
+                          <ZoomIn className="h-4 w-4 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </div>
+                      </>
+                    ) : (
+                      <Package className="h-4 w-4 text-[--k-muted]" />
+                    )}
+                  </button>
                   <Link
                     to={`/products/${p.productId}`}
-                    className="text-[--k-text] hover:text-[--k-primary] hover:underline"
+                    className="flex-1 min-w-0 text-[--k-text] hover:text-[--k-primary] hover:underline truncate"
                   >
-                    {p.product.reference}
-                    {p.product.description ? ` — ${p.product.description}` : ''}
+                    {p.product.description || p.product.reference}
+                    {p.product.description && (
+                      <span className="block text-xs text-[--k-muted]/80 truncate">{p.product.reference}</span>
+                    )}
                   </Link>
-                  <span className="font-semibold text-red-600">{p.remaining}</span>
+                  <span className="font-semibold text-red-600 flex-shrink-0">{p.remaining}</span>
                 </li>
               ))}
             </ul>
