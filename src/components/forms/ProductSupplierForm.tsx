@@ -52,6 +52,7 @@ export default function ProductSupplierForm({ product, onClose }: ProductSupplie
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['product', product.id] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['product-price-history', product.id] });
       setShowAddForm(false);
       setNewLink({
         supplierId: '',

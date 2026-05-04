@@ -18,7 +18,18 @@ import {
   Download,
   X,
   AlertTriangle,
+  TrendingUp,
 } from 'lucide-react';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
+  ResponsiveContainer,
+  Legend,
+} from 'recharts';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
@@ -28,7 +39,7 @@ import ProductSupplierForm from '../components/forms/ProductSupplierForm';
 import MovementForm from '../components/forms/MovementForm';
 import Comments from '../components/ProductComments';
 import api from '../services/api';
-import type { Product, ApiResponse } from '../types';
+import type { Product, ApiResponse, ProductPriceHistoryEntry } from '../types';
 
 // Helper to get full image URL
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/api$/, '');
@@ -38,6 +49,60 @@ const getFullImageUrl = (url: string | null | undefined): string => {
   if (url.startsWith('http')) return url;
   return `${API_BASE_URL}${url}`;
 };
+
+const CHART_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#84cc16'];
+
+function PriceHistoryChart({ entries }: { entries: ProductPriceHistoryEntry[] }) {
+  // Build a per-supplier line: array of { date, price } sorted asc, then merge into one chart
+  const suppliers = Array.from(
+    new Map(entries.map((e) => [e.supplierId, e.supplierName])).entries(),
+  ).map(([id, name]) => ({ id, name }));
+
+  // Use timestamp as x so duplicate days from different suppliers don't collide
+  type Row = { ts: number; label: string } & Record<string, number | string>;
+  const rowMap = new Map<number, Row>();
+  for (const e of entries) {
+    const ts = new Date(e.changedAt).getTime();
+    if (!rowMap.has(ts)) {
+      rowMap.set(ts, {
+        ts,
+        label: new Date(e.changedAt).toLocaleDateString('fr-FR'),
+      });
+    }
+    const row = rowMap.get(ts)!;
+    row[`s_${e.supplierId}`] = Number(e.unitPrice);
+  }
+  const rows = Array.from(rowMap.values()).sort((a, b) => a.ts - b.ts);
+
+  return (
+    <div className="h-64 w-full">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={rows} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+          <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+          <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${v} €`} />
+          <RechartsTooltip
+            formatter={(value) => `${Number(value).toFixed(2)} €`}
+            labelFormatter={(l) => `Le ${l}`}
+          />
+          <Legend wrapperStyle={{ fontSize: 12 }} />
+          {suppliers.map((s, i) => (
+            <Line
+              key={s.id}
+              type="monotone"
+              dataKey={`s_${s.id}`}
+              name={s.name}
+              stroke={CHART_COLORS[i % CHART_COLORS.length]}
+              strokeWidth={2}
+              dot={{ r: 3 }}
+              connectNulls
+            />
+          ))}
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
@@ -53,6 +118,15 @@ export default function ProductDetail() {
     queryFn: async () => {
       const res = await api.get<ApiResponse<Product>>(`/products/${id}`);
       return res.data?.data;
+    },
+    enabled: !!id,
+  });
+
+  const { data: priceHistory } = useQuery({
+    queryKey: ['product-price-history', id],
+    queryFn: async () => {
+      const res = await api.get<ApiResponse<ProductPriceHistoryEntry[]>>(`/products/${id}/price-history`);
+      return res.data?.data || [];
     },
     enabled: !!id,
   });
@@ -342,6 +416,79 @@ export default function ProductDetail() {
           )}
         </CardContent>
       </Card>
+
+      {/* Historique des prix */}
+      {priceHistory && priceHistory.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Historique des prix ({priceHistory.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <PriceHistoryChart entries={priceHistory} />
+            <div className="mt-4 overflow-x-auto">
+              <table className="w-full text-[13px]">
+                <thead>
+                  <tr className="border-b border-[--k-border] bg-[--k-surface-2]/50 text-[--k-muted]">
+                    <th className="px-4 py-1.5 text-left text-xs font-medium">Date</th>
+                    <th className="px-4 py-1.5 text-left text-xs font-medium">Fournisseur</th>
+                    <th className="px-4 py-1.5 text-right text-xs font-medium">Prix unitaire</th>
+                    <th className="px-4 py-1.5 text-right text-xs font-medium">Variation</th>
+                    <th className="px-4 py-1.5 text-left text-xs font-medium">Modifié par</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[...priceHistory].reverse().map((entry, idx, arr) => {
+                    const newer = idx > 0 ? Number(arr[idx - 1].unitPrice) : null;
+                    const current = Number(entry.unitPrice);
+                    let delta: number | null = null;
+                    let deltaPct: number | null = null;
+                    if (newer != null && current > 0) {
+                      delta = newer - current;
+                      deltaPct = (delta / current) * 100;
+                    }
+                    return (
+                      <tr key={entry.id} className="border-t border-[--k-border]">
+                        <td className="px-4 py-1.5 text-[--k-muted] tabular-nums">
+                          {new Date(entry.changedAt).toLocaleDateString('fr-FR')}
+                          <span className="ml-2 text-xs text-[--k-muted]/60">
+                            {new Date(entry.changedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </td>
+                        <td className="px-4 py-1.5 text-[--k-text]">{entry.supplierName}</td>
+                        <td className="px-4 py-1.5 text-right tabular-nums font-medium text-[--k-text]">
+                          {Number(entry.unitPrice).toFixed(2)} {'€'}
+                        </td>
+                        <td className="px-4 py-1.5 text-right tabular-nums">
+                          {delta == null ? (
+                            <span className="text-[--k-muted]">—</span>
+                          ) : delta === 0 ? (
+                            <span className="text-[--k-muted]">±0</span>
+                          ) : (
+                            <span className={delta > 0 ? 'text-red-600' : 'text-green-600'}>
+                              {delta > 0 ? '+' : ''}
+                              {delta.toFixed(2)} {'€'}
+                              {deltaPct != null && (
+                                <span className="ml-1 text-xs">
+                                  ({delta > 0 ? '+' : ''}
+                                  {deltaPct.toFixed(1)}%)
+                                </span>
+                              )}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-1.5 text-[--k-muted]">{entry.changedByName || '—'}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Stock par site */}
       <Card>

@@ -239,6 +239,17 @@ export interface DashboardStats {
   totalPossibleUnits: number;
 }
 
+export interface ProductPriceHistoryEntry {
+  id: string;
+  productId: string;
+  supplierId: string;
+  supplierName: string;
+  unitPrice: string | number;
+  changedAt: string;
+  changedById?: string | null;
+  changedByName?: string | null;
+}
+
 export interface LowStockAlert {
   id: string;
   reference: string;
