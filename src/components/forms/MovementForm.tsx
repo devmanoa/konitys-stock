@@ -16,7 +16,6 @@ interface MovementFormData {
   quantity: number
   condition: ProductCondition
   movementDate: string
-  operator?: string
   comment?: string
 }
 
@@ -51,7 +50,6 @@ export default function MovementForm({ onSuccess, onCancel, preselectedProductId
       quantity: 1,
       sourceSiteId: '',
       targetSiteId: '',
-      operator: '',
       comment: '',
     },
   })
@@ -83,7 +81,6 @@ export default function MovementForm({ onSuccess, onCancel, preselectedProductId
         movementDate: new Date(data.movementDate).toISOString(),
         sourceSiteId: data.sourceSiteId || undefined,
         targetSiteId: data.targetSiteId || undefined,
-        operator: data.operator || undefined,
         comment: data.comment || undefined,
       }
       const res = await api.post('/movements', payload)
@@ -223,15 +220,6 @@ export default function MovementForm({ onSuccess, onCancel, preselectedProductId
         label="Date du mouvement *"
         error={errors.movementDate?.message}
         {...register('movementDate', { required: 'Date requise' })}
-      />
-
-      <Input
-        id="operator"
-        type="text"
-        label="Opérateur"
-        placeholder="Nom de l'opérateur"
-        error={errors.operator?.message}
-        {...register('operator')}
       />
 
       <div className="space-y-1">

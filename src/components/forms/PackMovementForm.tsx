@@ -32,7 +32,6 @@ interface PackMovementFormData {
   packQuantity: number
   siteId: string
   movementDate: string
-  operator?: string
   comment?: string
   items: PackItem[]
 }
@@ -125,7 +124,6 @@ export default function PackMovementForm({ onSuccess, onCancel }: PackMovementFo
         quantity: item.quantity,
         condition: item.condition,
         movementDate: new Date(data.movementDate).toISOString(),
-        operator: data.operator || undefined,
         comment: data.comment
           ? `[Pack: ${selectedPack?.name}] ${data.comment}`
           : `[Pack: ${selectedPack?.name}]`,
@@ -327,8 +325,6 @@ export default function PackMovementForm({ onSuccess, onCancel }: PackMovementFo
         error={errors.movementDate?.message}
         {...register('movementDate', { required: 'Date du mouvement requise' })}
       />
-
-      <Input label="Opérateur" type="text" {...register('operator')} placeholder="Nom de l'opérateur (optionnel)" />
 
       <div>
         <label className="block text-[13px] font-medium text-[--k-text] mb-1">Commentaire</label>
