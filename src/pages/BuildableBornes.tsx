@@ -1,4 +1,5 @@
 import { Fragment, useState, useMemo, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Factory, AlertTriangle, CheckCircle2, ChevronRight, ArrowLeft, Package, ZoomIn, Download, X } from 'lucide-react';
 import Button from '../components/ui/Button';
@@ -196,8 +197,11 @@ function BorneDetail({
                                 <Package className="h-4 w-4 text-[--k-muted]" />
                               )}
                             </button>
-                            <div className="min-w-0">
-                              <div className="font-medium text-[--k-text]">
+                            <Link
+                              to={`/products/${c.productId}`}
+                              className="min-w-0 group/link"
+                            >
+                              <div className="font-medium text-[--k-text] group-hover/link:text-[--k-primary] group-hover/link:underline">
                                 {c.product.description || c.product.reference}
                               </div>
                               {c.product.description && (
@@ -205,7 +209,7 @@ function BorneDetail({
                                   {c.product.reference}
                                 </div>
                               )}
-                            </div>
+                            </Link>
                           </div>
                         </td>
                         <td className="px-4 py-2 text-center text-[--k-text]">{c.required}</td>
@@ -244,10 +248,13 @@ function BorneDetail({
                   key={p.id}
                   className="flex items-center justify-between rounded-lg border border-orange-200 bg-orange-50 px-3 py-2 text-sm"
                 >
-                  <span className="text-[--k-text]">
+                  <Link
+                    to={`/products/${p.productId}`}
+                    className="text-[--k-text] hover:text-[--k-primary] hover:underline"
+                  >
                     {p.product.reference}
                     {p.product.description ? ` — ${p.product.description}` : ''}
-                  </span>
+                  </Link>
                   <span className="font-semibold text-red-600">{p.remaining}</span>
                 </li>
               ))}
