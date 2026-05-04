@@ -368,9 +368,38 @@ export default function Orders() {
         <KpiCard title="Qté attente" value={totalQuantityPending} icon={Package} colorIndex={0} />
       </div>
 
+      {/* Tabs */}
+      <div className="flex items-center gap-1 border-b border-[--k-border]">
+        {[
+          { value: '', label: 'Toutes' },
+          { value: 'PENDING', label: 'En cours' },
+          { value: 'COMPLETED', label: 'Terminées' },
+          { value: 'CANCELLED', label: 'Annulées' },
+        ].map((tab) => {
+          const isActive = statusFilter === tab.value;
+          return (
+            <button
+              key={tab.value || 'all'}
+              type="button"
+              onClick={() => updateParams({ status: tab.value })}
+              className={`relative px-4 py-2 text-sm font-medium transition-colors ${
+                isActive
+                  ? 'text-[--k-primary]'
+                  : 'text-[--k-muted] hover:text-[--k-text]'
+              }`}
+            >
+              {tab.label}
+              {isActive && (
+                <span className="absolute inset-x-0 -bottom-px h-0.5 bg-[--k-primary]" />
+              )}
+            </button>
+          );
+        })}
+      </div>
+
       {/* Filters */}
       <div className="space-y-3">
-        {/* Row 1: Search + Statut + Fournisseur */}
+        {/* Row 1: Search + Fournisseur */}
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
           <div className="relative min-w-[140px] sm:w-[352px]">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[--k-muted]" />
@@ -383,17 +412,6 @@ export default function Orders() {
             />
           </div>
           <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0">
-            <SearchSelect
-              value={statusFilter}
-              onChange={(val) => updateParams({ status: val })}
-              options={[
-                { value: 'PENDING', label: 'En cours' },
-                { value: 'COMPLETED', label: 'Terminées' },
-                { value: 'CANCELLED', label: 'Annulées' },
-              ]}
-              placeholder="Statut"
-              className="min-w-[140px] sm:w-[352px]"
-            />
             <SearchSelect
               value={supplierFilter}
               onChange={(val) => updateParams({ supplier: val })}
