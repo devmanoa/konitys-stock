@@ -1,3 +1,4 @@
+import { useState, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -55,6 +56,7 @@ const MOVEMENT_TYPE_LABELS: Record<string, string> = {
 
 export default function Dashboard() {
   const navigate = useNavigate()
+  const [alertTypeFilter, setAlertTypeFilter] = useState<string>('')
 
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['dashboard-stats'],
@@ -126,6 +128,26 @@ export default function Dashboard() {
     return new Intl.NumberFormat('fr-FR').format(value)
   }
 
+  // Onglets dynamiques par type de borne (uniquement ceux qui ont des alertes)
+  const availableAlertTypes = useMemo(() => {
+    const map = new Map<string, string>()
+    let hasUnassigned = false
+    for (const a of lowStockAlerts || []) {
+      if (a.assemblyType?.id) map.set(a.assemblyType.id, a.assemblyType.name)
+      else hasUnassigned = true
+    }
+    const types = Array.from(map.entries()).map(([id, name]) => ({ id, name }))
+    types.sort((a, b) => a.name.localeCompare(b.name))
+    return { types, hasUnassigned }
+  }, [lowStockAlerts])
+
+  const filteredAlerts = useMemo(() => {
+    if (!lowStockAlerts) return []
+    if (!alertTypeFilter) return lowStockAlerts
+    if (alertTypeFilter === '__none__') return lowStockAlerts.filter((a) => !a.assemblyType?.id)
+    return lowStockAlerts.filter((a) => a.assemblyType?.id === alertTypeFilter)
+  }, [lowStockAlerts, alertTypeFilter])
+
   if (statsLoading) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -144,7 +166,7 @@ export default function Dashboard() {
         <KpiCard title="Stock total" value={formatNumber(stats?.totalItems || 0)} icon={Building2} colorIndex={2} />
         <KpiCard title="Unités possibles" value={formatNumber(stats?.totalPossibleUnits || 0)} icon={TrendingUp} colorIndex={3} />
         <KpiCard title="Valeur stock" value={formatCurrency(stats?.totalStockValue || 0)} icon={Euro} colorIndex={5} />
-        <KpiCard title="Alertes" value={lowStockAlerts?.length || 0} icon={AlertTriangle} colorIndex={1} />
+        <KpiCard title="Alertes" value={filteredAlerts.length} icon={AlertTriangle} colorIndex={1} />
       </div>
 
       {/* Buildable bornes */}
@@ -257,12 +279,39 @@ export default function Dashboard() {
               <span className="text-lg font-semibold text-[--k-text]">Alertes stock</span>
             </div>
             <span className="text-[11px] font-medium text-amber-600 bg-amber-100/60 rounded-full px-2 py-0.5">
-              {lowStockAlerts?.length || 0}
+              {filteredAlerts.length}
             </span>
           </div>
+          {(availableAlertTypes.types.length > 0 || availableAlertTypes.hasUnassigned) && (
+            <div className="flex items-center gap-1 border-b border-[--k-border] px-2 overflow-x-auto">
+              {[
+                { value: '', label: 'Toutes' },
+                ...availableAlertTypes.types.map((t) => ({ value: t.id, label: t.name })),
+                ...(availableAlertTypes.hasUnassigned ? [{ value: '__none__', label: 'Sans type' }] : []),
+              ].map((tab) => {
+                const isActive = alertTypeFilter === tab.value
+                return (
+                  <button
+                    key={tab.value || 'all'}
+                    type="button"
+                    onClick={() => setAlertTypeFilter(tab.value)}
+                    className={cn(
+                      'relative px-3 py-1.5 text-[12px] font-medium whitespace-nowrap transition-colors',
+                      isActive ? 'text-[--k-primary]' : 'text-[--k-muted] hover:text-[--k-text]'
+                    )}
+                  >
+                    {tab.label}
+                    {isActive && (
+                      <span className="absolute inset-x-0 -bottom-px h-0.5 bg-[--k-primary]" />
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          )}
           <div className="divide-y divide-[--k-border]">
-            {lowStockAlerts && lowStockAlerts.length > 0 ? (
-              lowStockAlerts.slice(0, 5).map((alert) => {
+            {filteredAlerts.length > 0 ? (
+              filteredAlerts.slice(0, 5).map((alert) => {
                 const threshold = alert.minStock || 10
                 const pct = Math.min(Math.round((alert.total / threshold) * 100), 100)
                 const level = alert.supplyRisk === 'HIGH' ? 'critical' : 'low'

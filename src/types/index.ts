@@ -244,6 +244,7 @@ export interface LowStockAlert {
   reference: string;
   description?: string;
   assembly?: string;
+  assemblyType?: { id: string; name: string } | null;
   qtyPerUnit: number;
   supplyRisk?: SupplyRisk;
   minStock?: number | null;
