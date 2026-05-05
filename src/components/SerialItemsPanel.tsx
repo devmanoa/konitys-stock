@@ -1,13 +1,16 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Edit2, Trash2, Hash, Search } from 'lucide-react';
 import Button from './ui/Button';
 import Input from './ui/Input';
 import Select from './ui/Select';
 import Modal from './ui/Modal';
+import Pagination from './ui/Pagination';
 import { useToast } from './ui/Toast';
 import api from '../services/api';
 import type { ApiResponse, ProductSerialItem, SerialStatus, ProductCondition, Site } from '../types';
+
+const PAGE_SIZE = 15;
 
 const STATUS_LABELS: Record<SerialStatus, string> = {
   IN_STOCK: 'En stock',
@@ -37,6 +40,12 @@ export default function SerialItemsPanel({ productId }: Props) {
   const [conditionFilter, setConditionFilter] = useState<string>('');
   const [siteFilter, setSiteFilter] = useState<string>('');
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+
+  // Reset to page 1 whenever a filter changes
+  useEffect(() => {
+    setPage(1);
+  }, [statusFilter, conditionFilter, siteFilter, search]);
 
   const [editing, setEditing] = useState<ProductSerialItem | null>(null);
   const [creating, setCreating] = useState(false);
@@ -80,6 +89,17 @@ export default function SerialItemsPanel({ productId }: Props) {
       return res.data?.data || [];
     },
   });
+
+  const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
+  const pagedItems = useMemo(
+    () => items.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [items, page],
+  );
+
+  // Clamp current page if items shrank below it (e.g. after a deletion or filter change)
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ['serial-items', productId] });
@@ -245,7 +265,7 @@ export default function SerialItemsPanel({ productId }: Props) {
               </tr>
             </thead>
             <tbody>
-              {items.map((it) => (
+              {pagedItems.map((it) => (
                 <tr key={it.id} className="border-t border-[--k-border] hover:bg-[--k-surface-2]/30">
                   <td className="px-3 py-1.5 font-mono">
                     {it.serialNumber ? (
@@ -291,6 +311,20 @@ export default function SerialItemsPanel({ productId }: Props) {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {!isLoading && items.length > PAGE_SIZE && (
+        <div className="flex items-center justify-between gap-3 pt-2 text-xs text-[--k-muted]">
+          <span>
+            {Math.min((page - 1) * PAGE_SIZE + 1, items.length)}–
+            {Math.min(page * PAGE_SIZE, items.length)} sur {items.length}
+          </span>
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+          />
         </div>
       )}
 
