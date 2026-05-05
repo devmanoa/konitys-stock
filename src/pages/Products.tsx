@@ -35,6 +35,7 @@ export default function Products() {
   const page = parseInt(searchParams.get('page') || '1', 10);
   const assemblyTypeId = searchParams.get('assemblyTypeId') || '';
   const assemblyId = searchParams.get('assemblyId') || '';
+  const partCategoryId = searchParams.get('partCategoryId') || '';
 
   const setSearch = (value: string) => {
     const params = new URLSearchParams(searchParams);
@@ -90,6 +91,15 @@ export default function Products() {
     },
   });
 
+  // Fetch part categories (global)
+  const { data: partCategoriesData } = useQuery({
+    queryKey: ['part-categories'],
+    queryFn: async () => {
+      const res = await api.get<{ success: boolean; data: { id: string; name: string }[] }>('/part-categories');
+      return res.data?.data || [];
+    },
+  });
+
   // Filter assemblies by selected type
   const filteredAssemblies = assemblyTypeId
     ? assembliesData?.filter((assembly) =>
@@ -99,7 +109,7 @@ export default function Products() {
       )
     : assembliesData;
 
-  const hasActiveFilters = search || assemblyTypeId || assemblyId || page > 1;
+  const hasActiveFilters = search || assemblyTypeId || assemblyId || partCategoryId || page > 1;
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | undefined>();
@@ -108,7 +118,7 @@ export default function Products() {
   const [lightboxProduct, setLightboxProduct] = useState<Product | null>(null);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['products', page, search, assemblyTypeId, assemblyId],
+    queryKey: ['products', page, search, assemblyTypeId, assemblyId, partCategoryId],
     queryFn: async () => {
       const params = new URLSearchParams({
         page: page.toString(),
@@ -116,6 +126,7 @@ export default function Products() {
         ...(search && { search }),
         ...(assemblyTypeId && { assemblyTypeId }),
         ...(assemblyId && { assemblyId }),
+        ...(partCategoryId && { partCategoryId }),
       });
       const res = await api.get<PaginatedResponse<Product>>(`/products?${params}`);
       return res.data;
@@ -314,6 +325,13 @@ export default function Products() {
               onChange={(val) => setFilter('assemblyId', val)}
               options={filteredAssemblies?.map((assembly) => ({ value: assembly.id, label: assembly.name })) || []}
               placeholder="Borne"
+              className="min-w-[140px] sm:w-[352px]"
+            />
+            <SearchSelect
+              value={partCategoryId}
+              onChange={(val) => setFilter('partCategoryId', val)}
+              options={partCategoriesData?.map((c) => ({ value: c.id, label: c.name })) || []}
+              placeholder="Catégorie de pièce"
               className="min-w-[140px] sm:w-[352px]"
             />
             {hasActiveFilters && (
