@@ -357,7 +357,17 @@ export default function SerialItemsPanel({ productId }: Props) {
               <label className="block text-[13px] font-medium text-[--k-text] mb-1">Statut</label>
               <Select
                 value={form.status}
-                onChange={(e) => setForm({ ...form, status: e.target.value as SerialStatus })}
+                onChange={(e) => {
+                  const next = e.target.value as SerialStatus
+                  setForm((prev) => ({
+                    ...prev,
+                    status: next,
+                    // Clear customer name when leaving OUT status — the field
+                    // is hidden in any other state and shouldn't persist a
+                    // stale value silently.
+                    customerName: next === 'OUT' ? prev.customerName : '',
+                  }))
+                }}
               >
                 {Object.entries(STATUS_LABELS).map(([k, v]) => (
                   <option key={k} value={k}>{v}</option>
@@ -377,12 +387,14 @@ export default function SerialItemsPanel({ productId }: Props) {
               ))}
             </Select>
           </div>
-          <Input
-            label="Client (si sorti)"
-            value={form.customerName}
-            onChange={(e) => setForm({ ...form, customerName: e.target.value })}
-            placeholder="Nom du client final"
-          />
+          {form.status === 'OUT' && (
+            <Input
+              label="Client"
+              value={form.customerName}
+              onChange={(e) => setForm({ ...form, customerName: e.target.value })}
+              placeholder="Nom du client final"
+            />
+          )}
           <div>
             <label className="block text-[13px] font-medium text-[--k-text] mb-1">Commentaire</label>
             <textarea
