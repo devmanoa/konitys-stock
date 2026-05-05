@@ -300,7 +300,9 @@ export interface StockBySite {
 }
 
 export interface TopProductStock {
+  id?: string;
   reference: string;
+  description?: string;
   assembly: string;
   totalNew: number;
   totalUsed: number;

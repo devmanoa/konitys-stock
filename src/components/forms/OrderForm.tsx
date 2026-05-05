@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, ArrowRight, ShoppingCart, Plus, Trash2, Search } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ShoppingCart, Plus, Trash2, Search, ExternalLink } from 'lucide-react';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
@@ -353,7 +353,18 @@ export default function OrderForm({ onSuccess, onCancel, duplicateFrom }: OrderF
                       />
                     </td>
                     <td className="px-3 py-2 text-[--k-text]">
-                      {line.product.description || line.product.reference}
+                      <div className="flex items-center gap-1.5">
+                        <span>{line.product.description || line.product.reference}</span>
+                        <a
+                          href={`/products/${line.productId}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[--k-muted] hover:text-[--k-primary]"
+                          title="Ouvrir la fiche produit dans un nouvel onglet"
+                        >
+                          <ExternalLink className="h-3.5 w-3.5" />
+                        </a>
+                      </div>
                     </td>
                     <td className="px-3 py-2 text-[--k-muted] font-mono text-xs">
                       {line.product.reference}

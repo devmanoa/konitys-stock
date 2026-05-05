@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link as RouterLink } from 'react-router-dom'
 import {
   Package,
   ShoppingCart,
@@ -369,15 +369,22 @@ export default function Dashboard() {
           <div className="divide-y divide-[--k-border]">
             {topProducts && topProducts.length > 0 ? (
               topProducts.map((p, i) => (
-                <div key={p.reference} className="flex items-center gap-3 px-4 py-2.5">
+                <div key={p.id || p.reference} className="flex items-center gap-3 px-4 py-2.5">
                   <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[--k-surface-2] text-[11px] font-semibold text-[--k-muted]">
                     {i + 1}
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-[12px] font-medium text-[--k-text] truncate">
-                        {p.reference}
-                      </span>
+                      {p.id ? (
+                        <RouterLink
+                          to={`/products/${p.id}`}
+                          className="text-[12px] font-medium text-[--k-primary] hover:underline truncate"
+                        >
+                          {p.reference}
+                        </RouterLink>
+                      ) : (
+                        <span className="text-[12px] font-medium text-[--k-text] truncate">{p.reference}</span>
+                      )}
                       <span className="rounded px-1.5 py-0.5 text-[10px] font-medium bg-[--k-surface-2] text-[--k-muted]">
                         {p.assembly}
                       </span>
@@ -444,7 +451,16 @@ export default function Dashboard() {
                         {MOVEMENT_TYPE_LABELS[m.type] || m.type}
                       </span>
                     </td>
-                    <td className="px-4 py-2 font-medium text-[--k-text]">{m.product?.reference}</td>
+                    <td className="px-4 py-2 font-medium">
+                      {m.product ? (
+                        <RouterLink
+                          to={`/products/${m.productId}`}
+                          className="text-[--k-primary] hover:underline"
+                        >
+                          {m.product.reference}
+                        </RouterLink>
+                      ) : '—'}
+                    </td>
                     <td className="px-4 py-2 tabular-nums">{m.quantity}</td>
                     <td className="px-4 py-2">
                       <div className="flex items-center gap-2">

@@ -178,9 +178,12 @@ export default function Movements() {
           {movement.product.reference}
         </Link>
         {movement.product.description && (
-          <p className="text-sm text-[--k-muted] truncate mt-0.5">
+          <Link
+            to={`/products/${movement.productId}`}
+            className="block text-sm text-[--k-muted] hover:text-[--k-primary] hover:underline truncate mt-0.5"
+          >
             {movement.product.description}
-          </p>
+          </Link>
         )}
       </div>
 
@@ -441,8 +444,17 @@ export default function Movements() {
                         {movement.product.reference}
                       </Link>
                     </td>
-                    <td className="px-4 py-1.5 text-[--k-text] truncate max-w-[200px]">
-                      {movement.product.description || '—'}
+                    <td className="px-4 py-1.5 truncate max-w-[200px]">
+                      {movement.product.description ? (
+                        <Link
+                          to={`/products/${movement.productId}`}
+                          className="text-[--k-text] hover:text-[--k-primary] hover:underline"
+                        >
+                          {movement.product.description}
+                        </Link>
+                      ) : (
+                        <span className="text-[--k-muted]">—</span>
+                      )}
                     </td>
                     <td className="px-4 py-1.5 text-center">
                       <span className={`font-bold ${

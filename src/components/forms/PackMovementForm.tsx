@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Trash2 } from 'lucide-react'
+import { Trash2, ExternalLink } from 'lucide-react'
 import Button from '../ui/Button'
 import Input from '../ui/Input'
 import Select from '../ui/Select'
@@ -245,7 +245,7 @@ export default function PackMovementForm({ onSuccess, onCancel }: PackMovementFo
                         className="h-10 w-10 rounded-lg object-cover bg-white flex-shrink-0"
                         onError={(e) => { (e.target as HTMLImageElement).src = '/default-product.svg' }}
                       />
-                      <div>
+                      <div className="min-w-0 flex-1">
                         {watch(`items.${index}.productDescription`) && (
                           <span className="block text-[13px] font-medium text-[--k-text]">
                             {watch(`items.${index}.productDescription`)}
@@ -255,6 +255,15 @@ export default function PackMovementForm({ onSuccess, onCancel }: PackMovementFo
                           {watch(`items.${index}.productReference`)}
                         </span>
                       </div>
+                      <a
+                        href={`/products/${watch(`items.${index}.productId`)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-shrink-0 text-[--k-muted] hover:text-[--k-primary]"
+                        title="Ouvrir la fiche produit dans un nouvel onglet"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </a>
                     </div>
                   </div>
 

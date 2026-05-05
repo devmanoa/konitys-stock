@@ -549,8 +549,13 @@ export default function SupplierDetail() {
                           </span>
                         </RouterLink>
                       </td>
-                      <td className="py-2 text-[15px] text-[--k-muted]">
-                        {ps.product.reference}
+                      <td className="py-2 text-[15px]">
+                        <RouterLink
+                          to={`/products/${ps.productId}`}
+                          className="text-[--k-muted] hover:text-[--k-primary] hover:underline"
+                        >
+                          {ps.product.reference}
+                        </RouterLink>
                       </td>
                       <td className="py-2 text-[--k-muted]">
                         {ps.product.assemblyType?.name || '-'}

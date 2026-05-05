@@ -1,5 +1,6 @@
 import { useForm } from 'react-hook-form'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { ExternalLink } from 'lucide-react'
 import Button from '../ui/Button'
 import Input from '../ui/Input'
 import Select from '../ui/Select'
@@ -112,8 +113,19 @@ export default function ReceiveOrderForm({ orderId, itemId, onSuccess, onCancel 
         <h4 className="font-medium text-blue-900 mb-2 text-[13px]">Détails de l'article</h4>
         <div className="grid grid-cols-2 gap-2 text-[13px]">
           <span className="text-blue-700">Produit :</span>
-          <span className="font-medium text-blue-900">
+          <span className="font-medium text-blue-900 inline-flex items-center gap-1.5">
             {item.product?.description || item.product?.reference || item.productId}
+            {item.productId && (
+              <a
+                href={`/products/${item.productId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-700 hover:text-blue-900"
+                title="Ouvrir la fiche produit dans un nouvel onglet"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+            )}
           </span>
           <span className="text-blue-700">Référence :</span>
           <span className="font-medium text-blue-900">{item.product?.reference}</span>
