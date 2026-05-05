@@ -320,12 +320,19 @@ export default function Dashboard() {
                 const level = alert.supplyRisk === 'HIGH' ? 'critical' : 'low'
                 return (
                   <div key={alert.id} className="px-4 py-2.5 cursor-pointer hover:bg-[--k-surface-2]/30 transition-colors" onClick={() => navigate(`/products/${alert.id}`)}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-[12px] font-medium text-[--k-text] truncate">
-                        {alert.reference}
-                      </span>
+                    <div className="flex items-start justify-between mb-1 gap-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[12px] font-medium text-[--k-text] truncate">
+                          {alert.description || alert.reference}
+                        </div>
+                        {alert.description && (
+                          <div className="text-[10px] text-[--k-muted] font-mono truncate">
+                            {alert.reference}
+                          </div>
+                        )}
+                      </div>
                       <span className={cn(
-                        'rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums',
+                        'shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums',
                         level === 'critical' ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600'
                       )}>
                         {formatStockBreakdown(alert.totalNew, alert.totalUsed)}{alert.minStock != null ? ` / ${alert.minStock}` : ''}
@@ -380,15 +387,20 @@ export default function Dashboard() {
                           to={`/products/${p.id}`}
                           className="text-[12px] font-medium text-[--k-primary] hover:underline truncate"
                         >
-                          {p.reference}
+                          {p.description || p.reference}
                         </RouterLink>
                       ) : (
-                        <span className="text-[12px] font-medium text-[--k-text] truncate">{p.reference}</span>
+                        <span className="text-[12px] font-medium text-[--k-text] truncate">{p.description || p.reference}</span>
                       )}
                       <span className="rounded px-1.5 py-0.5 text-[10px] font-medium bg-[--k-surface-2] text-[--k-muted]">
                         {p.assembly}
                       </span>
                     </div>
+                    {p.description && (
+                      <div className="text-[10px] text-[--k-muted] font-mono truncate mt-0.5">
+                        {p.reference}
+                      </div>
+                    )}
                   </div>
                   <span className="text-[12px] font-semibold tabular-nums text-[--k-text]">
                     {formatNumber(p.total)}
@@ -451,13 +463,20 @@ export default function Dashboard() {
                         {MOVEMENT_TYPE_LABELS[m.type] || m.type}
                       </span>
                     </td>
-                    <td className="px-4 py-2 font-medium">
+                    <td className="px-4 py-2">
                       {m.product ? (
                         <RouterLink
                           to={`/products/${m.productId}`}
-                          className="text-[--k-primary] hover:underline"
+                          className="block hover:underline"
                         >
-                          {m.product.reference}
+                          <div className="font-medium text-[--k-primary] truncate max-w-[200px]">
+                            {m.product.description || m.product.reference}
+                          </div>
+                          {m.product.description && (
+                            <div className="text-[10px] text-[--k-muted] font-mono truncate">
+                              {m.product.reference}
+                            </div>
+                          )}
                         </RouterLink>
                       ) : '—'}
                     </td>
