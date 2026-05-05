@@ -56,14 +56,14 @@ export default function SerialItemsPanel({ productId }: Props) {
     condition: ProductCondition;
     siteId: string;
     status: SerialStatus;
-    customerName: string;
+    borneNumber: string;
     comment: string;
   }>({
     serialNumber: '',
     condition: 'NEW',
     siteId: '',
     status: 'IN_STOCK',
-    customerName: '',
+    borneNumber: '',
     comment: '',
   });
 
@@ -113,7 +113,7 @@ export default function SerialItemsPanel({ productId }: Props) {
         condition: form.condition,
         siteId: form.siteId || null,
         status: form.status,
-        customerName: form.customerName || null,
+        borneNumber: form.borneNumber || null,
         comment: form.comment || null,
       });
     },
@@ -133,7 +133,7 @@ export default function SerialItemsPanel({ productId }: Props) {
         condition: form.condition,
         siteId: form.siteId || null,
         status: form.status,
-        customerName: form.customerName || null,
+        borneNumber: form.borneNumber || null,
         comment: form.comment || null,
       });
     },
@@ -165,7 +165,7 @@ export default function SerialItemsPanel({ productId }: Props) {
       condition: 'NEW',
       siteId: '',
       status: 'IN_STOCK',
-      customerName: '',
+      borneNumber: '',
       comment: '',
     });
   };
@@ -177,7 +177,7 @@ export default function SerialItemsPanel({ productId }: Props) {
       condition: 'NEW',
       siteId: '',
       status: 'IN_STOCK',
-      customerName: '',
+      borneNumber: '',
       comment: '',
     });
   };
@@ -189,7 +189,7 @@ export default function SerialItemsPanel({ productId }: Props) {
       condition: item.condition,
       siteId: item.siteId || '',
       status: item.status,
-      customerName: item.customerName || '',
+      borneNumber: item.borneNumber || '',
       comment: item.comment || '',
     });
   };
@@ -207,7 +207,7 @@ export default function SerialItemsPanel({ productId }: Props) {
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[--k-muted]" />
           <input
             type="text"
-            placeholder="N° de série, client..."
+            placeholder="N° de série, n° borne..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="input-field !pl-10"
@@ -259,7 +259,7 @@ export default function SerialItemsPanel({ productId }: Props) {
                 <th className="px-3 py-2 text-left text-xs font-medium">État</th>
                 <th className="px-3 py-2 text-left text-xs font-medium">Site</th>
                 <th className="px-3 py-2 text-left text-xs font-medium">Statut</th>
-                <th className="px-3 py-2 text-left text-xs font-medium">Client</th>
+                <th className="px-3 py-2 text-left text-xs font-medium">N° borne</th>
                 <th className="px-3 py-2 text-left text-xs font-medium">Entrée</th>
                 <th className="px-3 py-2 text-right text-xs font-medium">Actions</th>
               </tr>
@@ -286,7 +286,7 @@ export default function SerialItemsPanel({ productId }: Props) {
                     </span>
                   </td>
                   <td className="px-3 py-1.5 text-[--k-muted] truncate max-w-[160px]">
-                    {it.customerName || '—'}
+                    {it.borneNumber || '—'}
                   </td>
                   <td className="px-3 py-1.5 text-[--k-muted] tabular-nums">
                     {new Date(it.enteredAt).toLocaleDateString('fr-FR')}
@@ -365,7 +365,7 @@ export default function SerialItemsPanel({ productId }: Props) {
                     // Clear customer name when leaving OUT status — the field
                     // is hidden in any other state and shouldn't persist a
                     // stale value silently.
-                    customerName: next === 'OUT' ? prev.customerName : '',
+                    borneNumber: next === 'OUT' ? prev.borneNumber : '',
                   }))
                 }}
               >
@@ -389,10 +389,10 @@ export default function SerialItemsPanel({ productId }: Props) {
           </div>
           {form.status === 'OUT' && (
             <Input
-              label="Client"
-              value={form.customerName}
-              onChange={(e) => setForm({ ...form, customerName: e.target.value })}
-              placeholder="Nom du client final"
+              label="N° borne"
+              value={form.borneNumber}
+              onChange={(e) => setForm({ ...form, borneNumber: e.target.value })}
+              placeholder="N° de la borne installée"
             />
           )}
           <div>

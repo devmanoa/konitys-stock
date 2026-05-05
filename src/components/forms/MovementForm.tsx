@@ -65,7 +65,7 @@ export default function MovementForm({ onSuccess, onCancel, preselectedProductId
   const [serialInput, setSerialInput] = useState('')
   const [serialError, setSerialError] = useState<string | null>(null)
   const [selectedSerialIds, setSelectedSerialIds] = useState<string[]>([])
-  const [customerName, setCustomerName] = useState('')
+  const [borneNumber, setBorneNumber] = useState('')
 
   const addSerialNumbers = (raw: string) => {
     setSerialError(null)
@@ -139,7 +139,7 @@ export default function MovementForm({ onSuccess, onCancel, preselectedProductId
         } else if (data.type === 'OUT' || data.type === 'TRANSFER') {
           payload.serialItemIds = selectedSerialIds
           payload.quantity = selectedSerialIds.length
-          if (data.type === 'OUT' && customerName) payload.customerName = customerName
+          if (data.type === 'OUT' && borneNumber) payload.borneNumber = borneNumber
         }
       }
       const res = await api.post('/movements', payload)
@@ -397,10 +397,10 @@ export default function MovementForm({ onSuccess, onCancel, preselectedProductId
 
       {isSerialTracked && movementType === 'OUT' && (
         <Input
-          label="Client"
-          value={customerName}
-          onChange={(e) => setCustomerName(e.target.value)}
-          placeholder="Nom du client final (optionnel)"
+          label="N° borne"
+          value={borneNumber}
+          onChange={(e) => setBorneNumber(e.target.value)}
+          placeholder="N° de la borne installée (optionnel)"
         />
       )}
 

@@ -166,7 +166,7 @@ export interface ProductSerialItem {
   status: SerialStatus;
   enteredAt: string;
   exitedAt?: string | null;
-  customerName?: string | null;
+  borneNumber?: string | null;
   comment?: string | null;
   createdAt: string;
   updatedAt: string;
