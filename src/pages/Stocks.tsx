@@ -52,12 +52,16 @@ export default function Stocks() {
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [lightboxProduct, setLightboxProduct] = useState<ProductWithAssembly | null>(null);
+  const [snapshotDate, setSnapshotDate] = useState<string>(''); // YYYY-MM-DD ; empty = live mode
 
-  // Fetch stocks
+  // Fetch stocks (live or historical snapshot depending on snapshotDate)
   const { data: stocksData, isLoading: stocksLoading } = useQuery({
-    queryKey: ['stocks'],
+    queryKey: ['stocks', snapshotDate || 'live'],
     queryFn: async () => {
-      const res = await api.get<ApiResponse<StockWithDetails[]>>('/stocks');
+      const url = snapshotDate
+        ? `/stocks/snapshot?date=${encodeURIComponent(snapshotDate)}`
+        : '/stocks';
+      const res = await api.get<ApiResponse<StockWithDetails[]>>(url);
       return res.data?.data;
     },
   });
@@ -393,7 +397,36 @@ export default function Stocks() {
       <PageHeader
         title="Gestion des Stocks"
         subtitle="Vue matricielle des stocks par produit et par site"
-      />
+      >
+        <div className="flex items-center gap-2">
+          <label className="flex items-center gap-2 text-[13px] text-[--k-muted]">
+            <span className="hidden sm:inline">Stock à la date :</span>
+            <input
+              type="date"
+              value={snapshotDate}
+              onChange={(e) => setSnapshotDate(e.target.value)}
+              max={new Date().toISOString().split('T')[0]}
+              className="input-field !py-1 !px-2"
+            />
+          </label>
+          {snapshotDate && (
+            <Button variant="ghost" size="sm" onClick={() => setSnapshotDate('')}>
+              <X className="h-4 w-4 sm:mr-1" />
+              <span className="hidden sm:inline">Temps réel</span>
+            </Button>
+          )}
+        </div>
+      </PageHeader>
+
+      {snapshotDate && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-800 flex items-center gap-2">
+          <span className="font-semibold">Mode historique</span>
+          <span>—</span>
+          <span>
+            Stock reconstruit au {new Date(snapshotDate).toLocaleDateString('fr-FR')} en fin de journée.
+          </span>
+        </div>
+      )}
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
