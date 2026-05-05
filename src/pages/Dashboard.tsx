@@ -17,6 +17,7 @@ import { PageHeader } from '../components/PageHeader'
 import { cn } from '../components/ui/cn'
 import api from '../services/api'
 import { formatStockBreakdown } from '../utils/stockFormat'
+import { getOperatorInitials, getOperatorColor } from '../utils/operatorAvatar'
 import type {
   DashboardStats,
   StockMovement,
@@ -55,30 +56,6 @@ const MOVEMENT_TYPE_LABELS: Record<string, string> = {
   TRANSFER: 'Transfert',
 }
 
-const AVATAR_PALETTE = [
-  'bg-indigo-100 text-indigo-700',
-  'bg-emerald-100 text-emerald-700',
-  'bg-amber-100 text-amber-700',
-  'bg-rose-100 text-rose-700',
-  'bg-sky-100 text-sky-700',
-  'bg-violet-100 text-violet-700',
-  'bg-teal-100 text-teal-700',
-  'bg-orange-100 text-orange-700',
-]
-
-function getOperatorInitials(name: string | null | undefined): string {
-  if (!name) return '?'
-  const parts = name.trim().split(/\s+/)
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
-}
-
-function getOperatorColor(name: string | null | undefined): string {
-  if (!name) return 'bg-gray-100 text-gray-500'
-  let hash = 0
-  for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) | 0
-  return AVATAR_PALETTE[Math.abs(hash) % AVATAR_PALETTE.length]
-}
 
 export default function Dashboard() {
   const navigate = useNavigate()

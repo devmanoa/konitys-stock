@@ -6,7 +6,6 @@ import Input from '../ui/Input';
 import Select from '../ui/Select';
 import SupplierSearch from '../ui/SupplierSearch';
 import api from '../../services/api';
-import { useAuth } from '../../contexts/AuthContext';
 import type { Supplier, Site, Product, ProductSupplier, Order, ApiResponse, PaginatedResponse } from '../../types';
 
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://127.0.0.1:3001').replace(/\/api$/, '');
@@ -38,7 +37,6 @@ interface OrderFormProps {
 
 export default function OrderForm({ onSuccess, onCancel, duplicateFrom }: OrderFormProps) {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
 
   // Step management
   const [step, setStep] = useState<1 | 2>(duplicateFrom ? 2 : 1);
@@ -151,7 +149,6 @@ export default function OrderForm({ onSuccess, onCancel, duplicateFrom }: OrderF
         responsible: responsible || undefined,
         supplierRef: supplierRef || undefined,
         comment: comment || undefined,
-        createdBy: user?.fullName || user?.username || undefined,
         items,
       };
 

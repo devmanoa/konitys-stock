@@ -28,6 +28,8 @@ import { useToast } from '../components/ui/Toast';
 import Pagination from '../components/ui/Pagination';
 import { PageHeader } from '../components/PageHeader';
 import api from '../services/api';
+import { cn } from '../components/ui/cn';
+import { getOperatorInitials, getOperatorColor } from '../utils/operatorAvatar';
 import type { Order, Supplier, OrderTemplate, ApiResponse, PaginatedResponse } from '../types';
 
 export default function Orders() {
@@ -526,6 +528,9 @@ export default function Orders() {
                     <th className="px-4 py-1.5 text-left text-xs font-medium bg-white">
                       Destination
                     </th>
+                    <th className="px-4 py-1.5 text-left text-xs font-medium bg-white">
+                      Opérateur
+                    </th>
                     <th className="px-4 py-1.5 text-center text-xs font-medium bg-white w-12">
                     </th>
                   </tr>
@@ -595,6 +600,22 @@ export default function Orders() {
                         </td>
                         <td className="px-4 py-1.5 text-[--k-muted]">
                           {order.destinationSite?.name || '-'}
+                        </td>
+                        <td className="px-4 py-1.5">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={cn(
+                                'flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-semibold flex-shrink-0',
+                                getOperatorColor(order.createdBy)
+                              )}
+                              title={order.createdBy || 'Inconnu'}
+                            >
+                              {getOperatorInitials(order.createdBy)}
+                            </span>
+                            <span className="text-[--k-text] truncate max-w-[120px]">
+                              {order.createdBy || <span className="text-[--k-muted] italic">Inconnu</span>}
+                            </span>
+                          </div>
                         </td>
                         <td className="px-4 py-1.5 text-center">
                           <ActionsDropdown order={order} />
