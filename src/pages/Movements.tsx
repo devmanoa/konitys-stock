@@ -173,16 +173,16 @@ export default function Movements() {
       <div className="mt-3">
         <Link
           to={`/products/${movement.productId}`}
-          className="font-medium text-[--k-primary] hover:text-indigo-700"
+          className="block font-medium text-[--k-primary] hover:text-indigo-700"
         >
-          {movement.product.reference}
+          {movement.product.description || movement.product.reference}
         </Link>
         {movement.product.description && (
           <Link
             to={`/products/${movement.productId}`}
-            className="block text-sm text-[--k-muted] hover:text-[--k-primary] hover:underline truncate mt-0.5"
+            className="block text-xs text-[--k-muted] font-mono hover:text-[--k-primary] truncate mt-0.5"
           >
-            {movement.product.description}
+            {movement.product.reference}
           </Link>
         )}
       </div>
@@ -392,9 +392,6 @@ export default function Movements() {
                     Type
                   </th>
                   <th className="px-4 py-1.5 text-left text-xs font-medium bg-white">
-                    Référence
-                  </th>
-                  <th className="px-4 py-1.5 text-left text-xs font-medium bg-white">
                     Produit
                   </th>
                   <th className="px-4 py-1.5 text-center text-xs font-medium bg-white">
@@ -436,24 +433,17 @@ export default function Movements() {
                         {getTypeBadge(movement.type)}
                       </div>
                     </td>
-                    <td className="px-4 py-1.5">
+                    <td className="px-4 py-1.5 truncate max-w-[260px]">
                       <Link
                         to={`/products/${movement.productId}`}
-                        className="font-mono text-[--k-primary] hover:text-indigo-700 hover:underline"
+                        className="block font-medium text-[--k-primary] hover:text-indigo-700 hover:underline truncate"
                       >
-                        {movement.product.reference}
+                        {movement.product.description || movement.product.reference}
                       </Link>
-                    </td>
-                    <td className="px-4 py-1.5 truncate max-w-[200px]">
-                      {movement.product.description ? (
-                        <Link
-                          to={`/products/${movement.productId}`}
-                          className="text-[--k-text] hover:text-[--k-primary] hover:underline"
-                        >
-                          {movement.product.description}
-                        </Link>
-                      ) : (
-                        <span className="text-[--k-muted]">—</span>
+                      {movement.product.description && (
+                        <span className="block text-xs text-[--k-muted] font-mono truncate">
+                          {movement.product.reference}
+                        </span>
                       )}
                     </td>
                     <td className="px-4 py-1.5 text-center">
