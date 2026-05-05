@@ -8,6 +8,7 @@ import SearchSelect from '../components/ui/SearchSelect';
 import { KpiCard } from '../components/KpiCard';
 import { PageHeader } from '../components/PageHeader';
 import api from '../services/api';
+import { formatStockBreakdown } from '../utils/stockFormat';
 import type { Stock, Site, Product, ApiResponse, AssemblyType, PaginatedResponse, Assembly } from '../types';
 
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/api$/, '');
@@ -244,28 +245,10 @@ export default function Stocks() {
 
   const renderStockCell = (quantityNew: number, quantityUsed: number) => {
     const total = quantityNew + quantityUsed;
-    if (total === 0) {
-      return <span className="text-[--k-muted]">-</span>;
-    }
-
     return (
-      <div className="flex flex-col items-center gap-0.5">
-        <span className="font-medium text-[--k-text]">{total}</span>
-        {(quantityNew > 0 || quantityUsed > 0) && (
-          <div className="flex flex-col gap-0.5 text-xs">
-            {quantityNew > 0 && (
-              <span className="text-green-600">
-                {quantityNew} Neuf
-              </span>
-            )}
-            {quantityUsed > 0 && (
-              <span className="text-orange-600">
-                {quantityUsed} Occasion
-              </span>
-            )}
-          </div>
-        )}
-      </div>
+      <span className={total === 0 ? 'text-[--k-muted]' : 'font-medium text-[--k-text]'}>
+        {formatStockBreakdown(quantityNew, quantityUsed)}
+      </span>
     );
   };
 
@@ -391,15 +374,9 @@ export default function Stocks() {
                     <span className="text-sm font-medium text-[--k-text]">
                       {site.name}
                     </span>
-                    <div className="flex items-center gap-3 text-sm">
-                      <span className="font-bold text-[--k-text]">{siteTotal}</span>
-                      {siteStock?.quantityNew ? (
-                        <span className="text-green-600">{siteStock.quantityNew} N</span>
-                      ) : null}
-                      {siteStock?.quantityUsed ? (
-                        <span className="text-orange-600">{siteStock.quantityUsed} O</span>
-                      ) : null}
-                    </div>
+                    <span className="text-sm font-medium text-[--k-text]">
+                      {formatStockBreakdown(siteStock?.quantityNew || 0, siteStock?.quantityUsed || 0)}
+                    </span>
                   </div>
                 );
               })}

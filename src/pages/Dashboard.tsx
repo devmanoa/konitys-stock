@@ -16,6 +16,7 @@ import { KpiCard } from '../components/KpiCard'
 import { PageHeader } from '../components/PageHeader'
 import { cn } from '../components/ui/cn'
 import api from '../services/api'
+import { formatStockBreakdown } from '../utils/stockFormat'
 import type {
   DashboardStats,
   StockMovement,
@@ -350,7 +351,7 @@ export default function Dashboard() {
                         'rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums',
                         level === 'critical' ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600'
                       )}>
-                        {alert.total}{alert.minStock != null ? `/${alert.minStock}` : ''} ({alert.totalNew} N / {alert.totalUsed} O)
+                        {formatStockBreakdown(alert.totalNew, alert.totalUsed)}{alert.minStock != null ? ` / ${alert.minStock}` : ''}
                       </span>
                     </div>
                     <div className="flex items-center justify-between gap-3">
@@ -409,12 +410,16 @@ export default function Dashboard() {
                     {formatNumber(p.total)}
                   </span>
                   <div className="flex items-center gap-1">
-                    <span className="inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-medium tabular-nums bg-emerald-50 text-emerald-600">
-                      {p.totalNew} N
-                    </span>
-                    <span className="inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-medium tabular-nums bg-amber-50 text-amber-600">
-                      {p.totalUsed} O
-                    </span>
+                    {p.totalNew > 0 && (
+                      <span className="inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-medium tabular-nums bg-emerald-50 text-emerald-600">
+                        {p.totalNew} {p.totalNew > 1 ? 'neufs' : 'neuf'}
+                      </span>
+                    )}
+                    {p.totalUsed > 0 && (
+                      <span className="inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-medium tabular-nums bg-amber-50 text-amber-600">
+                        {p.totalUsed} occas
+                      </span>
+                    )}
                   </div>
                 </div>
               ))
