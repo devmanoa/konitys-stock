@@ -362,10 +362,12 @@ export default function SerialItemsPanel({ productId }: Props) {
                   setForm((prev) => ({
                     ...prev,
                     status: next,
-                    // Clear customer name when leaving OUT status — the field
+                    // Clear borne number when leaving OUT status — the field
                     // is hidden in any other state and shouldn't persist a
                     // stale value silently.
                     borneNumber: next === 'OUT' ? prev.borneNumber : '',
+                    // Same for siteId: an OUT item is no longer at any site.
+                    siteId: next === 'OUT' ? '' : prev.siteId,
                   }))
                 }}
               >
@@ -375,18 +377,20 @@ export default function SerialItemsPanel({ productId }: Props) {
               </Select>
             </div>
           </div>
-          <div>
-            <label className="block text-[13px] font-medium text-[--k-text] mb-1">Site</label>
-            <Select
-              value={form.siteId}
-              onChange={(e) => setForm({ ...form, siteId: e.target.value })}
-            >
-              <option value="">— Aucun —</option>
-              {sites.map((s) => (
-                <option key={s.id} value={s.id}>{s.name}</option>
-              ))}
-            </Select>
-          </div>
+          {form.status !== 'OUT' && (
+            <div>
+              <label className="block text-[13px] font-medium text-[--k-text] mb-1">Site</label>
+              <Select
+                value={form.siteId}
+                onChange={(e) => setForm({ ...form, siteId: e.target.value })}
+              >
+                <option value="">— Aucun —</option>
+                {sites.map((s) => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </Select>
+            </div>
+          )}
           {form.status === 'OUT' && (
             <Input
               label="N° borne"
