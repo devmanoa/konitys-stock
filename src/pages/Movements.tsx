@@ -137,13 +137,6 @@ export default function Movements() {
     });
   };
 
-  const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString('fr-FR', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
   const hasFilters = typeFilter || siteFilter || startDate || endDate || search || conditionFilter;
 
   const resetFilters = () => {
@@ -163,9 +156,6 @@ export default function Movements() {
         <div className="text-right">
           <p className="text-sm font-medium text-[--k-text]">
             {formatDate(movement.movementDate)}
-          </p>
-          <p className="text-xs text-[--k-muted]">
-            {formatTime(movement.movementDate)}
           </p>
         </div>
       </div>
@@ -421,9 +411,6 @@ export default function Movements() {
                       <div className="flex flex-col">
                         <span className="font-medium text-[--k-text]">
                           {formatDate(movement.movementDate)}
-                        </span>
-                        <span className="text-xs text-[--k-muted]">
-                          {formatTime(movement.movementDate)}
                         </span>
                       </div>
                     </td>

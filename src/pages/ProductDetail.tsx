@@ -595,15 +595,7 @@ export default function ProductDetail() {
                   {data.movements.map((mvt) => (
                     <tr key={mvt.id} className="hover:bg-[--k-surface-2]">
                       <td className="py-2 text-[--k-muted]">
-                        <div className="flex flex-col">
-                          <span>{new Date(mvt.movementDate).toLocaleDateString('fr-FR')}</span>
-                          <span className="text-xs">
-                            {new Date(mvt.movementDate).toLocaleTimeString('fr-FR', {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </span>
-                        </div>
+                        {new Date(mvt.movementDate).toLocaleDateString('fr-FR')}
                       </td>
                       <td className="py-2">
                         <div className="flex items-center gap-2">
