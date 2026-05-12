@@ -169,6 +169,8 @@ export interface ProductSerialItem {
   borneNumber?: string | null;
   comment?: string | null;
   createdAt: string;
+  createdById?: string | null;
+  createdByName?: string | null;
   updatedAt: string;
   product?: { id: string; reference: string; description?: string };
 }

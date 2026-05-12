@@ -8,6 +8,7 @@ import Modal from './ui/Modal';
 import Pagination from './ui/Pagination';
 import { useToast } from './ui/Toast';
 import api from '../services/api';
+import { getOperatorInitials, getOperatorColor } from '../utils/operatorAvatar';
 import type { ApiResponse, ProductSerialItem, SerialStatus, ProductCondition, Site } from '../types';
 
 const PAGE_SIZE = 15;
@@ -261,6 +262,7 @@ export default function SerialItemsPanel({ productId }: Props) {
                 <th className="px-3 py-2 text-left text-xs font-medium">Statut</th>
                 <th className="px-3 py-2 text-left text-xs font-medium">N° borne</th>
                 <th className="px-3 py-2 text-left text-xs font-medium">Entrée</th>
+                <th className="px-3 py-2 text-left text-xs font-medium">Ajouté par</th>
                 <th className="px-3 py-2 text-right text-xs font-medium">Actions</th>
               </tr>
             </thead>
@@ -290,6 +292,24 @@ export default function SerialItemsPanel({ productId }: Props) {
                   </td>
                   <td className="px-3 py-1.5 text-[--k-muted] tabular-nums">
                     {new Date(it.enteredAt).toLocaleDateString('fr-FR')}
+                  </td>
+                  <td className="px-3 py-1.5">
+                    {it.createdByName ? (
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold text-white"
+                          style={{ backgroundColor: getOperatorColor(it.createdByName) }}
+                          title={it.createdByName}
+                        >
+                          {getOperatorInitials(it.createdByName)}
+                        </span>
+                        <span className="text-[12px] text-[--k-text] truncate max-w-[120px]">
+                          {it.createdByName}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-[--k-muted]">—</span>
+                    )}
                   </td>
                   <td className="px-3 py-1.5">
                     <div className="flex items-center justify-end gap-1">
