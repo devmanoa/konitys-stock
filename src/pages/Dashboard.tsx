@@ -5,6 +5,7 @@ import {
   Package,
   ShoppingCart,
   AlertTriangle,
+  AlertOctagon,
   TrendingUp,
   Truck,
   Building2,
@@ -327,6 +328,7 @@ export default function Dashboard() {
                 const threshold = alert.minStock || 10
                 const pct = Math.min(Math.round((alert.total / threshold) * 100), 100)
                 const level = alert.supplyRisk === 'HIGH' ? 'critical' : 'low'
+                const typeName = alert.assemblyType?.name || alert.assembly
                 return (
                   <div key={alert.id} className="px-4 py-2.5 cursor-pointer hover:bg-[--k-surface-2]/30 transition-colors" onClick={() => navigate(`/products/${alert.id}`)}>
                     <div className="flex items-start justify-between mb-1 gap-2">
@@ -337,8 +339,13 @@ export default function Dashboard() {
                         onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_PRODUCT_IMAGE }}
                       />
                       <div className="min-w-0 flex-1">
-                        <div className="text-[12px] font-medium text-[--k-text] truncate">
-                          {alert.description || alert.reference}
+                        <div className="flex items-center gap-1.5">
+                          {level === 'critical' && (
+                            <AlertOctagon className="h-3.5 w-3.5 shrink-0 text-red-600" />
+                          )}
+                          <div className="text-[12px] font-medium text-[--k-text] truncate">
+                            {alert.description || alert.reference}
+                          </div>
                         </div>
                         {alert.description && (
                           <div className="text-[10px] text-[--k-muted] font-mono truncate">
@@ -354,15 +361,22 @@ export default function Dashboard() {
                       </span>
                     </div>
                     <div className="flex items-center justify-between gap-3">
-                      <span className="text-[11px] text-[--k-muted]">
-                        {alert.assembly || 'Sans type'} · {alert.primarySupplier || 'Aucun fournisseur'}
+                      <span className="text-[11px] text-[--k-muted] truncate">
+                        {typeName && (
+                          <span className="inline-block rounded-full bg-[--k-surface-2] px-1.5 py-0.5 text-[10px] font-medium text-[--k-text] mr-1.5">
+                            {typeName}
+                          </span>
+                        )}
+                        {alert.primarySupplier || 'Aucun fournisseur'}
                       </span>
-                      <div className="h-1.5 w-20 shrink-0 rounded-full bg-[--k-surface-2] overflow-hidden">
-                        <div
-                          className={cn('h-full rounded-full', level === 'critical' ? 'bg-red-400' : 'bg-amber-400')}
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
+                      {pct > 0 && (
+                        <div className="h-1.5 w-20 shrink-0 rounded-full bg-[--k-surface-2] overflow-hidden">
+                          <div
+                            className={cn('h-full rounded-full', level === 'critical' ? 'bg-red-400' : 'bg-amber-400')}
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
                 )
