@@ -180,14 +180,11 @@ export default function Sites() {
                 </div>
               )}
 
-              <div className="mt-3 flex items-center justify-between border-t border-[--k-border] pt-3">
-                <span className="text-xs text-[--k-muted]">
-                  {site._count?.stocks || 0} produits en stock
-                </span>
-                {!site.isActive && (
+              {!site.isActive && (
+                <div className="mt-3 flex items-center justify-end border-t border-[--k-border] pt-3">
                   <Badge variant="default">Inactif</Badge>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
