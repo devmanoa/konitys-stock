@@ -28,6 +28,16 @@ import type {
   ApiResponse,
 } from '../types'
 
+const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/api$/, '')
+const DEFAULT_PRODUCT_IMAGE = '/default-product.svg'
+
+const getFullImageUrl = (url: string | null | undefined): string => {
+  if (!url) return DEFAULT_PRODUCT_IMAGE
+  if (url.startsWith('http://') || url.startsWith('https://')) return url
+  if (url.startsWith('/uploads')) return `${API_BASE_URL}${url}`
+  return url
+}
+
 const ORDER_STATUT_COLORS: Record<string, string> = {
   PENDING: 'bg-amber-50 text-amber-600',
   CONFIRMED: 'bg-blue-50 text-blue-600',
@@ -320,6 +330,12 @@ export default function Dashboard() {
                 return (
                   <div key={alert.id} className="px-4 py-2.5 cursor-pointer hover:bg-[--k-surface-2]/30 transition-colors" onClick={() => navigate(`/products/${alert.id}`)}>
                     <div className="flex items-start justify-between mb-1 gap-2">
+                      <img
+                        src={getFullImageUrl(alert.imageUrl)}
+                        alt=""
+                        className="h-8 w-8 shrink-0 rounded object-cover bg-[--k-surface-2]"
+                        onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_PRODUCT_IMAGE }}
+                      />
                       <div className="min-w-0 flex-1">
                         <div className="text-[12px] font-medium text-[--k-text] truncate">
                           {alert.description || alert.reference}

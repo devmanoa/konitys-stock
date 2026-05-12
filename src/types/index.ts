@@ -272,6 +272,7 @@ export interface LowStockAlert {
   id: string;
   reference: string;
   description?: string;
+  imageUrl?: string;
   assembly?: string;
   assemblyType?: { id: string; name: string } | null;
   qtyPerUnit: number;
