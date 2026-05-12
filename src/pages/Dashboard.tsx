@@ -164,10 +164,9 @@ export default function Dashboard() {
       <PageHeader title="Tableau de bord" subtitle="Stock Manager — Vue d'ensemble" />
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <KpiCard title="Produits" value={formatNumber(stats?.totalProducts || 0)} icon={Package} colorIndex={0} />
         <KpiCard title="Stock total" value={formatNumber(stats?.totalItems || 0)} icon={Building2} colorIndex={2} />
-        <KpiCard title="Unités possibles" value={formatNumber(stats?.totalPossibleUnits || 0)} icon={TrendingUp} colorIndex={3} />
         <KpiCard title="Valeur stock" value={formatCurrency(stats?.totalStockValue || 0)} icon={Euro} colorIndex={5} />
         <KpiCard title="Alertes" value={filteredAlerts.length} icon={AlertTriangle} colorIndex={1} />
       </div>
