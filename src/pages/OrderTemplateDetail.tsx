@@ -55,11 +55,11 @@ export default function OrderTemplateDetail() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['order-templates'] });
-      toast.success('Modele supprime', 'Le modele a ete supprime');
+      toast.success('Modèle supprimé', 'Le modèle a été supprimé');
       navigate('/order-templates');
     },
     onError: () => {
-      toast.error('Erreur', 'Impossible de supprimer le modele');
+      toast.error('Erreur', 'Impossible de supprimer le modèle');
     },
   });
 
@@ -91,7 +91,7 @@ export default function OrderTemplateDetail() {
   if (error || !data) {
     return (
       <div className="text-center py-12">
-        <p className="text-red-600">Modele non trouve</p>
+        <p className="text-red-600">Modèle non trouvé</p>
         <Button variant="secondary" onClick={() => navigate('/order-templates')} className="mt-4">
           Retour aux modèles
         </Button>
@@ -114,7 +114,7 @@ export default function OrderTemplateDetail() {
             <h1 className="text-2xl font-bold text-[--k-text]">
               {data.name}
             </h1>
-            <p className="text-[--k-muted] mt-1 text-sm">Modele de commande</p>
+            <p className="text-[--k-muted] mt-1 text-sm">Modèle de commande</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -154,7 +154,7 @@ export default function OrderTemplateDetail() {
               <div>
                 <dt className="text-sm font-medium text-[--k-muted] flex items-center gap-1">
                   <FileText className="h-3.5 w-3.5" />
-                  Nom du modele
+                  Nom du modèle
                 </dt>
                 <dd className="mt-1 text-sm text-[--k-text] font-medium">
                   {data.name}
@@ -200,7 +200,7 @@ export default function OrderTemplateDetail() {
               <div>
                 <dt className="text-sm font-medium text-[--k-muted] flex items-center gap-1">
                   <Clock className="h-3.5 w-3.5" />
-                  Date de creation
+                  Date de création
                 </dt>
                 <dd className="mt-1 text-sm text-[--k-muted]">
                   {formatDate(data.createdAt)}
@@ -216,7 +216,7 @@ export default function OrderTemplateDetail() {
             <CardTitle>
               <div className="flex items-center gap-2">
                 <Package className="h-5 w-5" />
-                Resume
+                Résumé
               </div>
             </CardTitle>
           </CardHeader>
@@ -229,14 +229,14 @@ export default function OrderTemplateDetail() {
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-[--k-muted]">Quantite totale</span>
+                <span className="text-sm text-[--k-muted]">Quantité totale</span>
                 <span className="text-lg font-semibold text-[--k-text]">
                   {totalQty}
                 </span>
               </div>
               <div className="border-t border-[--k-border] pt-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-[--k-muted]">Montant estime HT</span>
+                  <span className="text-sm font-medium text-[--k-muted]">Montant estimé HT</span>
                   <span className="text-lg font-bold text-[--k-text]">
                     {formatPrice(estimatedTotal)}
                   </span>
@@ -272,7 +272,7 @@ export default function OrderTemplateDetail() {
           <CardTitle>
             <div className="flex items-center gap-2">
               <Package className="h-5 w-5" />
-              Articles du modele ({data.items?.length || 0})
+              Articles du modèle ({data.items?.length || 0})
             </div>
           </CardTitle>
         </CardHeader>
@@ -301,7 +301,7 @@ export default function OrderTemplateDetail() {
                   </div>
                 </div>
                 <div className="flex items-center justify-between text-sm text-[--k-muted]">
-                  <span>Qte: {item.quantity} | Prix: {formatPrice(item.unitPrice)}</span>
+                  <span>Qté : {item.quantity} | Prix : {formatPrice(item.unitPrice)}</span>
                 </div>
               </div>
             ))}
@@ -316,13 +316,13 @@ export default function OrderTemplateDetail() {
                     Produit
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-[--k-muted] uppercase">
-                    Reference
+                    Référence
                   </th>
                   <th className="px-4 py-3 text-right text-xs font-medium text-[--k-muted] uppercase">
                     Prix HT
                   </th>
                   <th className="px-4 py-3 text-center text-xs font-medium text-[--k-muted] uppercase">
-                    Quantite
+                    Quantité
                   </th>
                   <th className="px-4 py-3 text-right text-xs font-medium text-[--k-muted] uppercase">
                     Total HT
@@ -372,7 +372,7 @@ export default function OrderTemplateDetail() {
       <Modal
         isOpen={isEditOpen}
         onClose={() => setIsEditOpen(false)}
-        title="Modifier le modele"
+        title="Modifier le modèle"
         size="xl"
       >
         <OrderTemplateEditForm
@@ -381,7 +381,7 @@ export default function OrderTemplateDetail() {
             setIsEditOpen(false);
             queryClient.invalidateQueries({ queryKey: ['order-template', id] });
             queryClient.invalidateQueries({ queryKey: ['order-templates'] });
-            toast.success('Modele modifie', 'Le modele a ete mis a jour');
+            toast.success('Modèle modifié', 'Le modèle a été mis à jour');
           }}
           onCancel={() => setIsEditOpen(false)}
         />
@@ -396,7 +396,7 @@ export default function OrderTemplateDetail() {
       >
         <div className="space-y-4">
           <p className="text-[--k-muted]">
-            Etes-vous sur de vouloir supprimer le modele{' '}
+            Êtes-vous sûr de vouloir supprimer le modèle{' '}
             <span className="font-semibold text-[--k-text]">{data.name}</span> ?
           </p>
           <div className="flex justify-end gap-3 pt-4">

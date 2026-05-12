@@ -323,7 +323,7 @@ export default function SupplierDetail() {
           </CardContent>
         </Card>
 
-        {/* Resume commandes */}
+        {/* Résumé commandes */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

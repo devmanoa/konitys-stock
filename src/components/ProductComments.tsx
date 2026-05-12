@@ -212,7 +212,7 @@ export default function Comments({ entityType, entityId }: CommentsProps) {
                         {formatRelativeTime(comment.createdAt)}
                       </span>
                       {comment.updatedAt !== comment.createdAt && (
-                        <span className="text-[11px] text-[--k-muted] italic">(modifie)</span>
+                        <span className="text-[11px] text-[--k-muted] italic">(modifié)</span>
                       )}
                     </div>
 

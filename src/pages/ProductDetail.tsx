@@ -337,7 +337,7 @@ export default function ProductDetail() {
           </CardContent>
         </Card>
 
-        {/* Stock resume */}
+        {/* Stock résumé */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

@@ -175,10 +175,10 @@ export default function OrderTemplateEditForm({ template, onSuccess, onCancel }:
       {/* Name */}
       <Input
         id="templateName"
-        label="Nom du modele *"
+        label="Nom du modèle *"
         value={name}
         onChange={(e) => setName(e.target.value)}
-        placeholder="Ex: Reappro mensuel composants"
+        placeholder="Ex : Réappro mensuel composants"
       />
 
       {/* Supplier */}
@@ -195,7 +195,7 @@ export default function OrderTemplateEditForm({ template, onSuccess, onCancel }:
           value={destinationSiteId}
           onChange={(e) => setDestinationSiteId(e.target.value)}
         >
-          <option value="">Selectionner</option>
+          <option value="">Sélectionner</option>
           {storageSites.map(site => (
             <option key={site.id} value={site.id}>{site.name}</option>
           ))}
@@ -230,7 +230,7 @@ export default function OrderTemplateEditForm({ template, onSuccess, onCancel }:
           <div className="rounded-xl border-2 border-dashed border-[--k-border] py-8 text-center">
             <ShoppingCart className="mx-auto h-8 w-8 text-gray-400" />
             <p className="mt-2 text-[13px] text-[--k-muted]">
-              Aucun produit ajoute
+              Aucun produit ajouté
             </p>
             <Button
               type="button"
@@ -251,9 +251,9 @@ export default function OrderTemplateEditForm({ template, onSuccess, onCancel }:
                 <tr className="text-left text-xs font-medium uppercase text-[--k-muted]">
                   <th className="px-3 py-2"></th>
                   <th className="px-3 py-2">Produit</th>
-                  <th className="px-3 py-2">Reference</th>
+                  <th className="px-3 py-2">Référence</th>
                   <th className="px-3 py-2">Prix HT</th>
-                  <th className="px-3 py-2 w-28">Quantite</th>
+                  <th className="px-3 py-2 w-28">Quantité</th>
                   <th className="px-3 py-2 w-10"></th>
                 </tr>
               </thead>
@@ -330,7 +330,7 @@ export default function OrderTemplateEditForm({ template, onSuccess, onCancel }:
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Rechercher par nom ou reference..."
+                  placeholder="Rechercher par nom ou référence..."
                   value={pickerSearch}
                   onChange={(e) => setPickerSearch(e.target.value)}
                   autoFocus
@@ -348,8 +348,8 @@ export default function OrderTemplateEditForm({ template, onSuccess, onCancel }:
               ) : availableProducts.length === 0 ? (
                 <div className="py-8 text-center text-[13px] text-[--k-muted]">
                   {supplierProducts?.length === orderLines.length
-                    ? 'Tous les produits ont ete ajoutes'
-                    : 'Aucun produit trouve'}
+                    ? 'Tous les produits ont été ajoutés'
+                    : 'Aucun produit trouvé'}
                 </div>
               ) : (
                 <div className="divide-y divide-[--k-border]">
@@ -417,11 +417,11 @@ export default function OrderTemplateEditForm({ template, onSuccess, onCancel }:
           <div className="flex items-center justify-between">
             <span className="text-[--k-muted]">
               <ShoppingCart className="inline h-4 w-4 mr-1" />
-              {validLines.length} article{validLines.length > 1 ? 's' : ''} — {validLines.reduce((s, i) => s + i.quantity, 0)} unites
+              {validLines.length} article{validLines.length > 1 ? 's' : ''} — {validLines.reduce((s, i) => s + i.quantity, 0)} unités
             </span>
             {totalEstime > 0 && (
               <span className="font-semibold text-[--k-primary]">
-                Total estime : {totalEstime.toFixed(2)} € HT
+                Total estimé : {totalEstime.toFixed(2)} € HT
               </span>
             )}
           </div>
