@@ -285,6 +285,18 @@ export default function ProductDetail() {
                     <dd className="mt-1 text-[--k-text]">{data.assemblyType.name}</dd>
                   </div>
                 )}
+                <div>
+                  <dt className="text-[13px] font-medium text-[--k-muted]">Numéro de série</dt>
+                  <dd className="mt-1">
+                    {data.hasSerialNumber ? (
+                      <span className="inline-flex items-center rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-800">
+                        Suivi unitaire
+                      </span>
+                    ) : (
+                      <span className="text-[--k-muted] text-sm">Non suivi</span>
+                    )}
+                  </dd>
+                </div>
                 {data.minStock != null && (
                   <div>
                     <dt className="text-[13px] font-medium text-[--k-muted]">Seuil critique</dt>

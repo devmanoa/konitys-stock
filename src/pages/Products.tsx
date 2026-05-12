@@ -36,6 +36,7 @@ export default function Products() {
   const assemblyTypeId = searchParams.get('assemblyTypeId') || '';
   const assemblyId = searchParams.get('assemblyId') || '';
   const partCategoryId = searchParams.get('partCategoryId') || '';
+  const serialFilter = searchParams.get('serial') || '';
 
   const setSearch = (value: string) => {
     const params = new URLSearchParams(searchParams);
@@ -109,7 +110,7 @@ export default function Products() {
       )
     : assembliesData;
 
-  const hasActiveFilters = search || assemblyTypeId || assemblyId || partCategoryId || page > 1;
+  const hasActiveFilters = search || assemblyTypeId || assemblyId || partCategoryId || serialFilter || page > 1;
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | undefined>();
@@ -118,7 +119,7 @@ export default function Products() {
   const [lightboxProduct, setLightboxProduct] = useState<Product | null>(null);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['products', page, search, assemblyTypeId, assemblyId, partCategoryId],
+    queryKey: ['products', page, search, assemblyTypeId, assemblyId, partCategoryId, serialFilter],
     queryFn: async () => {
       const params = new URLSearchParams({
         page: page.toString(),
@@ -127,6 +128,7 @@ export default function Products() {
         ...(assemblyTypeId && { assemblyTypeId }),
         ...(assemblyId && { assemblyId }),
         ...(partCategoryId && { partCategoryId }),
+        ...(serialFilter && { hasSerialNumber: serialFilter }),
       });
       const res = await api.get<PaginatedResponse<Product>>(`/products?${params}`);
       return res.data;
@@ -332,6 +334,16 @@ export default function Products() {
               onChange={(val) => setFilter('partCategoryId', val)}
               options={partCategoriesData?.map((c) => ({ value: c.id, label: c.name })) || []}
               placeholder="Catégorie de pièce"
+              className="min-w-[140px] sm:w-[352px]"
+            />
+            <SearchSelect
+              value={serialFilter}
+              onChange={(val) => setFilter('serial', val)}
+              options={[
+                { value: 'true', label: 'Avec n° de série' },
+                { value: 'false', label: 'Sans n° de série' },
+              ]}
+              placeholder="N° de série"
               className="min-w-[140px] sm:w-[352px]"
             />
             {hasActiveFilters && (
