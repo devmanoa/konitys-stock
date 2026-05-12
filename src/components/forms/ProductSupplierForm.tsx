@@ -129,7 +129,16 @@ export default function ProductSupplierForm({ product, onClose }: ProductSupplie
                   </div>
                   <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-[--k-muted]">
                     {ps.supplierRef && <span>Réf: {ps.supplierRef}</span>}
-                    {ps.unitPrice && <span>Prix: {Number(ps.unitPrice).toFixed(2)} €</span>}
+                    {ps.unitPrice && (
+                      <span>
+                        Prix : {Number(ps.unitPrice).toFixed(2)} €
+                        {ps.priceUpdatedAt && (
+                          <span className="ml-1 text-[11px]">
+                            (au {new Date(ps.priceUpdatedAt).toLocaleDateString('fr-FR')})
+                          </span>
+                        )}
+                      </span>
+                    )}
                     {ps.leadTime && <span>Délai: {ps.leadTime}</span>}
                   </div>
                 </div>

@@ -414,7 +414,18 @@ export default function ProductDetail() {
                       </td>
                       <td className="py-2 text-[--k-muted]">{ps.supplierRef || '-'}</td>
                       <td className="py-2 text-[--k-muted]">
-                        {ps.unitPrice ? `${Number(ps.unitPrice).toFixed(2)} \u20AC` : '-'}
+                        {ps.unitPrice ? (
+                          <div className="flex flex-col">
+                            <span className="text-[--k-text]">{Number(ps.unitPrice).toFixed(2)} \u20AC</span>
+                            {ps.priceUpdatedAt && (
+                              <span className="text-[11px] text-[--k-muted]">
+                                au {new Date(ps.priceUpdatedAt).toLocaleDateString('fr-FR')}
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          '-'
+                        )}
                       </td>
                       <td className="py-2 text-[--k-muted]">{ps.leadTime || '-'}</td>
                       <td className="py-2">
