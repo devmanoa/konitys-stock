@@ -61,36 +61,38 @@ export default function MovementForm({ onSuccess, onCancel, preselectedProductId
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(preselectedProduct || null)
 
   // Serial-tracked workflow state
-  const [serialNumbersList, setSerialNumbersList] = useState<string[]>([])
-  const [serialInput, setSerialInput] = useState('')
-  const [serialError, setSerialError] = useState<string | null>(null)
+  const [serialInputs, setSerialInputs] = useState<string[]>([])
   const [selectedSerialIds, setSelectedSerialIds] = useState<string[]>([])
   const [borneNumber, setBorneNumber] = useState('')
 
-  const addSerialNumbers = (raw: string) => {
-    setSerialError(null)
-    const candidates = raw
-      .split(/[\n,;\t]+/)
-      .map((s) => s.trim())
-      .filter((s) => s.length > 0)
-    if (candidates.length === 0) return
-    const next = [...serialNumbersList]
-    const dupes: string[] = []
-    for (const c of candidates) {
-      if (next.includes(c)) dupes.push(c)
-      else next.push(c)
-    }
-    setSerialNumbersList(next)
-    if (dupes.length > 0) {
-      setSerialError(`Doublon ignoré : ${dupes.join(', ')}`)
-    }
-  }
-
-  const removeSerialNumber = (sn: string) => {
-    setSerialNumbersList(serialNumbersList.filter((s) => s !== sn))
-  }
-
   const isSerialTracked = !!selectedProduct?.hasSerialNumber
+
+  // Sync number of inputs with quantity (only for serial-tracked IN)
+  useEffect(() => {
+    if (!isSerialTracked || movementType !== 'IN') return
+    const qty = Math.max(0, Number(quantity) || 0)
+    setSerialInputs((prev) => {
+      if (prev.length === qty) return prev
+      if (prev.length < qty) return [...prev, ...Array(qty - prev.length).fill('')]
+      return prev.slice(0, qty)
+    })
+  }, [quantity, isSerialTracked, movementType])
+
+  // Reset inputs when leaving IN
+  useEffect(() => {
+    if (movementType !== 'IN') setSerialInputs([])
+  }, [movementType])
+
+  // Compute duplicates (trimmed, case-sensitive — serials are alphanumeric IDs)
+  const duplicateSerials = (() => {
+    const seen = new Map<string, number>()
+    serialInputs.forEach((s) => {
+      const v = s.trim()
+      if (!v) return
+      seen.set(v, (seen.get(v) || 0) + 1)
+    })
+    return new Set(Array.from(seen.entries()).filter(([, n]) => n > 1).map(([v]) => v))
+  })()
 
   // For OUT/TRANSFER: list of available serial items at sourceSite with the chosen condition
   const { data: availableSerialItems = [] } = useQuery({
@@ -135,7 +137,8 @@ export default function MovementForm({ onSuccess, onCancel, preselectedProductId
       }
       if (isSerialTracked) {
         if (data.type === 'IN') {
-          if (serialNumbersList.length > 0) payload.serialNumbers = serialNumbersList
+          const filled = serialInputs.map((s) => s.trim()).filter((s) => s.length > 0)
+          if (filled.length > 0) payload.serialNumbers = filled
         } else if (data.type === 'OUT' || data.type === 'TRANSFER') {
           payload.serialItemIds = selectedSerialIds
           payload.quantity = selectedSerialIds.length
@@ -162,6 +165,9 @@ export default function MovementForm({ onSuccess, onCancel, preselectedProductId
       return
     }
     setProductError(undefined)
+    if (isSerialTracked && data.type === 'IN' && duplicateSerials.size > 0) {
+      return
+    }
     if (isSerialTracked && (data.type === 'OUT' || data.type === 'TRANSFER')) {
       if (selectedSerialIds.length === 0) {
         return
@@ -271,78 +277,45 @@ export default function MovementForm({ onSuccess, onCancel, preselectedProductId
         />
       )}
 
-      {isSerialTracked && movementType === 'IN' && (
-        <div className="space-y-1">
+      {isSerialTracked && movementType === 'IN' && serialInputs.length > 0 && (
+        <div className="space-y-1.5">
           <label className="block text-[13px] font-medium text-[--k-text]">
             Numéros de série
           </label>
-          <div className="flex flex-wrap gap-1.5 rounded-lg border border-[--k-border] bg-[--k-surface] p-2 min-h-[44px] focus-within:border-[--k-primary]">
-            {serialNumbersList.map((sn) => (
-              <span
-                key={sn}
-                className="inline-flex items-center gap-1 rounded-full bg-[--k-primary-2] px-2.5 py-1 text-[12px] font-mono text-[--k-primary]"
-              >
-                {sn}
-                <button
-                  type="button"
-                  onClick={() => removeSerialNumber(sn)}
-                  className="hover:text-red-600 ml-0.5"
-                  title="Retirer"
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-            <input
-              type="text"
-              value={serialInput}
-              onChange={(e) => {
-                setSerialError(null)
-                setSerialInput(e.target.value)
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault()
-                  if (serialInput.trim()) {
-                    addSerialNumbers(serialInput)
-                    setSerialInput('')
-                  }
-                } else if (e.key === 'Backspace' && serialInput === '' && serialNumbersList.length > 0) {
-                  // Quick remove last with Backspace on empty input
-                  removeSerialNumber(serialNumbersList[serialNumbersList.length - 1])
-                }
-              }}
-              onPaste={(e) => {
-                const pasted = e.clipboardData.getData('text')
-                if (/[\n,;\t]/.test(pasted)) {
-                  // Multi-value paste: parse and add all, prevent default
-                  e.preventDefault()
-                  addSerialNumbers(pasted)
-                  setSerialInput('')
-                }
-              }}
-              onBlur={() => {
-                if (serialInput.trim()) {
-                  addSerialNumbers(serialInput)
-                  setSerialInput('')
-                }
-              }}
-              placeholder={serialNumbersList.length === 0 ? 'Tapez un n° puis Entrée (ou collez plusieurs n°)' : 'Ajouter…'}
-              className="flex-1 min-w-[160px] bg-transparent border-none outline-none text-[13px] font-mono"
-            />
+          <div className="space-y-1.5">
+            {serialInputs.map((value, idx) => {
+              const trimmed = value.trim()
+              const isDup = trimmed.length > 0 && duplicateSerials.has(trimmed)
+              return (
+                <div key={idx} className="flex items-center gap-2">
+                  <span className="text-[12px] text-[--k-muted] w-6 text-right">#{idx + 1}</span>
+                  <input
+                    type="text"
+                    value={value}
+                    onChange={(e) => {
+                      const next = [...serialInputs]
+                      next[idx] = e.target.value
+                      setSerialInputs(next)
+                    }}
+                    placeholder="N° de série (optionnel)"
+                    className={`input-field flex-1 font-mono text-[13px] ${
+                      isDup ? 'border-red-400 focus:border-red-500' : ''
+                    }`}
+                  />
+                  {isDup && (
+                    <span className="text-[11px] text-red-600 font-medium">Doublon</span>
+                  )}
+                </div>
+              )
+            })}
           </div>
-          {serialError && (
-            <p className="text-xs text-amber-600">{serialError}</p>
+          {duplicateSerials.size > 0 && (
+            <p className="text-xs text-red-600">
+              {duplicateSerials.size} doublon(s) détecté(s) — corrigez avant de valider.
+            </p>
           )}
           <p className="text-xs text-[--k-muted]">
-            {(() => {
-              const n = serialNumbersList.length
-              const qty = Number(quantity) || 0
-              if (n === 0) return `${qty} exemplaire(s) sera/seront créé(s) avec n° « à compléter »`
-              if (n < qty) return `${n} numéro(s) saisi(s), ${qty - n} sera/seront créé(s) avec n° « à compléter »`
-              if (n > qty) return `Attention : ${n} numéros saisis pour ${qty} exemplaires — les ${n - qty} excédentaires seront ignorés`
-              return `${n} numéro(s) saisi(s)`
-            })()}
+            Laissez vide pour créer un exemplaire avec n° « à compléter ».
           </p>
         </div>
       )}
