@@ -20,6 +20,22 @@ type AssemblyTypeItemDraft = {
   partCategoryId: string;
 };
 
+function summarizeAssemblyTypeItems(items: AssemblyType['items']) {
+  const list = items || [];
+  let total = 0;
+  const buckets = new Map<string, number>();
+  for (const it of list) {
+    const qty = Number(it.quantity) || 0;
+    total += qty;
+    const label = it.partCategory?.name || 'Sans catégorie';
+    buckets.set(label, (buckets.get(label) || 0) + qty);
+  }
+  const byCategory = Array.from(buckets.entries())
+    .map(([label, qty]) => ({ label, qty }))
+    .sort((a, b) => b.qty - a.qty);
+  return { total, byCategory };
+}
+
 export default function Settings() {
   const queryClient = useQueryClient();
   const toast = useToast();
@@ -380,7 +396,9 @@ export default function Settings() {
             <>
               {/* Mobile Cards */}
               <div className="space-y-3 lg:hidden">
-                {assemblyTypesData.map((assemblyType) => (
+                {assemblyTypesData.map((assemblyType) => {
+                  const totals = summarizeAssemblyTypeItems(assemblyType.items)
+                  return (
                   <div
                     key={assemblyType.id}
                     className="rounded-2xl border border-[--k-border] bg-[--k-surface] p-3"
@@ -394,8 +412,20 @@ export default function Settings() {
                           </p>
                         )}
                         <p className="mt-2 text-xs text-[--k-muted]">
-                          {assemblyType._count?.assemblies || 0} borne(s)
+                          {assemblyType._count?.assemblies || 0} borne(s) · Total pièces : <span className="font-semibold text-[--k-text]">{totals.total}</span>
                         </p>
+                        {totals.byCategory.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {totals.byCategory.map((c) => (
+                              <span
+                                key={c.label}
+                                className="inline-flex items-center rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-700"
+                              >
+                                {c.label} : {c.qty}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
                       <div className="flex gap-1 shrink-0">
                         <Button
@@ -416,7 +446,8 @@ export default function Settings() {
                       </div>
                     </div>
                   </div>
-                ))}
+                  )
+                })}
               </div>
 
               {/* Desktop Table */}
@@ -426,18 +457,44 @@ export default function Settings() {
                     <tr className="border-b border-[--k-border] bg-[--k-surface-2]/50">
                       <th className="px-4 py-1.5 text-left text-xs font-medium text-[--k-muted]">Nom</th>
                       <th className="px-4 py-1.5 text-left text-xs font-medium text-[--k-muted]">Description</th>
+                      <th className="px-4 py-1.5 text-left text-xs font-medium text-[--k-muted]">Composition</th>
                       <th className="px-4 py-1.5 text-center text-xs font-medium text-[--k-muted]">Bornes</th>
                       <th className="px-4 py-1.5 text-right text-xs font-medium text-[--k-muted]">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {assemblyTypesData.map((assemblyType) => (
+                    {assemblyTypesData.map((assemblyType) => {
+                      const totals = summarizeAssemblyTypeItems(assemblyType.items)
+                      return (
                       <tr key={assemblyType.id} className="border-t border-[--k-border] hover:bg-[--k-surface-2]/30 transition-colors">
                         <td className="px-4 py-1.5 font-medium text-[--k-text]">
                           {assemblyType.name}
                         </td>
                         <td className="px-4 py-1.5 text-[--k-muted]">
                           {assemblyType.description || '-'}
+                        </td>
+                        <td className="px-4 py-1.5">
+                          {totals.total === 0 ? (
+                            <span className="text-[--k-muted]">—</span>
+                          ) : (
+                            <div className="flex flex-col gap-1">
+                              <span className="text-[12px] text-[--k-text]">
+                                Total pièces : <span className="font-semibold">{totals.total}</span>
+                              </span>
+                              {totals.byCategory.length > 0 && (
+                                <div className="flex flex-wrap gap-1">
+                                  {totals.byCategory.map((c) => (
+                                    <span
+                                      key={c.label}
+                                      className="inline-flex items-center rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-700"
+                                    >
+                                      {c.label} : {c.qty}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </td>
                         <td className="px-4 py-1.5 text-center text-[--k-muted]">
                           {assemblyType._count?.assemblies || 0}
@@ -464,7 +521,8 @@ export default function Settings() {
                           </div>
                         </td>
                       </tr>
-                    ))}
+                      )
+                    })}
                   </tbody>
                 </table>
               </div>
