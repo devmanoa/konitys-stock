@@ -257,10 +257,6 @@ export default function ProductDetail() {
                   <dt className="text-[13px] font-medium text-[--k-muted]">Référence</dt>
                   <dd className="mt-1 text-[--k-text]">{data.reference}</dd>
                 </div>
-                <div>
-                  <dt className="text-[13px] font-medium text-[--k-muted]">Quantité par unité</dt>
-                  <dd className="mt-1 text-[--k-text]">{data.qtyPerUnit}</dd>
-                </div>
                 {data.supplyRisk && (
                   <div>
                     <dt className="text-[13px] font-medium text-[--k-muted]">Risque approvisionnement</dt>
@@ -279,10 +275,20 @@ export default function ProductDetail() {
                     <dd className="mt-1 text-[--k-text]">{data.assembly.name}</dd>
                   </div>
                 )}
-                {data.assemblyType?.name && (
-                  <div>
-                    <dt className="text-[13px] font-medium text-[--k-muted]">Type borne</dt>
-                    <dd className="mt-1 text-[--k-text]">{data.assemblyType.name}</dd>
+                {data.assemblyTypes && data.assemblyTypes.length > 0 && (
+                  <div className="col-span-2">
+                    <dt className="text-[13px] font-medium text-[--k-muted]">Types de borne — qté par unité</dt>
+                    <dd className="mt-1 flex flex-wrap gap-1.5">
+                      {data.assemblyTypes.map((l) => (
+                        <span
+                          key={l.assemblyTypeId}
+                          className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-800"
+                        >
+                          {l.assemblyType.name}
+                          <span className="text-[10px] text-indigo-600">× {l.qtyPerUnit}</span>
+                        </span>
+                      ))}
+                    </dd>
                   </div>
                 )}
                 <div>

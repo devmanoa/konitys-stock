@@ -174,7 +174,9 @@ export default function Stocks() {
     // Filter by assembly type
     if (selectedAssemblyType) {
       result = result.filter((row) => {
-        return row.product.assemblyTypeId === selectedAssemblyType;
+        return (row.product.assemblyTypes || []).some(
+          (l: any) => l.assemblyTypeId === selectedAssemblyType,
+        );
       });
     }
 
@@ -676,9 +678,9 @@ export default function Stocks() {
                       </td>
                       <td className="px-3 py-1.5">
                         <div className="flex flex-col">
-                          {row.product.assemblyType && (
+                          {(row.product.assemblyTypes || []).length > 0 && (
                             <span className="text-xs text-[--k-primary]">
-                              {row.product.assemblyType.name}
+                              {(row.product.assemblyTypes || []).map((l: any) => l.assemblyType.name).join(', ')}
                             </span>
                           )}
                           {row.product.assembly && (

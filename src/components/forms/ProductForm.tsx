@@ -23,17 +23,18 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
   const [formData, setFormData] = useState<CreateProductInput>({
     reference: '',
     description: '',
-    qtyPerUnit: 1,
     supplyRisk: undefined,
     minStock: null,
     location: '',
     assemblyId: '',
-    assemblyTypeId: '',
     comment: '',
     imageUrl: '',
     partCategoryIds: [],
     hasSerialNumber: false,
   });
+
+  // Selected assembly types with per-type qtyPerUnit
+  const [selectedTypes, setSelectedTypes] = useState<{ assemblyTypeId: string; qtyPerUnit: number }[]>([]);
 
   // Fetch assembly types for filter
   const { data: assemblyTypesData } = useQuery({
@@ -62,11 +63,11 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
     },
   });
 
-  // Filter assemblies by selected type
-  const filteredAssemblies = formData.assemblyTypeId
+  // Filter assemblies by any of the selected types (or show all if none selected)
+  const filteredAssemblies = selectedTypes.length > 0
     ? assembliesData?.filter((assembly) =>
         assembly.assemblyTypes?.some((at: any) =>
-          at.assemblyTypeId === formData.assemblyTypeId || at.id === formData.assemblyTypeId
+          selectedTypes.some(st => st.assemblyTypeId === at.assemblyTypeId || st.assemblyTypeId === at.id)
         )
       )
     : assembliesData;
@@ -80,17 +81,21 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
       setFormData({
         reference: product.reference,
         description: product.description || '',
-        qtyPerUnit: product.qtyPerUnit,
         supplyRisk: product.supplyRisk,
         minStock: product.minStock ?? null,
         location: product.location || '',
         assemblyId: product.assemblyId || '',
-        assemblyTypeId: product.assemblyTypeId || '',
         comment: product.comment || '',
         imageUrl: product.imageUrl || '',
         partCategoryIds: product.partCategories?.map(pc => pc.partCategoryId) || [],
         hasSerialNumber: product.hasSerialNumber || false,
       });
+      setSelectedTypes(
+        (product.assemblyTypes || []).map(l => ({
+          assemblyTypeId: l.assemblyTypeId,
+          qtyPerUnit: l.qtyPerUnit,
+        })),
+      );
     }
   }, [product]);
 
@@ -156,8 +161,11 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
       newErrors.reference = 'La référence ne doit pas dépasser 50 caractères';
     }
 
-    if (formData.qtyPerUnit && formData.qtyPerUnit < 1) {
-      newErrors.qtyPerUnit = 'La quantité doit être au moins 1';
+    for (const t of selectedTypes) {
+      if (!t.qtyPerUnit || t.qtyPerUnit < 1) {
+        newErrors.assemblyTypes = 'Chaque type de borne doit avoir une quantité ≥ 1';
+        break;
+      }
     }
 
     setErrors(newErrors);
@@ -170,11 +178,10 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
 
     const data = {
       ...formData,
-      qtyPerUnit: formData.qtyPerUnit || 1,
       supplyRisk: formData.supplyRisk || undefined,
       minStock: formData.minStock != null && formData.minStock >= 0 ? formData.minStock : null,
       assemblyId: formData.assemblyId || undefined,
-      assemblyTypeId: formData.assemblyTypeId || undefined,
+      assemblyTypes: selectedTypes.length > 0 ? selectedTypes : undefined,
       partCategoryIds: formData.partCategoryIds?.length ? formData.partCategoryIds : undefined,
     };
 
@@ -264,21 +271,6 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
           )}
         </div>
 
-        <div className="col-span-2 sm:col-span-1">
-          <label className="mb-1 block text-[13px] font-medium text-[--k-text]">
-            Quantité par unité
-          </label>
-          <Input
-            type="number"
-            min={1}
-            value={formData.qtyPerUnit || ''}
-            onChange={(e) => handleChange('qtyPerUnit', parseInt(e.target.value) || 1)}
-            placeholder="1"
-          />
-          {errors.qtyPerUnit && (
-            <p className="mt-1 text-[13px] text-[--k-danger]">{errors.qtyPerUnit}</p>
-          )}
-        </div>
       </div>
 
       <div>
@@ -292,52 +284,89 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="mb-1 block text-[13px] font-medium text-[--k-text]">
-            Type borne
-          </label>
-          <Select
-            value={formData.assemblyTypeId || ''}
-            onChange={(e) => {
-              handleChange('assemblyTypeId', e.target.value || undefined);
-              // Reset assembly if changing type filter
-              if (e.target.value && formData.assemblyId) {
-                const assembly = assembliesData?.find(a => a.id === formData.assemblyId);
-                const hasType = assembly?.assemblyTypes?.some((at: any) =>
-                  at.assemblyTypeId === e.target.value || at.id === e.target.value
-                );
-                if (!hasType) {
-                  handleChange('assemblyId', undefined);
-                }
-              }
-            }}
-          >
-            <option value="">Aucun type</option>
-            {assemblyTypesData?.map((type) => (
-              <option key={type.id} value={type.id}>
-                {type.name}
-              </option>
-            ))}
-          </Select>
+      <div>
+        <label className="mb-1 block text-[13px] font-medium text-[--k-text]">
+          Types de borne — quantité par unité
+        </label>
+        <p className="mb-2 text-xs text-[--k-muted]">
+          Un produit peut être utilisé dans plusieurs types de borne. Indiquez la quantité requise par unité pour chaque type.
+        </p>
+        <div className="space-y-2 rounded-lg border border-[--k-border] p-3">
+          {selectedTypes.length === 0 && (
+            <p className="text-xs italic text-[--k-muted]">Aucun type sélectionné.</p>
+          )}
+          {selectedTypes.map((st) => {
+            const type = assemblyTypesData?.find((t) => t.id === st.assemblyTypeId);
+            return (
+              <div key={st.assemblyTypeId} className="flex items-center gap-2">
+                <span className="flex-1 text-sm text-[--k-text]">
+                  {type?.name || st.assemblyTypeId}
+                </span>
+                <Input
+                  type="number"
+                  min={1}
+                  value={st.qtyPerUnit}
+                  onChange={(e) => {
+                    const next = Math.max(1, parseInt(e.target.value) || 1);
+                    setSelectedTypes((prev) =>
+                      prev.map((p) => (p.assemblyTypeId === st.assemblyTypeId ? { ...p, qtyPerUnit: next } : p)),
+                    );
+                  }}
+                  className="!w-24"
+                />
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSelectedTypes((prev) => prev.filter((p) => p.assemblyTypeId !== st.assemblyTypeId))
+                  }
+                  className="rounded-md p-1.5 text-[--k-muted] hover:bg-[--k-surface-2] hover:text-[--k-danger]"
+                  title="Retirer"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            );
+          })}
+          {assemblyTypesData && assemblyTypesData.some((t) => !selectedTypes.find((st) => st.assemblyTypeId === t.id)) && (
+            <Select
+              value=""
+              onChange={(e) => {
+                const id = e.target.value;
+                if (!id) return;
+                setSelectedTypes((prev) => [...prev, { assemblyTypeId: id, qtyPerUnit: 1 }]);
+              }}
+            >
+              <option value="">+ Ajouter un type…</option>
+              {assemblyTypesData
+                ?.filter((t) => !selectedTypes.find((st) => st.assemblyTypeId === t.id))
+                .map((type) => (
+                  <option key={type.id} value={type.id}>
+                    {type.name}
+                  </option>
+                ))}
+            </Select>
+          )}
         </div>
+        {errors.assemblyTypes && (
+          <p className="mt-1 text-[13px] text-[--k-danger]">{errors.assemblyTypes}</p>
+        )}
+      </div>
 
-        <div>
-          <label className="mb-1 block text-[13px] font-medium text-[--k-text]">
-            Borne
-          </label>
-          <Select
-            value={formData.assemblyId || ''}
-            onChange={(e) => handleChange('assemblyId', e.target.value || undefined)}
-          >
-            <option value="">Aucune borne</option>
-            {filteredAssemblies?.map((assembly) => (
-              <option key={assembly.id} value={assembly.id}>
-                {assembly.name}
-              </option>
-            ))}
-          </Select>
-        </div>
+      <div>
+        <label className="mb-1 block text-[13px] font-medium text-[--k-text]">
+          Borne
+        </label>
+        <Select
+          value={formData.assemblyId || ''}
+          onChange={(e) => handleChange('assemblyId', e.target.value || undefined)}
+        >
+          <option value="">Aucune borne</option>
+          {filteredAssemblies?.map((assembly) => (
+            <option key={assembly.id} value={assembly.id}>
+              {assembly.name}
+            </option>
+          ))}
+        </Select>
       </div>
 
       <div className="grid grid-cols-2 gap-4">

@@ -231,9 +231,9 @@ export default function Products() {
 
       <div className="mt-3 grid grid-cols-2 gap-2 text-[13px]">
         <div>
-          <span className="text-[--k-muted]">Borne:</span>
+          <span className="text-[--k-muted]">Borne :</span>
           <p className="text-[--k-text] truncate">
-            {product.assembly?.name || product.assemblyType?.name || '-'}
+            {product.assembly?.name || (product.assemblyTypes || []).map((l: any) => l.assemblyType.name).join(', ') || '-'}
           </p>
         </div>
         <div>
@@ -477,11 +477,11 @@ export default function Products() {
                     <td className="px-4 py-1.5">
                       <div className="flex flex-col">
                         <span className="text-[--k-muted]">
-                          {product.assembly?.name || (product.assemblyType ? '' : '-')}
+                          {product.assembly?.name || ((product.assemblyTypes || []).length > 0 ? '' : '-')}
                         </span>
-                        {product.assemblyType && (
+                        {(product.assemblyTypes || []).length > 0 && (
                           <span className="text-xs text-[--k-muted]">
-                            {product.assemblyType.name}
+                            {(product.assemblyTypes || []).map((l: any) => l.assemblyType.name).join(', ')}
                           </span>
                         )}
                       </div>

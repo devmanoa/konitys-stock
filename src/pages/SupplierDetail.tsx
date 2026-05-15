@@ -40,7 +40,7 @@ interface SupplierWithRelations extends Supplier {
       reference: string;
       description?: string;
       imageUrl?: string;
-      assemblyType?: { id: string; name: string };
+      assemblyTypes?: { assemblyTypeId: string; qtyPerUnit: number; assemblyType: { id: string; name: string } }[];
     };
   })[];
   orders: Order[];
@@ -558,7 +558,7 @@ export default function SupplierDetail() {
                         </RouterLink>
                       </td>
                       <td className="py-2 text-[--k-muted]">
-                        {ps.product.assemblyType?.name || '-'}
+                        {(ps.product.assemblyTypes || []).map((l: any) => l.assemblyType.name).join(', ') || '-'}
                       </td>
                       <td className="py-2 text-[--k-muted]">{ps.supplierRef || '-'}</td>
                       <td className="py-2 text-right text-[--k-text]">

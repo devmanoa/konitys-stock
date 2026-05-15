@@ -131,18 +131,23 @@ export interface Stock {
   updatedAt: string;
 }
 
+export interface ProductAssemblyTypeLink {
+  assemblyTypeId: string;
+  assemblyType: { id: string; name: string };
+  qtyPerUnit: number;
+}
+
 export interface Product {
   id: string;
   reference: string;
   description?: string;
-  qtyPerUnit: number;
   supplyRisk?: SupplyRisk;
   minStock?: number | null;
   location?: string;
   assemblyId?: string;
   assembly?: Assembly;
-  assemblyTypeId?: string;
-  assemblyType?: AssemblyType;
+  /** Many-to-many: a product may belong to several assembly types, each with its own qtyPerUnit. */
+  assemblyTypes?: ProductAssemblyTypeLink[];
   comment?: string;
   imageUrl?: string;
   hasSerialNumber?: boolean;
@@ -324,12 +329,11 @@ export interface OrdersByMonth {
 export interface CreateProductInput {
   reference: string;
   description?: string;
-  qtyPerUnit?: number;
   supplyRisk?: SupplyRisk;
   minStock?: number | null;
   location?: string;
   assemblyId?: string;
-  assemblyTypeId?: string;
+  assemblyTypes?: { assemblyTypeId: string; qtyPerUnit: number }[];
   comment?: string;
   imageUrl?: string;
   partCategoryIds?: string[];
