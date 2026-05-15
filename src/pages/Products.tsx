@@ -300,7 +300,7 @@ export default function Products() {
       </PageHeader>
 
       {/* Filters */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
           {/* Search */}
           <div className="relative min-w-[140px] sm:w-[352px]">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[--k-muted]" />
