@@ -564,7 +564,7 @@ export default function SupplierDetail() {
                       <td className="py-2 text-right text-[--k-text]">
                         {ps.unitPrice ? (
                           <div className="flex flex-col items-end">
-                            <span>{Number(ps.unitPrice).toFixed(2)} \u20AC</span>
+                            <span>{Number(ps.unitPrice).toFixed(2)} €</span>
                             {ps.priceUpdatedAt && (
                               <span className="text-[11px] text-[--k-muted]">
                                 au {new Date(ps.priceUpdatedAt).toLocaleDateString('fr-FR')}
