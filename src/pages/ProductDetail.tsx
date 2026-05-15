@@ -478,9 +478,6 @@ export default function ProductDetail() {
                       <tr key={entry.id} className="border-t border-[--k-border]">
                         <td className="px-4 py-1.5 text-[--k-muted] tabular-nums">
                           {new Date(entry.changedAt).toLocaleDateString('fr-FR')}
-                          <span className="ml-2 text-xs text-[--k-muted]/60">
-                            {new Date(entry.changedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                          </span>
                         </td>
                         <td className="px-4 py-1.5 text-[--k-text]">{entry.supplierName}</td>
                         <td className="px-4 py-1.5 text-right tabular-nums font-medium text-[--k-text]">
