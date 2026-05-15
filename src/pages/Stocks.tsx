@@ -102,10 +102,21 @@ export default function Stocks() {
       )
     : assembliesData;
 
-  // Storage sites only (for matrix columns)
+  // Site IDs that actually hold stock anywhere
+  const activeSiteIds = useMemo(() => {
+    const ids = new Set<string>();
+    (stocksData || []).forEach((stock) => {
+      if ((stock.quantityNew || 0) + (stock.quantityUsed || 0) > 0) {
+        ids.add(stock.siteId);
+      }
+    });
+    return ids;
+  }, [stocksData]);
+
+  // Storage sites with at least one product in stock (for matrix columns)
   const storageSites = useMemo(() =>
-    sites?.filter(s => s.type === 'STORAGE' && s.isActive) || [],
-    [sites]
+    sites?.filter(s => s.type === 'STORAGE' && s.isActive && activeSiteIds.has(s.id)) || [],
+    [sites, activeSiteIds]
   );
 
   // Build matrix data
