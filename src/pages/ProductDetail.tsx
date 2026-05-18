@@ -38,10 +38,11 @@ import Modal from '../components/ui/Modal';
 import ProductForm from '../components/forms/ProductForm';
 import ProductSupplierForm from '../components/forms/ProductSupplierForm';
 import MovementForm from '../components/forms/MovementForm';
+import MovementDetail from '../components/MovementDetail';
 import Comments from '../components/ProductComments';
 import SerialItemsPanel from '../components/SerialItemsPanel';
 import api from '../services/api';
-import type { Product, ApiResponse, ProductPriceHistoryEntry } from '../types';
+import type { Product, ApiResponse, ProductPriceHistoryEntry, StockMovement } from '../types';
 
 // Helper to get full image URL
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/api$/, '');
@@ -114,6 +115,7 @@ export default function ProductDetail() {
   const [isSupplierModalOpen, setIsSupplierModalOpen] = useState(false);
   const [isMovementModalOpen, setIsMovementModalOpen] = useState(false);
   const [isImageOpen, setIsImageOpen] = useState(false);
+  const [selectedMovement, setSelectedMovement] = useState<StockMovement | null>(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['product', id],
@@ -619,7 +621,11 @@ export default function ProductDetail() {
                 </thead>
                 <tbody className="divide-y divide-[--k-border]">
                   {data.movements.map((mvt) => (
-                    <tr key={mvt.id} className="hover:bg-[--k-surface-2]">
+                    <tr
+                      key={mvt.id}
+                      onClick={() => setSelectedMovement({ ...mvt, product: data } as StockMovement)}
+                      className="hover:bg-[--k-surface-2] cursor-pointer"
+                    >
                       <td className="py-2 text-[--k-muted]">
                         {new Date(mvt.movementDate).toLocaleDateString('fr-FR')}
                       </td>
@@ -732,6 +738,16 @@ export default function ProductDetail() {
           }}
           onCancel={() => setIsMovementModalOpen(false)}
         />
+      </Modal>
+
+      {/* Movement Detail Modal */}
+      <Modal
+        isOpen={!!selectedMovement}
+        onClose={() => setSelectedMovement(null)}
+        title="Détail du mouvement"
+        size="lg"
+      >
+        {selectedMovement && <MovementDetail movement={selectedMovement} />}
       </Modal>
 
       {/* Image Lightbox */}
