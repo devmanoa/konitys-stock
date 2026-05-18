@@ -281,7 +281,7 @@ export default function Settings() {
                           </p>
                         )}
                         <p className="mt-2 text-xs text-[--k-muted]">
-                          {assemblyType._count?.assemblies || 0} borne(s) · Total pièces : <span className="font-semibold text-[--k-text]">{totals.total}</span>
+                          Total pièces : <span className="font-semibold text-[--k-text]">{totals.total}</span>
                         </p>
                         {totals.byCategory.length > 0 && (
                           <div className="mt-2 flex flex-wrap gap-1">
@@ -327,7 +327,6 @@ export default function Settings() {
                       <th className="px-4 py-1.5 text-left text-xs font-medium text-[--k-muted]">Nom</th>
                       <th className="px-4 py-1.5 text-left text-xs font-medium text-[--k-muted]">Description</th>
                       <th className="px-4 py-1.5 text-left text-xs font-medium text-[--k-muted]">Composition</th>
-                      <th className="px-4 py-1.5 text-center text-xs font-medium text-[--k-muted]">Bornes</th>
                       <th className="px-4 py-1.5 text-right text-xs font-medium text-[--k-muted]">Actions</th>
                     </tr>
                   </thead>
@@ -364,9 +363,6 @@ export default function Settings() {
                               )}
                             </div>
                           )}
-                        </td>
-                        <td className="px-4 py-1.5 text-center text-[--k-muted]">
-                          {assemblyType._count?.assemblies || 0}
                         </td>
                         <td className="px-4 py-1.5">
                           <div className="flex items-center justify-end gap-1">
