@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Edit2, Trash2, Boxes, Tag, X, Layers } from 'lucide-react';
@@ -6,19 +7,9 @@ import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import { PageHeader } from '../components/PageHeader';
 import Input from '../components/ui/Input';
-import Select from '../components/ui/Select';
-import ProductSearch from '../components/ui/ProductSearch';
 import { useToast } from '../components/ui/Toast';
 import api from '../services/api';
-import type { AssemblyType, Assembly, PartCategory, PaginatedResponse, Product } from '../types';
-
-type AssemblyTypeItemDraft = {
-  key: string;
-  productId: string;
-  product: { id: string; reference: string; description?: string; imageUrl?: string } | null;
-  quantity: number;
-  partCategoryId: string;
-};
+import type { AssemblyType, Assembly, PartCategory, PaginatedResponse } from '../types';
 
 function summarizeAssemblyTypeItems(items: AssemblyType['items']) {
   const list = items || [];
@@ -39,13 +30,10 @@ function summarizeAssemblyTypeItems(items: AssemblyType['items']) {
 export default function Settings() {
   const queryClient = useQueryClient();
   const toast = useToast();
+  const navigate = useNavigate();
 
-  // Assembly Types state (ex: Borne Classik, Borne Spherik)
-  const [isAssemblyTypeModalOpen, setIsAssemblyTypeModalOpen] = useState(false);
-  const [selectedAssemblyType, setSelectedAssemblyType] = useState<AssemblyType | undefined>();
-  const [assemblyTypeName, setAssemblyTypeName] = useState('');
-  const [assemblyTypeDescription, setAssemblyTypeDescription] = useState('');
-  const [assemblyTypeItems, setAssemblyTypeItems] = useState<AssemblyTypeItemDraft[]>([]);
+  // Assembly Types state (only used for delete confirmation now —
+  // edit/create has its own page at /settings/assembly-types/:id/edit)
   const [deleteAssemblyTypeConfirm, setDeleteAssemblyTypeConfirm] = useState<AssemblyType | null>(null);
 
 
@@ -89,46 +77,6 @@ export default function Settings() {
     queryFn: async () => {
       const res = await api.get<{ success: boolean; data: PartCategory[] }>('/part-categories');
       return res.data?.data || [];
-    },
-  });
-
-  // Assembly Type mutations
-  type AssemblyTypePayload = {
-    name: string;
-    description?: string;
-    items?: { productId: string; quantity: number; partCategoryId?: string | null }[];
-  };
-
-  const invalidateBuildable = () => {
-    queryClient.invalidateQueries({ queryKey: ['assembly-types'], refetchType: 'all' });
-    queryClient.invalidateQueries({ queryKey: ['buildable-bornes'] });
-  };
-
-  const createAssemblyTypeMutation = useMutation({
-    mutationFn: async (data: AssemblyTypePayload) => {
-      await api.post('/assembly-types', data);
-    },
-    onSuccess: () => {
-      invalidateBuildable();
-      handleCloseAssemblyTypeModal();
-      toast.success('Type borne créé', 'Le type borne a été créé avec succès');
-    },
-    onError: () => {
-      toast.error('Erreur', 'Impossible de créer le type borne');
-    },
-  });
-
-  const updateAssemblyTypeMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: AssemblyTypePayload }) => {
-      await api.put(`/assembly-types/${id}`, data);
-    },
-    onSuccess: () => {
-      invalidateBuildable();
-      handleCloseAssemblyTypeModal();
-      toast.success('Type borne modifié', 'Le type borne a été mis à jour');
-    },
-    onError: () => {
-      toast.error('Erreur', 'Impossible de modifier le type borne');
     },
   });
 
@@ -244,85 +192,6 @@ export default function Settings() {
     },
   });
 
-  // Assembly Type handlers
-  const handleOpenAssemblyTypeModal = (assemblyType?: AssemblyType) => {
-    setSelectedAssemblyType(assemblyType);
-    setAssemblyTypeName(assemblyType?.name || '');
-    setAssemblyTypeDescription(assemblyType?.description || '');
-    setAssemblyTypeItems(
-      assemblyType?.items?.map((item, idx) => ({
-        key: `existing-${item.id}-${idx}`,
-        productId: item.productId,
-        product: item.product,
-        quantity: item.quantity,
-        partCategoryId: item.partCategoryId || '',
-      })) || []
-    );
-    setIsAssemblyTypeModalOpen(true);
-  };
-
-  const handleCloseAssemblyTypeModal = () => {
-    setIsAssemblyTypeModalOpen(false);
-    setSelectedAssemblyType(undefined);
-    setAssemblyTypeName('');
-    setAssemblyTypeDescription('');
-    setAssemblyTypeItems([]);
-  };
-
-  const handleAddAssemblyTypeItem = () => {
-    setAssemblyTypeItems((prev) => [
-      ...prev,
-      { key: `new-${Date.now()}-${Math.random()}`, productId: '', product: null, quantity: 1, partCategoryId: '' },
-    ]);
-  };
-
-  const handleRemoveAssemblyTypeItem = (index: number) => {
-    setAssemblyTypeItems((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const handleAssemblyTypeItemProductChange = (index: number, productId: string, product: Product | null) => {
-    setAssemblyTypeItems((prev) =>
-      prev.map((item, i) =>
-        i === index
-          ? {
-              ...item,
-              productId,
-              product: product
-                ? { id: product.id, reference: product.reference, description: product.description, imageUrl: product.imageUrl }
-                : null,
-            }
-          : item
-      )
-    );
-  };
-
-  const handleAssemblyTypeItemFieldChange = (
-    index: number,
-    field: 'quantity' | 'partCategoryId',
-    value: number | string,
-  ) => {
-    setAssemblyTypeItems((prev) => prev.map((item, i) => (i === index ? { ...item, [field]: value } : item)));
-  };
-
-  const handleSaveAssemblyType = () => {
-    const validItems = assemblyTypeItems.filter((it) => it.productId && it.quantity > 0);
-    const data: AssemblyTypePayload = {
-      name: assemblyTypeName,
-      description: assemblyTypeDescription || undefined,
-      items: validItems.map((it) => ({
-        productId: it.productId,
-        quantity: it.quantity,
-        partCategoryId: it.partCategoryId || null,
-      })),
-    };
-
-    if (selectedAssemblyType) {
-      updateAssemblyTypeMutation.mutate({ id: selectedAssemblyType.id, data });
-    } else {
-      createAssemblyTypeMutation.mutate(data);
-    }
-  };
-
   // Assembly handlers
   const handleOpenAssemblyModal = (assembly?: Assembly) => {
     setSelectedAssembly(assembly);
@@ -375,7 +244,7 @@ export default function Settings() {
             <Boxes className="h-4 w-4 text-[--k-primary]" />
             <span className="text-lg font-semibold text-[--k-text]">Types de bornes</span>
           </div>
-          <Button size="sm" onClick={() => handleOpenAssemblyTypeModal()}>
+          <Button size="sm" onClick={() => navigate('/settings/assembly-types/new')}>
             <Plus className="mr-1 h-4 w-4" />
             Ajouter
           </Button>
@@ -431,7 +300,7 @@ export default function Settings() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleOpenAssemblyTypeModal(assemblyType)}
+                          onClick={() => navigate(`/settings/assembly-types/${assemblyType.id}/edit`)}
                         >
                           <Edit2 className="h-4 w-4" />
                         </Button>
@@ -504,7 +373,7 @@ export default function Settings() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleOpenAssemblyTypeModal(assemblyType)}
+                              onClick={() => navigate(`/settings/assembly-types/${assemblyType.id}/edit`)}
                               title="Modifier"
                             >
                               <Edit2 className="h-4 w-4" />
@@ -790,123 +659,6 @@ export default function Settings() {
         </div>
       </div>
       )}
-
-      {/* Assembly Type Modal */}
-      <Modal
-        isOpen={isAssemblyTypeModalOpen}
-        onClose={handleCloseAssemblyTypeModal}
-        title={selectedAssemblyType ? 'Modifier le type borne' : 'Nouveau type borne'}
-        size="lg"
-      >
-        <div className="space-y-4">
-          <Input
-            label="Nom"
-            value={assemblyTypeName}
-            onChange={(e) => setAssemblyTypeName(e.target.value)}
-            placeholder="ex: Borne Classik"
-          />
-          <div className="space-y-1">
-            <label className="block text-[13px] font-medium text-[--k-text]">
-              Description
-            </label>
-            <textarea
-              value={assemblyTypeDescription}
-              onChange={(e) => setAssemblyTypeDescription(e.target.value)}
-              placeholder="Description optionnelle..."
-              rows={3}
-              className="input-field"
-              style={{ height: 'auto', padding: '0.5rem 0.75rem' }}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="block text-[13px] font-medium text-[--k-text]">
-                Composants nécessaires pour la construction
-              </label>
-              <Button size="sm" variant="secondary" onClick={handleAddAssemblyTypeItem}>
-                <Plus className="mr-1 h-4 w-4" />
-                Ajouter
-              </Button>
-            </div>
-            <p className="text-xs text-[--k-muted]">
-              Liste des pièces et quantités nécessaires pour construire une unité de ce type de borne.
-            </p>
-
-            {assemblyTypeItems.length === 0 ? (
-              <p className="text-sm text-[--k-muted] italic py-4 text-center border border-dashed border-[--k-border] rounded-lg">
-                Aucun composant. Cliquez sur "Ajouter" pour commencer.
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {assemblyTypeItems.map((item, index) => (
-                  <div
-                    key={item.key}
-                    className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-3 p-3 bg-[--k-surface-2] rounded-lg"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <ProductSearch
-                        label=""
-                        onChange={(productId, product) => handleAssemblyTypeItemProductChange(index, productId, product)}
-                        initialProduct={item.product as Product | null}
-                      />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-36">
-                        <Select
-                          value={item.partCategoryId}
-                          onChange={(e) => handleAssemblyTypeItemFieldChange(index, 'partCategoryId', e.target.value)}
-                          disabled={!partCategoriesData?.length}
-                        >
-                          <option value="">— Catégorie —</option>
-                          {(partCategoriesData || []).map((c) => (
-                            <option key={c.id} value={c.id}>
-                              {c.name}
-                            </option>
-                          ))}
-                        </Select>
-                      </div>
-                      <div className="w-20 sm:w-24">
-                        <Input
-                          type="number"
-                          min="1"
-                          value={item.quantity}
-                          onChange={(e) => handleAssemblyTypeItemFieldChange(index, 'quantity', parseInt(e.target.value) || 1)}
-                          placeholder="Qté"
-                        />
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRemoveAssemblyTypeItem(index)}
-                        className="text-red-600 hover:bg-red-50 hover:text-red-700"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="flex justify-end gap-3 pt-4">
-            <Button variant="secondary" onClick={handleCloseAssemblyTypeModal}>
-              Annuler
-            </Button>
-            <Button
-              onClick={handleSaveAssemblyType}
-              disabled={!assemblyTypeName || createAssemblyTypeMutation.isPending || updateAssemblyTypeMutation.isPending}
-            >
-              {createAssemblyTypeMutation.isPending || updateAssemblyTypeMutation.isPending
-                ? 'Enregistrement...'
-                : selectedAssemblyType
-                ? 'Modifier'
-                : 'Créer'}
-            </Button>
-          </div>
-        </div>
-      </Modal>
 
       {/* Assembly Modal */}
       <Modal

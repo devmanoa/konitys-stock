@@ -20,6 +20,7 @@ import Settings from './pages/Settings'
 import OrderTemplates from './pages/OrderTemplates'
 import OrderTemplateDetail from './pages/OrderTemplateDetail'
 import BuildableBornes from './pages/BuildableBornes'
+import AssemblyTypeEdit from './pages/AssemblyTypeEdit'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -61,6 +62,8 @@ function App() {
                 <Route path="order-templates" element={<OrderTemplates />} />
                 <Route path="order-templates/:id" element={<OrderTemplateDetail />} />
                 <Route path="settings" element={<Settings />} />
+                <Route path="settings/assembly-types/new" element={<AssemblyTypeEdit />} />
+                <Route path="settings/assembly-types/:id/edit" element={<AssemblyTypeEdit />} />
               </Route>
             </Routes>
           </BrowserRouter>
