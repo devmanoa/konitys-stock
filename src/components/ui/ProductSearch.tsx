@@ -21,6 +21,10 @@ interface ProductSearchProps {
   label?: string
   disabled?: boolean
   initialProduct?: Product | null
+  /** Restrict results to products linked to this assembly type id. */
+  assemblyTypeId?: string
+  /** Restrict results to products in this part category id. */
+  partCategoryId?: string
 }
 
 export default function ProductSearch({
@@ -29,6 +33,8 @@ export default function ProductSearch({
   label = 'Produit *',
   disabled = false,
   initialProduct = null,
+  assemblyTypeId,
+  partCategoryId,
 }: ProductSearchProps) {
   const [search, setSearch] = useState('')
   const [isOpen, setIsOpen] = useState(false)
@@ -40,11 +46,17 @@ export default function ProductSearch({
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   const { data: products, isLoading } = useQuery({
-    queryKey: ['products-search', search],
+    queryKey: ['products-search', search, assemblyTypeId || '', partCategoryId || ''],
     queryFn: async () => {
       if (!search || search.length < 1) return []
+      const params = new URLSearchParams({
+        search,
+        limit: '15',
+      })
+      if (assemblyTypeId) params.set('assemblyTypeId', assemblyTypeId)
+      if (partCategoryId) params.set('partCategoryId', partCategoryId)
       const res = await api.get<PaginatedResponse<Product>>(
-        `/products?search=${encodeURIComponent(search)}&limit=15`
+        `/products?${params.toString()}`,
       )
       return res.data?.data
     },

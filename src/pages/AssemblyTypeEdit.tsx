@@ -342,6 +342,8 @@ export default function AssemblyTypeEdit() {
                                 handleProductChange(item.key, productId, product)
                               }
                               initialProduct={item.product as Product | null}
+                              assemblyTypeId={!isCreating ? id : undefined}
+                              partCategoryId={key !== UNCATEGORIZED_KEY ? key : undefined}
                             />
                           </div>
                           <div className="flex items-center gap-2">
