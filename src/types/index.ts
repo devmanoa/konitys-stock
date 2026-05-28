@@ -150,6 +150,7 @@ export interface Product {
   assemblyTypes?: ProductAssemblyTypeLink[];
   comment?: string;
   imageUrl?: string;
+  externalUrl?: string | null;
   hasSerialNumber?: boolean;
   createdAt: string;
   updatedAt: string;
@@ -157,6 +158,18 @@ export interface Product {
   stocks?: Stock[];
   movements?: StockMovement[];
   partCategories?: ProductPartCategory[];
+}
+
+export interface ProductAuditEntry {
+  id: string;
+  productId: string;
+  action: string;
+  field?: string | null;
+  oldValue?: string | null;
+  newValue?: string | null;
+  changedAt: string;
+  changedById?: string | null;
+  changedByName?: string | null;
 }
 
 export type SerialStatus = 'IN_STOCK' | 'OUT' | 'IN_REPAIR' | 'SCRAPPED' | 'LOST';
@@ -336,6 +349,7 @@ export interface CreateProductInput {
   assemblyTypes?: { assemblyTypeId: string; qtyPerUnit: number }[];
   comment?: string;
   imageUrl?: string;
+  externalUrl?: string | null;
   partCategoryIds?: string[];
   hasSerialNumber?: boolean;
 }

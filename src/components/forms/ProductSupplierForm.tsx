@@ -53,6 +53,7 @@ export default function ProductSupplierForm({ product, onClose }: ProductSupplie
       queryClient.invalidateQueries({ queryKey: ['product', product.id] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['product-price-history', product.id] });
+      queryClient.invalidateQueries({ queryKey: ['product-audit', product.id] });
       setShowAddForm(false);
       setNewLink({
         supplierId: '',
@@ -73,6 +74,7 @@ export default function ProductSupplierForm({ product, onClose }: ProductSupplie
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['product', product.id] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['product-audit', product.id] });
     },
   });
 

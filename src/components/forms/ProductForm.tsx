@@ -29,6 +29,7 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
     assemblyId: '',
     comment: '',
     imageUrl: '',
+    externalUrl: '',
     partCategoryIds: [],
     hasSerialNumber: false,
   });
@@ -87,6 +88,7 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
         assemblyId: product.assemblyId || '',
         comment: product.comment || '',
         imageUrl: product.imageUrl || '',
+        externalUrl: product.externalUrl || '',
         partCategoryIds: product.partCategories?.map(pc => pc.partCategoryId) || [],
         hasSerialNumber: product.hasSerialNumber || false,
       });
@@ -128,6 +130,10 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+      if (product?.id) {
+        queryClient.invalidateQueries({ queryKey: ['product', product.id] });
+        queryClient.invalidateQueries({ queryKey: ['product-audit', product.id] });
+      }
       onSuccess();
     },
     onError: (error: any) => {
@@ -183,6 +189,7 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
       assemblyId: formData.assemblyId || undefined,
       assemblyTypes: selectedTypes.length > 0 ? selectedTypes : undefined,
       partCategoryIds: formData.partCategoryIds?.length ? formData.partCategoryIds : undefined,
+      externalUrl: formData.externalUrl?.trim() || null,
     };
 
     if (isEditing) {
@@ -392,9 +399,24 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
           <Input
             value={formData.location || ''}
             onChange={(e) => handleChange('location', e.target.value)}
-            placeholder="Ex: A1-B2"
+            placeholder="Ex : A1-B2"
           />
         </div>
+      </div>
+
+      <div>
+        <label className="mb-1 block text-[13px] font-medium text-[--k-text]">
+          Lien externe
+        </label>
+        <Input
+          type="url"
+          value={formData.externalUrl || ''}
+          onChange={(e) => handleChange('externalUrl', e.target.value)}
+          placeholder="https://www.amazon.fr/..."
+        />
+        <p className="mt-1 text-xs text-[--k-muted]">
+          Lien public vers la fiche du produit (Amazon, site fournisseur, datasheet…).
+        </p>
       </div>
 
       <div className="grid grid-cols-2 gap-4">

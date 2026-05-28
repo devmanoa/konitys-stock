@@ -20,6 +20,7 @@ import {
   AlertTriangle,
   TrendingUp,
   Hash,
+  Clock,
 } from 'lucide-react';
 import {
   LineChart,
@@ -40,6 +41,7 @@ import ProductSupplierForm from '../components/forms/ProductSupplierForm';
 import MovementForm from '../components/forms/MovementForm';
 import MovementDetail from '../components/MovementDetail';
 import OperatorAvatar from '../components/OperatorAvatar';
+import ProductAuditTimeline from '../components/ProductAuditTimeline';
 import Comments from '../components/ProductComments';
 import SerialItemsPanel from '../components/SerialItemsPanel';
 import api from '../services/api';
@@ -270,6 +272,22 @@ export default function ProductDetail() {
                   <div>
                     <dt className="text-[13px] font-medium text-[--k-muted]">Emplacement</dt>
                     <dd className="mt-1 text-[--k-text]">{data.location}</dd>
+                  </div>
+                )}
+                {data.externalUrl && (
+                  <div className="col-span-2">
+                    <dt className="text-[13px] font-medium text-[--k-muted]">Lien externe</dt>
+                    <dd className="mt-1">
+                      <a
+                        href={data.externalUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-[--k-primary] hover:underline text-sm break-all"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                        {data.externalUrl}
+                      </a>
+                    </dd>
                   </div>
                 )}
                 {data.assembly?.name && (
@@ -691,6 +709,19 @@ export default function ProductDetail() {
               )}
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Historique des modifications */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="h-5 w-5" />
+            Historique des modifications
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ProductAuditTimeline productId={id!} />
         </CardContent>
       </Card>
 
