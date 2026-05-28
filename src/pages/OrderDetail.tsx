@@ -26,7 +26,7 @@ import ReceiveAllForm from '../components/forms/ReceiveAllForm';
 import { useToast } from '../components/ui/Toast';
 import Comments from '../components/ProductComments';
 import api from '../services/api';
-import { getOperatorInitials, getOperatorColor } from '../utils/operatorAvatar';
+import OperatorAvatar from '../components/OperatorAvatar';
 import type { Order, OrderItem, ApiResponse } from '../types';
 
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/api$/, '');
@@ -284,8 +284,8 @@ export default function OrderDetail() {
                   <User className="h-3.5 w-3.5" />
                   Responsable
                 </dt>
-                <dd className="mt-1 text-sm text-[--k-text]">
-                  {data.responsible || '—'}
+                <dd className="mt-1 text-sm">
+                  <OperatorAvatar name={data.responsible} size="md" />
                 </dd>
               </div>
 
@@ -294,20 +294,8 @@ export default function OrderDetail() {
                   <User className="h-3.5 w-3.5" />
                   Créé par
                 </dt>
-                <dd className="mt-1 text-sm text-[--k-text]">
-                  {data.createdBy ? (
-                    <span className="inline-flex items-center gap-2">
-                      <span
-                        className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-semibold ${getOperatorColor(data.createdBy)}`}
-                        title={data.createdBy}
-                      >
-                        {getOperatorInitials(data.createdBy)}
-                      </span>
-                      {data.createdBy}
-                    </span>
-                  ) : (
-                    '—'
-                  )}
+                <dd className="mt-1 text-sm">
+                  <OperatorAvatar name={data.createdBy} size="md" />
                 </dd>
               </div>
 
@@ -494,7 +482,7 @@ export default function OrderDetail() {
               </thead>
               <tbody className="divide-y divide-[--k-border]">
                 {data.items?.map((item) => (
-                  <tr key={item.id} className="hover:bg-[--k-surface-2]">
+                  <tr key={item.id} className="hover:bg-[--k-surface-2]/30 transition-colors">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <img

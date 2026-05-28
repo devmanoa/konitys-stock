@@ -8,7 +8,7 @@ import Modal from './ui/Modal';
 import Pagination from './ui/Pagination';
 import { useToast } from './ui/Toast';
 import api from '../services/api';
-import { getOperatorInitials, getOperatorColor } from '../utils/operatorAvatar';
+import OperatorAvatar from './OperatorAvatar';
 import type { ApiResponse, ProductSerialItem, SerialStatus, ProductCondition, Site } from '../types';
 
 const PAGE_SIZE = 15;
@@ -294,22 +294,7 @@ export default function SerialItemsPanel({ productId }: Props) {
                     {new Date(it.enteredAt).toLocaleDateString('fr-FR')}
                   </td>
                   <td className="px-3 py-1.5">
-                    {it.createdByName ? (
-                      <div className="flex items-center gap-1.5">
-                        <span
-                          className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold text-white"
-                          style={{ backgroundColor: getOperatorColor(it.createdByName) }}
-                          title={it.createdByName}
-                        >
-                          {getOperatorInitials(it.createdByName)}
-                        </span>
-                        <span className="text-[12px] text-[--k-text] truncate max-w-[120px]">
-                          {it.createdByName}
-                        </span>
-                      </div>
-                    ) : (
-                      <span className="text-[--k-muted]">—</span>
-                    )}
+                    <OperatorAvatar name={it.createdByName} size="sm" />
                   </td>
                   <td className="px-3 py-1.5">
                     <div className="flex items-center justify-end gap-1">

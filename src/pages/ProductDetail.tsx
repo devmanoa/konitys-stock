@@ -39,6 +39,7 @@ import ProductForm from '../components/forms/ProductForm';
 import ProductSupplierForm from '../components/forms/ProductSupplierForm';
 import MovementForm from '../components/forms/MovementForm';
 import MovementDetail from '../components/MovementDetail';
+import OperatorAvatar from '../components/OperatorAvatar';
 import Comments from '../components/ProductComments';
 import SerialItemsPanel from '../components/SerialItemsPanel';
 import api from '../services/api';
@@ -411,7 +412,7 @@ export default function ProductDetail() {
                 </thead>
                 <tbody className="divide-y divide-[--k-border]">
                   {data.productSuppliers.map((ps) => (
-                    <tr key={ps.id}>
+                    <tr key={ps.id} className="hover:bg-[--k-surface-2]/30 transition-colors">
                       <td className="py-2 font-medium">
                         <RouterLink
                           to={`/suppliers/${ps.supplier.id}`}
@@ -483,7 +484,7 @@ export default function ProductDetail() {
                       deltaPct = (delta / current) * 100;
                     }
                     return (
-                      <tr key={entry.id} className="border-t border-[--k-border]">
+                      <tr key={entry.id} className="border-t border-[--k-border] hover:bg-[--k-surface-2]/30 transition-colors">
                         <td className="px-4 py-1.5 text-[--k-muted] tabular-nums">
                           {new Date(entry.changedAt).toLocaleDateString('fr-FR')}
                         </td>
@@ -509,7 +510,9 @@ export default function ProductDetail() {
                             </span>
                           )}
                         </td>
-                        <td className="px-4 py-1.5 text-[--k-muted]">{entry.changedByName || '—'}</td>
+                        <td className="px-4 py-1.5">
+                          <OperatorAvatar name={entry.changedByName} size="xs" />
+                        </td>
                       </tr>
                     );
                   })}
@@ -560,7 +563,7 @@ export default function ProductDetail() {
                 </thead>
                 <tbody className="divide-y divide-[--k-border]">
                   {data.stocks.map((stock) => (
-                    <tr key={stock.id}>
+                    <tr key={stock.id} className="hover:bg-[--k-surface-2]/30 transition-colors">
                       <td className="py-2 font-medium text-[--k-text]">{stock.site.name}</td>
                       <td className="py-2">
                         <Badge variant={stock.site.type === 'STORAGE' ? 'success' : 'default'}>
@@ -624,7 +627,7 @@ export default function ProductDetail() {
                     <tr
                       key={mvt.id}
                       onClick={() => setSelectedMovement({ ...mvt, product: data } as StockMovement)}
-                      className="hover:bg-[--k-surface-2] cursor-pointer"
+                      className="hover:bg-[--k-surface-2]/30 transition-colors cursor-pointer"
                     >
                       <td className="py-2 text-[--k-muted]">
                         {new Date(mvt.movementDate).toLocaleDateString('fr-FR')}
@@ -660,7 +663,9 @@ export default function ProductDetail() {
                           {mvt.quantity}
                         </span>
                       </td>
-                      <td className="py-2 text-[--k-muted]">{mvt.operator || '-'}</td>
+                      <td className="py-2">
+                        <OperatorAvatar name={mvt.operator} size="xs" />
+                      </td>
                       <td className="py-2 text-[--k-muted]">
                         {mvt.comment ? (
                           <span className="truncate max-w-[100px] block" title={mvt.comment}>

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { User } from 'lucide-react'
+import OperatorAvatar from './OperatorAvatar'
 import type { StockMovement } from '../types'
 
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/api$/, '')
@@ -102,9 +102,12 @@ export default function MovementDetail({ movement }: { movement: StockMovement }
         </div>
         <div>
           <div className="text-xs font-medium uppercase tracking-wide text-[--k-muted]">Opérateur</div>
-          <div className="mt-1 flex items-center gap-1 text-sm text-[--k-text]">
-            <User className="h-3.5 w-3.5 text-[--k-muted]" />
-            {movement.operator || <span className="italic text-[--k-muted]">Non renseigné</span>}
+          <div className="mt-1 text-sm">
+            {movement.operator ? (
+              <OperatorAvatar name={movement.operator} size="md" />
+            ) : (
+              <span className="italic text-[--k-muted]">Non renseigné</span>
+            )}
           </div>
         </div>
         <div>

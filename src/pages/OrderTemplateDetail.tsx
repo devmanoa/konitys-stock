@@ -18,6 +18,7 @@ import Button from '../components/ui/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import Modal from '../components/ui/Modal';
 import OrderTemplateEditForm from '../components/forms/OrderTemplateEditForm';
+import OperatorAvatar from '../components/OperatorAvatar';
 import { useToast } from '../components/ui/Toast';
 import api from '../services/api';
 import type { OrderTemplate, ApiResponse } from '../types';
@@ -192,8 +193,8 @@ export default function OrderTemplateDetail() {
                   <User className="h-3.5 w-3.5" />
                   Responsable
                 </dt>
-                <dd className="mt-1 text-sm text-[--k-text]">
-                  {data.responsible || '—'}
+                <dd className="mt-1 text-sm">
+                  <OperatorAvatar name={data.responsible} size="md" />
                 </dd>
               </div>
 
@@ -331,7 +332,7 @@ export default function OrderTemplateDetail() {
               </thead>
               <tbody className="divide-y divide-[--k-border]">
                 {data.items?.map((item) => (
-                  <tr key={item.id} className="hover:bg-[--k-surface-2]">
+                  <tr key={item.id} className="hover:bg-[--k-surface-2]/30 transition-colors">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <img

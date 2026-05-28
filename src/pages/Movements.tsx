@@ -9,7 +9,6 @@ import {
   ArrowUpCircle,
   ArrowLeftRight,
   ArrowRight,
-  User,
   Package,
 } from 'lucide-react';
 import Button from '../components/ui/Button';
@@ -23,6 +22,7 @@ import { useToast } from '../components/ui/Toast';
 import Pagination from '../components/ui/Pagination';
 import { PageHeader } from '../components/PageHeader';
 import MovementDetail from '../components/MovementDetail';
+import OperatorAvatar from '../components/OperatorAvatar';
 import api from '../services/api';
 import type { StockMovement, Site, ApiResponse, PaginatedResponse } from '../types';
 
@@ -224,11 +224,10 @@ export default function Movements() {
         </div>
         {movement.operator && (
           <div className="col-span-2">
-            <span className="text-[--k-muted]">Opérateur:</span>
-            <p className="text-[--k-text] flex items-center gap-1">
-              <User className="h-3 w-3 text-[--k-muted]" />
-              {movement.operator}
-            </p>
+            <span className="text-[--k-muted]">Opérateur :</span>
+            <div className="mt-0.5">
+              <OperatorAvatar name={movement.operator} />
+            </div>
           </div>
         )}
         {movement.comment && (
@@ -476,14 +475,7 @@ export default function Movements() {
                       )}
                     </td>
                     <td className="px-4 py-1.5">
-                      {movement.operator ? (
-                        <div className="flex items-center gap-1 text-[--k-muted]">
-                          <User className="h-3 w-3" />
-                          {movement.operator}
-                        </div>
-                      ) : (
-                        <span className="text-[--k-muted]">-</span>
-                      )}
+                      <OperatorAvatar name={movement.operator} />
                     </td>
                     <td className="px-4 py-1.5">
                       {movement.comment ? (
