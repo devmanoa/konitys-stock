@@ -47,6 +47,7 @@ export default function Stocks() {
   const [selectedSite, setSelectedSite] = useState('');
   const [selectedAssemblyType, setSelectedAssemblyType] = useState('');
   const [selectedAssembly, setSelectedAssembly] = useState('');
+  const [selectedPartCategory, setSelectedPartCategory] = useState('');
   const [showZeroStock, setShowZeroStock] = useState(false);
   const [sortField, setSortField] = useState<SortField>('reference');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
@@ -101,6 +102,33 @@ export default function Stocks() {
         )
       )
     : assembliesData;
+
+  // Part categories present in the selected assembly type's nomenclature
+  // (used to show a 2nd filter "Catégorie de pièce" only when a type is selected)
+  const partCategoriesForSelectedType = useMemo(() => {
+    if (!selectedAssemblyType || !assemblyTypesData) return [];
+    const type = assemblyTypesData.find((t) => t.id === selectedAssemblyType);
+    if (!type?.items) return [];
+    const seen = new Map<string, string>();
+    for (const it of type.items) {
+      if (it.partCategory?.id) seen.set(it.partCategory.id, it.partCategory.name);
+    }
+    return Array.from(seen.entries())
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [selectedAssemblyType, assemblyTypesData]);
+
+  // ProductIds that have the selected part category in the selected type's nomenclature
+  const productIdsForSelectedCategory = useMemo(() => {
+    if (!selectedAssemblyType || !selectedPartCategory || !assemblyTypesData) return null;
+    const type = assemblyTypesData.find((t) => t.id === selectedAssemblyType);
+    if (!type?.items) return new Set<string>();
+    const ids = new Set<string>();
+    for (const it of type.items) {
+      if (it.partCategory?.id === selectedPartCategory) ids.add(it.productId);
+    }
+    return ids;
+  }, [selectedAssemblyType, selectedPartCategory, assemblyTypesData]);
 
   // Site IDs that actually hold stock anywhere
   const activeSiteIds = useMemo(() => {
@@ -180,6 +208,11 @@ export default function Stocks() {
       });
     }
 
+    // Filter by part category within the selected assembly type (2nd-level filter)
+    if (productIdsForSelectedCategory) {
+      result = result.filter((row) => productIdsForSelectedCategory.has(row.product.id));
+    }
+
     // Filter by assembly
     if (selectedAssembly) {
       result = result.filter((row) => {
@@ -213,7 +246,7 @@ export default function Stocks() {
     });
 
     return result;
-  }, [matrixData, search, selectedSite, selectedAssemblyType, selectedAssembly, showZeroStock, sortField, sortOrder]);
+  }, [matrixData, search, selectedSite, selectedAssemblyType, selectedAssembly, productIdsForSelectedCategory, showZeroStock, sortField, sortOrder]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -270,6 +303,19 @@ export default function Stocks() {
       { totalNew: 0, totalUsed: 0, total: 0 }
     );
   }, [filteredData]);
+
+  // Most recent Stock.updatedAt across all rows (live mode only)
+  const lastStockUpdate = useMemo(() => {
+    if (snapshotDate || !stocksData?.length) return null;
+    let max = 0;
+    for (const s of stocksData) {
+      if (s.updatedAt) {
+        const t = new Date(s.updatedAt).getTime();
+        if (t > max) max = t;
+      }
+    }
+    return max > 0 ? new Date(max) : null;
+  }, [stocksData, snapshotDate]);
 
   const renderStockCell = (quantityNew: number, quantityUsed: number) => {
     const total = quantityNew + quantityUsed;
@@ -422,7 +468,16 @@ export default function Stocks() {
         title="Gestion des Stocks"
         subtitle="Vue matricielle des stocks par produit et par site"
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          {lastStockUpdate && (
+            <span className="hidden md:inline text-[12px] text-[--k-muted] whitespace-nowrap">
+              Dernière MAJ :{' '}
+              <span className="text-[--k-text]">
+                {lastStockUpdate.toLocaleDateString('fr-FR')} à{' '}
+                {lastStockUpdate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+              </span>
+            </span>
+          )}
           <label className="flex items-center gap-2 text-[13px] text-[--k-muted] whitespace-nowrap">
             <span className="hidden sm:inline whitespace-nowrap">Stock à la date :</span>
             <input
@@ -488,11 +543,21 @@ export default function Stocks() {
               onChange={(val) => {
                 setSelectedAssemblyType(val);
                 setSelectedAssembly('');
+                setSelectedPartCategory('');
               }}
               options={assemblyTypesData?.filter((at) => at && at.id && at.name).map((at) => ({ value: at.id, label: at.name })) || []}
               placeholder="Type borne"
               className="min-w-[140px] sm:w-[352px]"
             />
+            {selectedAssemblyType && partCategoriesForSelectedType.length > 0 && (
+              <SearchSelect
+                value={selectedPartCategory}
+                onChange={(val) => setSelectedPartCategory(val)}
+                options={partCategoriesForSelectedType.map((c) => ({ value: c.id, label: c.name }))}
+                placeholder="Catégorie de pièce"
+                className="min-w-[140px] sm:w-[352px]"
+              />
+            )}
             <SearchSelect
               value={selectedAssembly}
               onChange={(val) => setSelectedAssembly(val)}
@@ -514,7 +579,7 @@ export default function Stocks() {
               <span className="sm:hidden">Stock 0</span>
             </label>
 
-            {(search || selectedSite || selectedAssemblyType || selectedAssembly || showZeroStock) && (
+            {(search || selectedSite || selectedAssemblyType || selectedAssembly || selectedPartCategory || showZeroStock) && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -523,6 +588,7 @@ export default function Stocks() {
                   setSelectedSite('');
                   setSelectedAssemblyType('');
                   setSelectedAssembly('');
+                  setSelectedPartCategory('');
                   setShowZeroStock(false);
                 }}
                 className="whitespace-nowrap"
