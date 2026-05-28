@@ -44,7 +44,10 @@ export default function Orders() {
   // URL params for filters
   const page = parseInt(searchParams.get('page') || '1');
   const search = searchParams.get('search') || '';
-  const statusFilter = searchParams.get('status') || '';
+  // Default tab is "En cours" (PENDING) when no URL param is set.
+  // The "Toutes" tab uses the sentinel value 'ALL' to make the choice explicit
+  // and survive URL round-trips (no param = default ≠ Toutes).
+  const statusFilter = searchParams.get('status') ?? 'PENDING';
   const supplierFilter = searchParams.get('supplier') || '';
   const startDate = searchParams.get('startDate') || '';
   const endDate = searchParams.get('endDate') || '';
@@ -71,7 +74,7 @@ export default function Orders() {
       const params = new URLSearchParams();
       params.set('page', page.toString());
       params.set('limit', '20');
-      if (statusFilter) params.set('status', statusFilter);
+      if (statusFilter && statusFilter !== 'ALL') params.set('status', statusFilter);
       if (supplierFilter) params.set('supplierId', supplierFilter);
       if (startDate) params.set('startDate', startDate);
       if (endDate) params.set('endDate', endDate);
@@ -171,7 +174,9 @@ export default function Orders() {
     });
   };
 
-  const hasFilters = statusFilter || supplierFilter || startDate || endDate || search;
+  // Don't count the default PENDING tab as an "active filter"; counting ALL would
+  // also be misleading since it's a no-op compared to no value.
+  const hasFilters = (statusFilter !== 'PENDING' && statusFilter !== 'ALL') || supplierFilter || startDate || endDate || search;
 
   const resetFilters = () => {
     setSearchParams(new URLSearchParams());
@@ -373,10 +378,10 @@ export default function Orders() {
       {/* Tabs */}
       <div className="flex items-center gap-1 border-b border-[--k-border]">
         {[
-          { value: '', label: 'Toutes' },
           { value: 'PENDING', label: 'En cours' },
           { value: 'COMPLETED', label: 'Terminées' },
           { value: 'CANCELLED', label: 'Annulées' },
+          { value: 'ALL', label: 'Toutes' },
         ].map((tab) => {
           const isActive = statusFilter === tab.value;
           return (
@@ -399,54 +404,47 @@ export default function Orders() {
         })}
       </div>
 
-      {/* Filters */}
-      <div className="space-y-3">
-        {/* Row 1: Search + Fournisseur */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-          <div className="relative min-w-[140px] sm:w-[352px]">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[--k-muted]" />
-            <input
-              type="text"
-              placeholder="Rechercher (n° commande, titre, fournisseur...)"
-              value={search}
-              onChange={(e) => updateParams({ search: e.target.value })}
-              className="input-field !pl-10"
-            />
-          </div>
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0">
-            <SearchSelect
-              value={supplierFilter}
-              onChange={(val) => updateParams({ supplier: val })}
-              options={suppliers?.map((s) => ({ value: s.id, label: s.name })) || []}
-              placeholder="Fournisseur"
-              className="min-w-[140px] sm:w-[352px]"
-            />
-          </div>
+      {/* Filters — single wrapping row, items aligned end like Movements */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+        <div className="relative min-w-[140px] sm:w-[352px]">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[--k-muted]" />
+          <input
+            type="text"
+            placeholder="Rechercher (n° commande, titre, fournisseur...)"
+            value={search}
+            onChange={(e) => updateParams({ search: e.target.value })}
+            className="input-field !pl-10"
+          />
         </div>
-
-        {/* Row 2: Dates + Réinitialiser */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0">
+          <SearchSelect
+            value={supplierFilter}
+            onChange={(val) => updateParams({ supplier: val })}
+            options={suppliers?.map((s) => ({ value: s.id, label: s.name })) || []}
+            placeholder="Fournisseur"
+            className="min-w-[140px] sm:w-[352px]"
+          />
           <input
             type="date"
             value={startDate}
             onChange={(e) => updateParams({ startDate: e.target.value })}
-            className="input-field min-w-[140px] sm:w-[352px]"
+            className="input-field min-w-[130px]"
             title="Date de début"
           />
           <input
             type="date"
             value={endDate}
             onChange={(e) => updateParams({ endDate: e.target.value })}
-            className="input-field min-w-[140px] sm:w-[352px]"
+            className="input-field min-w-[130px]"
             title="Date de fin"
           />
-          {hasFilters && (
-            <Button variant="ghost" size="sm" onClick={resetFilters} className="whitespace-nowrap">
-              <Filter className="h-4 w-4 sm:mr-1" />
-              <span className="hidden sm:inline">Réinitialiser</span>
-            </Button>
-          )}
         </div>
+        {hasFilters && (
+          <Button variant="ghost" size="sm" onClick={resetFilters} className="whitespace-nowrap">
+            <Filter className="h-4 w-4 sm:mr-1" />
+            <span className="hidden sm:inline">Réinitialiser</span>
+          </Button>
+        )}
       </div>
 
       {/* Mobile Cards View */}

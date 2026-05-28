@@ -2,6 +2,16 @@ import { Link } from 'react-router-dom'
 import { User } from 'lucide-react'
 import type { StockMovement } from '../types'
 
+const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/api$/, '')
+const DEFAULT_PRODUCT_IMAGE = '/default-product.svg'
+
+const getFullImageUrl = (url: string | null | undefined): string => {
+  if (!url) return DEFAULT_PRODUCT_IMAGE
+  if (url.startsWith('http://') || url.startsWith('https://')) return url
+  if (url.startsWith('/uploads')) return `${API_BASE_URL}${url}`
+  return url
+}
+
 const fmtDate = (d: string) =>
   new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
 
@@ -53,15 +63,29 @@ export default function MovementDetail({ movement }: { movement: StockMovement }
       {/* Product */}
       <div>
         <div className="text-xs font-medium uppercase tracking-wide text-[--k-muted]">Produit</div>
-        <Link
-          to={`/products/${movement.productId}`}
-          className="mt-1 block font-medium text-[--k-primary] hover:underline"
-        >
-          {movement.product?.description || movement.product?.reference}
-        </Link>
-        {movement.product?.description && (
-          <div className="text-xs font-mono text-[--k-muted]">{movement.product.reference}</div>
-        )}
+        <div className="mt-1 flex items-center gap-3">
+          <img
+            src={getFullImageUrl(movement.product?.imageUrl)}
+            alt=""
+            className="h-12 w-12 shrink-0 rounded-lg object-cover bg-[--k-surface-2] border border-[--k-border]"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = DEFAULT_PRODUCT_IMAGE
+            }}
+          />
+          <div className="min-w-0">
+            <Link
+              to={`/products/${movement.productId}`}
+              className="block font-medium text-[--k-primary] hover:underline truncate"
+            >
+              {movement.product?.description || movement.product?.reference}
+            </Link>
+            {movement.product?.description && (
+              <div className="text-xs font-mono text-[--k-muted] truncate">
+                {movement.product.reference}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Dates + operator grid */}

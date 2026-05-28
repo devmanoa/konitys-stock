@@ -249,6 +249,17 @@ export default function Stocks() {
     return totals;
   }, [filteredData, storageSites]);
 
+  // Storage sites sorted by total stock desc (so site with most stock shows first)
+  const sortedStorageSites = useMemo(() => {
+    return [...storageSites].sort((a, b) => {
+      const ta = siteTotals.get(a.id);
+      const tb = siteTotals.get(b.id);
+      const va = (ta?.totalNew || 0) + (ta?.totalUsed || 0);
+      const vb = (tb?.totalNew || 0) + (tb?.totalUsed || 0);
+      return vb - va;
+    });
+  }, [storageSites, siteTotals]);
+
   const grandTotal = useMemo(() => {
     return filteredData.reduce(
       (acc, row) => ({
@@ -378,7 +389,7 @@ export default function Stocks() {
         {isExpanded && (
           <div className="border-t border-[--k-border] p-4">
             <div className="space-y-2">
-              {storageSites.map((site) => {
+              {sortedStorageSites.map((site) => {
                 const siteStock = row.stocks.get(site.id);
                 const siteTotal = (siteStock?.quantityNew || 0) + (siteStock?.quantityUsed || 0);
                 if (siteTotal === 0) return null;
@@ -412,8 +423,8 @@ export default function Stocks() {
         subtitle="Vue matricielle des stocks par produit et par site"
       >
         <div className="flex items-center gap-2">
-          <label className="flex items-center gap-2 text-[13px] text-[--k-muted]">
-            <span className="hidden sm:inline">Stock à la date :</span>
+          <label className="flex items-center gap-2 text-[13px] text-[--k-muted] whitespace-nowrap">
+            <span className="hidden sm:inline whitespace-nowrap">Stock à la date :</span>
             <input
               type="date"
               value={snapshotDate}
@@ -558,7 +569,7 @@ export default function Stocks() {
           <>
             <div className="flex items-baseline justify-between gap-3 border-b border-[--k-border] px-4 py-2.5">
               <div className="text-lg font-semibold text-[--k-text]">Stock matriciel</div>
-              <div className="text-xs text-[--k-muted]">{filteredData.length} produits</div>
+              <div className="text-xs text-[--k-muted]">{filteredData.length} types de produits</div>
             </div>
             <div>
               <table className="w-full text-[13px]">
@@ -603,7 +614,7 @@ export default function Stocks() {
                         {getSortIcon('totalUsed')}
                       </button>
                     </th>
-                    {storageSites.map((site) => (
+                    {sortedStorageSites.map((site) => (
                       <th
                         key={site.id}
                         className="bg-white px-3 py-1.5 text-center text-xs font-medium text-[--k-muted]"
@@ -699,7 +710,7 @@ export default function Stocks() {
                       <td className="px-3 py-1.5 text-center font-medium text-orange-600">
                         {row.totalUsed}
                       </td>
-                      {storageSites.map((site) => {
+                      {sortedStorageSites.map((site) => {
                         const siteStock = row.stocks.get(site.id);
                         return (
                           <td key={site.id} className="px-3 py-1.5 text-center">
@@ -728,7 +739,7 @@ export default function Stocks() {
                     <td className="px-3 py-1.5 text-center text-orange-600">
                       {grandTotal.totalUsed}
                     </td>
-                    {storageSites.map((site) => {
+                    {sortedStorageSites.map((site) => {
                       const siteTotal = siteTotals.get(site.id);
                       return (
                         <td key={site.id} className="px-3 py-1.5 text-center">

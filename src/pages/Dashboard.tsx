@@ -205,7 +205,7 @@ export default function Dashboard() {
                   onClick={() => navigate('/buildable-bornes')}
                   className="text-left rounded-xl border border-[--k-border] bg-white p-3 transition hover:border-[--k-primary] hover:shadow-sm"
                 >
-                  <div className="text-xs text-[--k-muted] truncate">{b.name}</div>
+                  <div className="text-sm font-semibold text-[--k-text] truncate">{b.name}</div>
                   <div
                     className={cn(
                       'text-2xl font-bold',
@@ -290,10 +290,16 @@ export default function Dashboard() {
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-amber-500" />
               <span className="text-lg font-semibold text-[--k-text]">Alertes stock</span>
+              <span className="text-[11px] font-medium text-amber-600 bg-amber-100/60 rounded-full px-2 py-0.5">
+                {filteredAlerts.length}
+              </span>
             </div>
-            <span className="text-[11px] font-medium text-amber-600 bg-amber-100/60 rounded-full px-2 py-0.5">
-              {filteredAlerts.length}
-            </span>
+            <button
+              onClick={() => navigate('/stocks')}
+              className="text-[11px] font-medium text-[--k-primary] hover:underline"
+            >
+              Tous
+            </button>
           </div>
           {(availableAlertTypes.types.length > 0 || availableAlertTypes.hasUnassigned) && (
             <div className="flex items-center gap-1 border-b border-[--k-border] px-2 overflow-x-auto">
