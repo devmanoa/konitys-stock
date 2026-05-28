@@ -85,13 +85,14 @@ export default function Movements() {
     },
   });
 
-  // Filter movements by search (client-side)
+  // Filter movements by search (client-side) — defensive on every nested field
+  // so a row with a missing product doesn't crash the whole page.
   const filteredMovements = (movementsData?.data || []).filter((movement) => {
     if (!search) return true;
     const searchLower = search.toLowerCase();
     return (
-      movement.product.reference.toLowerCase().includes(searchLower) ||
-      movement.product.description?.toLowerCase().includes(searchLower) ||
+      movement.product?.reference?.toLowerCase().includes(searchLower) ||
+      movement.product?.description?.toLowerCase().includes(searchLower) ||
       movement.operator?.toLowerCase().includes(searchLower) ||
       movement.comment?.toLowerCase().includes(searchLower)
     );
@@ -178,9 +179,9 @@ export default function Movements() {
           onClick={(e) => e.stopPropagation()}
           className="block font-medium text-[--k-primary] hover:text-indigo-700"
         >
-          {movement.product.description || movement.product.reference}
+          {movement.product?.description || movement.product?.reference || 'Produit inconnu'}
         </Link>
-        {movement.product.description && (
+        {movement.product?.description && (
           <Link
             to={`/products/${movement.productId}`}
             onClick={(e) => e.stopPropagation()}
@@ -440,9 +441,9 @@ export default function Movements() {
                         onClick={(e) => e.stopPropagation()}
                         className="block font-medium text-[--k-primary] hover:text-indigo-700 hover:underline truncate"
                       >
-                        {movement.product.description || movement.product.reference}
+                        {movement.product?.description || movement.product?.reference || 'Produit inconnu'}
                       </Link>
-                      {movement.product.description && (
+                      {movement.product?.description && (
                         <span className="block text-xs text-[--k-muted] font-mono truncate">
                           {movement.product.reference}
                         </span>

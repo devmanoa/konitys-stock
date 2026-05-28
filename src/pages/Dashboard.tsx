@@ -330,7 +330,7 @@ export default function Dashboard() {
           )}
           <div className="divide-y divide-[--k-border]">
             {filteredAlerts.length > 0 ? (
-              filteredAlerts.slice(0, 5).map((alert) => {
+              filteredAlerts.slice(0, 10).map((alert) => {
                 const threshold = alert.minStock || 10
                 const pct = Math.min(Math.round((alert.total / threshold) * 100), 100)
                 const level = alert.supplyRisk === 'HIGH' ? 'critical' : 'low'
@@ -391,6 +391,14 @@ export default function Dashboard() {
               <p className="px-4 py-6 text-center text-[13px] text-[--k-muted]">
                 Aucune alerte stock
               </p>
+            )}
+            {filteredAlerts.length > 10 && (
+              <button
+                onClick={() => navigate('/stocks')}
+                className="w-full px-4 py-2 text-center text-[11px] font-medium text-[--k-primary] hover:bg-[--k-surface-2]/30 transition-colors"
+              >
+                + {filteredAlerts.length - 10} autres alertes — voir tout
+              </button>
             )}
           </div>
         </div>

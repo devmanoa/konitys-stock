@@ -17,6 +17,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext'
 import { loadRemoteComponent } from '../../remoteLoader'
 import { Topbar } from '../Topbar'
+import ErrorBoundary from '../ErrorBoundary'
 import { Sidebar } from '../Sidebar'
 
 // Lazy-load remote components
@@ -214,7 +215,9 @@ export default function AppLayout() {
 
         {/* Main content */}
         <main className="flex-1 min-w-0 overflow-y-auto p-3 md:p-5">
-          <Outlet />
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
         </main>
       </div>
     </div>
