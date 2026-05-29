@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
-import { ImagePlus, X, Upload, Loader2 } from 'lucide-react';
+import { ImagePlus, X, Upload, Loader2, Plus } from 'lucide-react';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
@@ -29,13 +29,15 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
     assemblyId: '',
     comment: '',
     imageUrl: '',
-    externalUrl: '',
     partCategoryIds: [],
     hasSerialNumber: false,
   });
 
   // Selected assembly types with per-type qtyPerUnit
   const [selectedTypes, setSelectedTypes] = useState<{ assemblyTypeId: string; qtyPerUnit: number }[]>([]);
+
+  // External links (free-form URLs, ordered)
+  const [externalLinks, setExternalLinks] = useState<string[]>([]);
 
   // Fetch assembly types for filter
   const { data: assemblyTypesData } = useQuery({
@@ -88,10 +90,10 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
         assemblyId: product.assemblyId || '',
         comment: product.comment || '',
         imageUrl: product.imageUrl || '',
-        externalUrl: product.externalUrl || '',
         partCategoryIds: product.partCategories?.map(pc => pc.partCategoryId) || [],
         hasSerialNumber: product.hasSerialNumber || false,
       });
+      setExternalLinks((product.externalLinks || []).map((l) => l.url));
       setSelectedTypes(
         (product.assemblyTypes || []).map(l => ({
           assemblyTypeId: l.assemblyTypeId,
@@ -182,6 +184,7 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
     e.preventDefault();
     if (!validate()) return;
 
+    const cleanLinks = externalLinks.map((u) => u.trim()).filter((u) => u.length > 0);
     const data = {
       ...formData,
       supplyRisk: formData.supplyRisk || undefined,
@@ -189,7 +192,7 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
       assemblyId: formData.assemblyId || undefined,
       assemblyTypes: selectedTypes.length > 0 ? selectedTypes : undefined,
       partCategoryIds: formData.partCategoryIds?.length ? formData.partCategoryIds : undefined,
-      externalUrl: formData.externalUrl?.trim() || null,
+      externalLinks: cleanLinks,
     };
 
     if (isEditing) {
@@ -406,17 +409,42 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
 
       <div>
         <label className="mb-1 block text-[13px] font-medium text-[--k-text]">
-          Lien externe
+          Liens externes
         </label>
-        <Input
-          type="url"
-          value={formData.externalUrl || ''}
-          onChange={(e) => handleChange('externalUrl', e.target.value)}
-          placeholder="https://www.amazon.fr/..."
-        />
-        <p className="mt-1 text-xs text-[--k-muted]">
-          Lien public vers la fiche du produit (Amazon, site fournisseur, datasheet…).
+        <p className="mb-2 text-xs text-[--k-muted]">
+          Liens publics vers la fiche du produit (Amazon, site fournisseur, datasheet…). Ajoute autant de liens que nécessaire.
         </p>
+        <div className="space-y-2">
+          {externalLinks.map((url, idx) => (
+            <div key={idx} className="flex items-center gap-2">
+              <Input
+                type="url"
+                value={url}
+                onChange={(e) => {
+                  setExternalLinks((prev) => prev.map((u, i) => (i === idx ? e.target.value : u)));
+                }}
+                placeholder="https://..."
+              />
+              <button
+                type="button"
+                onClick={() => setExternalLinks((prev) => prev.filter((_, i) => i !== idx))}
+                className="rounded-md p-1.5 text-[--k-muted] hover:bg-[--k-surface-2] hover:text-[--k-danger]"
+                title="Retirer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ))}
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={() => setExternalLinks((prev) => [...prev, ''])}
+          >
+            <Plus className="mr-1 h-4 w-4" />
+            Ajouter un lien
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">

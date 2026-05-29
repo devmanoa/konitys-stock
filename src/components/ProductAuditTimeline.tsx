@@ -7,6 +7,7 @@ import {
   Layers,
   Tag,
   Truck,
+  Link2,
 } from 'lucide-react'
 import api from '../services/api'
 import type { ApiResponse, ProductAuditEntry } from '../types'
@@ -48,6 +49,10 @@ function actionIcon(action: string) {
     case 'supplier_added':
       return <Truck className="h-3.5 w-3.5" />
     case 'supplier_removed':
+      return <Trash2 className="h-3.5 w-3.5" />
+    case 'external_link_added':
+      return <Link2 className="h-3.5 w-3.5" />
+    case 'external_link_removed':
       return <Trash2 className="h-3.5 w-3.5" />
     default:
       return <Plus className="h-3.5 w-3.5" />
@@ -128,6 +133,26 @@ function renderEntry(entry: ProductAuditEntry) {
         <>
           Fournisseur <span className="font-medium text-[--k-text]">{fieldLabel}</span>{' '}
           retiré{entry.oldValue ? <> ({entry.oldValue})</> : null}
+        </>
+      )
+    case 'external_link_added':
+      return (
+        <>
+          Lien externe ajouté : {entry.newValue ? (
+            <span className="font-mono text-[12px] break-all">{entry.newValue}</span>
+          ) : (
+            renderValue(entry.newValue)
+          )}
+        </>
+      )
+    case 'external_link_removed':
+      return (
+        <>
+          Lien externe retiré : {entry.oldValue ? (
+            <span className="font-mono text-[12px] break-all line-through opacity-70">{entry.oldValue}</span>
+          ) : (
+            renderValue(entry.oldValue)
+          )}
         </>
       )
     default:

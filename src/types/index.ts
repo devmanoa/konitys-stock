@@ -150,7 +150,7 @@ export interface Product {
   assemblyTypes?: ProductAssemblyTypeLink[];
   comment?: string;
   imageUrl?: string;
-  externalUrl?: string | null;
+  externalLinks?: { id: string; url: string; position: number }[];
   hasSerialNumber?: boolean;
   createdAt: string;
   updatedAt: string;
@@ -349,7 +349,7 @@ export interface CreateProductInput {
   assemblyTypes?: { assemblyTypeId: string; qtyPerUnit: number }[];
   comment?: string;
   imageUrl?: string;
-  externalUrl?: string | null;
+  externalLinks?: string[];
   partCategoryIds?: string[];
   hasSerialNumber?: boolean;
 }

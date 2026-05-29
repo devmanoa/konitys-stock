@@ -274,19 +274,24 @@ export default function ProductDetail() {
                     <dd className="mt-1 text-[--k-text]">{data.location}</dd>
                   </div>
                 )}
-                {data.externalUrl && (
+                {data.externalLinks && data.externalLinks.length > 0 && (
                   <div className="col-span-2">
-                    <dt className="text-[13px] font-medium text-[--k-muted]">Lien externe</dt>
-                    <dd className="mt-1">
-                      <a
-                        href={data.externalUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-[--k-primary] hover:underline text-sm break-all"
-                      >
-                        <ExternalLink className="h-3.5 w-3.5 shrink-0" />
-                        {data.externalUrl}
-                      </a>
+                    <dt className="text-[13px] font-medium text-[--k-muted]">
+                      Liens externes ({data.externalLinks.length})
+                    </dt>
+                    <dd className="mt-1 flex flex-col gap-1">
+                      {data.externalLinks.map((l) => (
+                        <a
+                          key={l.id}
+                          href={l.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-[--k-primary] hover:underline text-sm break-all"
+                        >
+                          <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                          {l.url}
+                        </a>
+                      ))}
                     </dd>
                   </div>
                 )}
