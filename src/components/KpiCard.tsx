@@ -16,15 +16,30 @@ interface KpiCardProps {
   value: string | number
   icon?: LucideIcon
   colorIndex?: number
+  onClick?: () => void
 }
 
-export function KpiCard({ title, subtitle, value, icon: Icon, colorIndex = 0 }: KpiCardProps) {
+export function KpiCard({ title, subtitle, value, icon: Icon, colorIndex = 0, onClick }: KpiCardProps) {
   const a = ACCENTS[colorIndex % ACCENTS.length]
   return (
     <div
+      onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={
+        onClick
+          ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                onClick()
+              }
+            }
+          : undefined
+      }
       className={cn(
         'relative overflow-hidden rounded-2xl bg-gradient-to-br p-4 shadow-md shadow-black/[0.08]',
-        a.card
+        a.card,
+        onClick && 'cursor-pointer transition-transform hover:-translate-y-0.5',
       )}
     >
       {/* Decorative circles */}

@@ -21,6 +21,7 @@ import OrderTemplates from './pages/OrderTemplates'
 import OrderTemplateDetail from './pages/OrderTemplateDetail'
 import BuildableBornes from './pages/BuildableBornes'
 import AssemblyTypeEdit from './pages/AssemblyTypeEdit'
+import StockAlerts from './pages/StockAlerts'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -54,6 +55,7 @@ function App() {
                 <Route path="orders" element={<Orders />} />
                 <Route path="orders/:id" element={<OrderDetail />} />
                 <Route path="stocks" element={<Stocks />} />
+                <Route path="stocks/alerts" element={<StockAlerts />} />
                 <Route path="movements" element={<Movements />} />
                 <Route path="sites" element={<Sites />} />
                 <Route path="packs" element={<Packs />} />

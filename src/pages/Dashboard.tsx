@@ -179,7 +179,13 @@ export default function Dashboard() {
         <KpiCard title="Produits" value={formatNumber(stats?.totalProducts || 0)} icon={Package} colorIndex={0} />
         <KpiCard title="Stock total" value={formatNumber(stats?.totalItems || 0)} icon={Building2} colorIndex={2} />
         <KpiCard title="Valeur stock" value={formatCurrency(stats?.totalStockValue || 0)} icon={Euro} colorIndex={5} />
-        <KpiCard title="Alertes" value={filteredAlerts.length} icon={AlertTriangle} colorIndex={1} />
+        <KpiCard
+          title="Alertes"
+          value={filteredAlerts.length}
+          icon={AlertTriangle}
+          colorIndex={1}
+          onClick={() => navigate('/stocks/alerts')}
+        />
       </div>
 
       {/* Buildable bornes */}
@@ -295,7 +301,7 @@ export default function Dashboard() {
               </span>
             </div>
             <button
-              onClick={() => navigate('/stocks')}
+              onClick={() => navigate('/stocks/alerts')}
               className="text-[11px] font-medium text-[--k-primary] hover:underline"
             >
               Tous
@@ -394,7 +400,7 @@ export default function Dashboard() {
             )}
             {filteredAlerts.length > 10 && (
               <button
-                onClick={() => navigate('/stocks')}
+                onClick={() => navigate('/stocks/alerts')}
                 className="w-full px-4 py-2 text-center text-[11px] font-medium text-[--k-primary] hover:bg-[--k-surface-2]/30 transition-colors"
               >
                 + {filteredAlerts.length - 10} autres alertes — voir tout
