@@ -423,22 +423,20 @@ export default function Orders() {
           placeholder="Fournisseur"
           className="min-w-[140px] sm:w-[352px]"
         />
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0">
-          <input
-            type="date"
-            value={startDate}
-            onChange={(e) => updateParams({ startDate: e.target.value })}
-            className="input-field min-w-[130px]"
-            title="Date de début"
-          />
-          <input
-            type="date"
-            value={endDate}
-            onChange={(e) => updateParams({ endDate: e.target.value })}
-            className="input-field min-w-[130px]"
-            title="Date de fin"
-          />
-        </div>
+        <input
+          type="date"
+          value={startDate}
+          onChange={(e) => updateParams({ startDate: e.target.value })}
+          className="input-field min-w-[140px] sm:w-[170px]"
+          title="Date de début"
+        />
+        <input
+          type="date"
+          value={endDate}
+          onChange={(e) => updateParams({ endDate: e.target.value })}
+          className="input-field min-w-[140px] sm:w-[170px]"
+          title="Date de fin"
+        />
         {hasFilters && (
           <Button variant="ghost" size="sm" onClick={resetFilters} className="whitespace-nowrap">
             <Filter className="h-4 w-4 sm:mr-1" />
