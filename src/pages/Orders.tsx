@@ -416,14 +416,14 @@ export default function Orders() {
             className="input-field !pl-10"
           />
         </div>
+        <SearchSelect
+          value={supplierFilter}
+          onChange={(val) => updateParams({ supplier: val })}
+          options={suppliers?.map((s) => ({ value: s.id, label: s.name })) || []}
+          placeholder="Fournisseur"
+          className="min-w-[140px] sm:w-[352px]"
+        />
         <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0">
-          <SearchSelect
-            value={supplierFilter}
-            onChange={(val) => updateParams({ supplier: val })}
-            options={suppliers?.map((s) => ({ value: s.id, label: s.name })) || []}
-            placeholder="Fournisseur"
-            className="min-w-[140px] sm:w-[352px]"
-          />
           <input
             type="date"
             value={startDate}
