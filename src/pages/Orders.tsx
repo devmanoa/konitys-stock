@@ -186,13 +186,23 @@ export default function Orders() {
 
   const pagination = ordersData?.pagination;
 
-  // Stats
-  const pendingCount = filteredOrders?.filter(o => o.status === 'PENDING').length || 0;
-  const completedCount = filteredOrders?.filter(o => o.status === 'COMPLETED').length || 0;
-  const cancelledCount = filteredOrders?.filter(o => o.status === 'CANCELLED').length || 0;
-  const totalQuantityPending = filteredOrders
-    ?.filter(o => o.status === 'PENDING')
-    .reduce((sum, o) => sum + getOrderTotalQty(o), 0) || 0;
+  // Global stats — never narrowed by the active tab/filters, so the KPIs
+  // always show the overall state, not the visible subset.
+  const { data: orderStats } = useQuery({
+    queryKey: ['orders-stats'],
+    queryFn: async () => {
+      const res = await api.get<ApiResponse<{
+        counts: Record<string, number>;
+        pendingQty: number;
+        total: number;
+      }>>('/orders/stats');
+      return res.data?.data;
+    },
+  });
+  const pendingCount = (orderStats?.counts.PENDING || 0) + (orderStats?.counts.PARTIAL || 0);
+  const completedCount = orderStats?.counts.COMPLETED || 0;
+  const cancelledCount = orderStats?.counts.CANCELLED || 0;
+  const totalQuantityPending = orderStats?.pendingQty || 0;
 
   // Fermer le dropdown au clic extérieur
   const dropdownRef = useRef<HTMLDivElement>(null);
