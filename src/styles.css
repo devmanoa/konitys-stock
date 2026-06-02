@@ -154,6 +154,46 @@ select.input-field {
 .comment-content ol { list-style: decimal; padding-left: 1.25em; margin: 0.25em 0; }
 .comment-content li { margin: 1px 0; }
 
+/* Rich editor: embedded image */
+.tiptap img.rich-editor-image,
+.comment-content img.rich-editor-image,
+.comment-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  border: 1px solid var(--k-border);
+  margin: 0.25em 0;
+}
+.rich-editor-image-wrapper { display: inline-block; max-width: 100%; }
+.rich-editor-image-wrapper.is-selected img.rich-editor-image {
+  outline: 2px solid var(--k-primary);
+  outline-offset: 2px;
+}
+.rich-editor-image-wrapper.is-resizing { user-select: none; }
+
+/* Rich editor: file attachment chip */
+.tiptap a.rich-editor-file,
+.comment-content a.rich-editor-file {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: var(--k-surface-2);
+  border: 1px solid var(--k-border);
+  color: var(--k-text);
+  font-size: 0.9em;
+  text-decoration: none;
+  margin: 0.25em 0;
+  transition: background 0.15s, border-color 0.15s;
+}
+.tiptap a.rich-editor-file:hover,
+.comment-content a.rich-editor-file:hover {
+  background: var(--k-surface);
+  border-color: var(--k-primary);
+  color: var(--k-primary);
+}
+
 /* Scrollbar styling */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }

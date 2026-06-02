@@ -15,12 +15,20 @@ import {
   AtSign,
   Send,
   ImagePlus,
+  Paperclip,
   Loader2,
 } from 'lucide-react';
-import Image from '@tiptap/extension-image';
 import api from '../../services/api';
 import MentionList, { type MentionListRef } from './MentionList';
+import { ResizableImage } from './ResizableImage';
+import { FileAttachment } from './FileAttachment';
 import type { KnownUser } from '../../types';
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} o`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} Ko`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
+}
 
 interface ToolbarButtonProps {
   icon: React.ElementType;
@@ -53,6 +61,8 @@ function Toolbar({
   hasContent,
   onImageClick,
   isUploadingImage,
+  onFileClick,
+  isUploadingFile,
 }: {
   editor: Editor;
   onSubmit?: () => void;
@@ -60,6 +70,8 @@ function Toolbar({
   hasContent: boolean;
   onImageClick: () => void;
   isUploadingImage: boolean;
+  onFileClick: () => void;
+  isUploadingFile: boolean;
 }) {
   return (
     <div className="flex items-center gap-0.5 border-t border-[--k-border] px-2 py-1.5">
@@ -119,6 +131,12 @@ function Toolbar({
         onClick={onImageClick}
         title={isUploadingImage ? 'Envoi en cours...' : 'Ajouter une image'}
       />
+      <ToolbarButton
+        icon={isUploadingFile ? Loader2 : Paperclip}
+        isActive={false}
+        onClick={onFileClick}
+        title={isUploadingFile ? 'Envoi en cours...' : 'Joindre un fichier (PDF, doc, archive…)'}
+      />
 
       <div className="flex-1" />
 
@@ -168,8 +186,10 @@ export default function RichTextEditor({
 
   const editorRef = useRef<Editor | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const attachInputRef = useRef<HTMLInputElement>(null);
   const [hasContent, setHasContent] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isUploadingFile, setIsUploadingFile] = useState(false);
 
   const doSubmit = useCallback(() => {
     const ed = editorRef.current;
@@ -186,17 +206,14 @@ export default function RichTextEditor({
 
   const handleImageSelected = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    // Reset the input so picking the same file twice still triggers onChange.
     e.target.value = '';
     if (!file) return;
     const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     if (!allowed.includes(file.type)) {
-      // eslint-disable-next-line no-console
       console.warn('Type d\'image non supporté. Utilisez JPEG, PNG, GIF ou WebP.');
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      // eslint-disable-next-line no-console
       console.warn('Image trop volumineuse (max 5 Mo).');
       return;
     }
@@ -216,10 +233,47 @@ export default function RichTextEditor({
       const ed = editorRef.current;
       ed?.chain().focus().setImage({ src: fullUrl, alt: file.name }).run();
     } catch (err) {
-      // eslint-disable-next-line no-console
       console.error('Upload image RichTextEditor failed', err);
     } finally {
       setIsUploadingImage(false);
+    }
+  }, []);
+
+  const handleAttachButtonClick = useCallback(() => {
+    attachInputRef.current?.click();
+  }, []);
+
+  const handleAttachSelected = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (file.size > 50 * 1024 * 1024) {
+      console.warn('Fichier trop volumineux (max 50 Mo).');
+      return;
+    }
+    setIsUploadingFile(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await api.post<{
+        success: boolean;
+        data?: { fileUrl: string; originalName: string; size: number; mimeType: string };
+      }>('/upload/file', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+      const payload = res.data?.data;
+      if (!payload?.fileUrl) return;
+      const apiBase = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/api$/, '');
+      const fullUrl = payload.fileUrl.startsWith('http') ? payload.fileUrl : `${apiBase}${payload.fileUrl}`;
+      const ed = editorRef.current;
+      ed?.chain().focus().setFileAttachment({
+        href: fullUrl,
+        name: payload.originalName || file.name,
+        size: formatBytes(payload.size ?? file.size),
+        mimeType: payload.mimeType || file.type,
+      }).run();
+    } catch (err) {
+      console.error('Upload file RichTextEditor failed', err);
+    } finally {
+      setIsUploadingFile(false);
     }
   }, []);
 
@@ -317,14 +371,14 @@ export default function RichTextEditor({
         Placeholder.configure({
           placeholder,
         }),
-        Image.configure({
+        ResizableImage.configure({
           HTMLAttributes: {
             class: 'rich-editor-image',
           },
-          // Inline so an image can sit alongside text without forcing a new paragraph.
           inline: false,
           allowBase64: false,
         }),
+        FileAttachment,
       ],
       content,
       autofocus: autoFocus,
@@ -379,6 +433,12 @@ export default function RichTextEditor({
         className="hidden"
         onChange={handleImageSelected}
       />
+      <input
+        ref={attachInputRef}
+        type="file"
+        className="hidden"
+        onChange={handleAttachSelected}
+      />
       {showToolbar && (
         <Toolbar
           editor={editor}
@@ -387,6 +447,8 @@ export default function RichTextEditor({
           hasContent={hasContent}
           onImageClick={handleImageButtonClick}
           isUploadingImage={isUploadingImage}
+          onFileClick={handleAttachButtonClick}
+          isUploadingFile={isUploadingFile}
         />
       )}
     </div>
