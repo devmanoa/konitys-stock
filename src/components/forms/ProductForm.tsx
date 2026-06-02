@@ -5,6 +5,7 @@ import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
 import api from '../../services/api';
+import RichTextEditor from '../ui/RichTextEditor';
 import type { Product, CreateProductInput, SupplyRisk, ApiResponse, Assembly, AssemblyType, PartCategory, PaginatedResponse, Site, Location as LocationType } from '../../types';
 
 // Remove /api suffix for static files URL
@@ -700,13 +701,11 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
         <label className="mb-1 block text-[13px] font-medium text-[--k-text]">
           Commentaire
         </label>
-        <textarea
-          value={formData.comment || ''}
-          onChange={(e) => handleChange('comment', e.target.value)}
+        <RichTextEditor
+          content={formData.comment || ''}
+          onChange={(html) => handleChange('comment', html)}
           placeholder="Notes ou commentaires..."
-          rows={3}
-          className="input-field"
-          style={{ height: 'auto', padding: '0.5rem 0.75rem' }}
+          fetchMentions={() => []}
         />
       </div>
 

@@ -6,6 +6,7 @@ import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
 import ProductSearch from '../components/ui/ProductSearch'
+import RichTextEditor from '../components/ui/RichTextEditor'
 import { useToast } from '../components/ui/Toast'
 import api from '../services/api'
 import type { ApiResponse, AssemblyType, PartCategory, Product } from '../types'
@@ -249,13 +250,11 @@ export default function AssemblyTypeEdit() {
           />
           <div className="space-y-1">
             <label className="block text-[13px] font-medium text-[--k-text]">Description</label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+            <RichTextEditor
+              content={description}
+              onChange={setDescription}
               placeholder="Description optionnelle…"
-              rows={3}
-              className="input-field"
-              style={{ height: 'auto', padding: '0.5rem 0.75rem' }}
+              fetchMentions={() => []}
             />
           </div>
         </CardContent>

@@ -7,6 +7,7 @@ import Input from '../components/ui/Input';
 import { PageHeader } from '../components/PageHeader';
 import { useToast } from '../components/ui/Toast';
 import ProductSearch from '../components/ui/ProductSearch';
+import RichTextEditor from '../components/ui/RichTextEditor';
 import api from '../services/api';
 import type { Pack, Product, ApiResponse } from '../types';
 
@@ -332,13 +333,11 @@ export default function Packs() {
             <label className="block text-[13px] font-medium text-[--k-text]">
               Description
             </label>
-            <textarea
-              value={packDescription}
-              onChange={(e) => setPackDescription(e.target.value)}
+            <RichTextEditor
+              content={packDescription}
+              onChange={setPackDescription}
               placeholder="Description optionnelle..."
-              rows={2}
-              className="input-field"
-              style={{ height: 'auto', padding: '0.5rem 0.75rem' }}
+              fetchMentions={() => []}
             />
           </div>
 

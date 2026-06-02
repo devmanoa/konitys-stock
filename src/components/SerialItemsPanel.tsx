@@ -8,6 +8,7 @@ import Modal from './ui/Modal';
 import Pagination from './ui/Pagination';
 import { useToast } from './ui/Toast';
 import api from '../services/api';
+import RichTextEditor from './ui/RichTextEditor';
 import OperatorAvatar from './OperatorAvatar';
 import type { ApiResponse, ProductSerialItem, SerialStatus, ProductCondition, Site } from '../types';
 
@@ -406,12 +407,10 @@ export default function SerialItemsPanel({ productId }: Props) {
           )}
           <div>
             <label className="block text-[13px] font-medium text-[--k-text] mb-1">Commentaire</label>
-            <textarea
-              value={form.comment}
-              onChange={(e) => setForm({ ...form, comment: e.target.value })}
-              rows={2}
-              className="input-field"
-              style={{ height: 'auto', padding: '0.5rem 0.75rem' }}
+            <RichTextEditor
+              content={form.comment}
+              onChange={(html) => setForm({ ...form, comment: html })}
+              fetchMentions={() => []}
             />
           </div>
           <div className="flex justify-end gap-3 pt-2">

@@ -7,6 +7,7 @@ import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import { PageHeader } from '../components/PageHeader';
 import Input from '../components/ui/Input';
+import RichTextEditor from '../components/ui/RichTextEditor';
 import { useToast } from '../components/ui/Toast';
 import api from '../services/api';
 import type { AssemblyType, Assembly, PartCategory, PaginatedResponse } from '../types';
@@ -734,13 +735,11 @@ export default function Settings() {
             <label className="block text-[13px] font-medium text-[--k-text]">
               Description
             </label>
-            <textarea
-              value={assemblyDescription}
-              onChange={(e) => setAssemblyDescription(e.target.value)}
+            <RichTextEditor
+              content={assemblyDescription}
+              onChange={setAssemblyDescription}
               placeholder="Description optionnelle..."
-              rows={3}
-              className="input-field"
-              style={{ height: 'auto', padding: '0.5rem 0.75rem' }}
+              fetchMentions={() => []}
             />
           </div>
           <div className="flex justify-end gap-3 pt-4">

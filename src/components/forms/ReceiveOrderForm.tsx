@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ExternalLink, Plus, X, AlertTriangle } from 'lucide-react'
 import Button from '../ui/Button'
 import Input from '../ui/Input'
 import Select from '../ui/Select'
 import api from '../../services/api'
+import RichTextEditor from '../ui/RichTextEditor'
 import type { Order, OrderItem, Site, ApiResponse, AnomalyDecision } from '../../types'
 
 interface ReceiveItemFormData {
@@ -57,6 +58,7 @@ export default function ReceiveOrderForm({ orderId, itemId, onSuccess, onCancel 
     register,
     handleSubmit,
     watch,
+    control,
     formState: { errors },
   } = useForm<ReceiveItemFormData>({
     defaultValues: {
@@ -332,16 +334,20 @@ export default function ReceiveOrderForm({ orderId, itemId, onSuccess, onCancel 
       </div>
 
       <div className="space-y-1">
-        <label htmlFor="comment" className="block text-[13px] font-medium text-[--k-text]">
+        <label className="block text-[13px] font-medium text-[--k-text]">
           Commentaire général (optionnel)
         </label>
-        <textarea
-          id="comment"
-          rows={2}
-          className="input-field"
-          style={{ height: 'auto', padding: '0.5rem 0.75rem' }}
-          placeholder="Commentaire optionnel..."
-          {...register('comment')}
+        <Controller
+          control={control}
+          name="comment"
+          render={({ field }) => (
+            <RichTextEditor
+              content={field.value || ''}
+              onChange={field.onChange}
+              placeholder="Commentaire optionnel..."
+              fetchMentions={() => []}
+            />
+          )}
         />
       </div>
 

@@ -4,6 +4,7 @@ import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
 import api from '../../services/api';
+import RichTextEditor from '../ui/RichTextEditor';
 import type { Order, OrderItem, Site, ApiResponse } from '../../types';
 
 interface ItemLine {
@@ -184,17 +185,14 @@ export default function ReceiveAllForm({ order, onSuccess, onCancel }: ReceiveAl
       </Select>
 
       <div className="space-y-1">
-        <label htmlFor="comment" className="block text-[13px] font-medium text-[--k-text]">
+        <label className="block text-[13px] font-medium text-[--k-text]">
           Commentaire
         </label>
-        <textarea
-          id="comment"
-          rows={2}
-          className="input-field"
-          style={{ height: 'auto', padding: '0.5rem 0.75rem' }}
+        <RichTextEditor
+          content={comment}
+          onChange={setComment}
           placeholder="Commentaire optionnel..."
-          value={comment}
-          onChange={(e) => setComment(e.target.value)}
+          fetchMentions={() => []}
         />
       </div>
 

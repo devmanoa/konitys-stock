@@ -14,7 +14,11 @@ import {
   ListOrdered,
   AtSign,
   Send,
+  ImagePlus,
+  Loader2,
 } from 'lucide-react';
+import Image from '@tiptap/extension-image';
+import api from '../../services/api';
 import MentionList, { type MentionListRef } from './MentionList';
 import type { KnownUser } from '../../types';
 
@@ -47,11 +51,15 @@ function Toolbar({
   onSubmit,
   isSubmitting,
   hasContent,
+  onImageClick,
+  isUploadingImage,
 }: {
   editor: Editor;
-  onSubmit: () => void;
+  onSubmit?: () => void;
   isSubmitting: boolean;
   hasContent: boolean;
+  onImageClick: () => void;
+  isUploadingImage: boolean;
 }) {
   return (
     <div className="flex items-center gap-0.5 border-t border-[--k-border] px-2 py-1.5">
@@ -105,18 +113,26 @@ function Toolbar({
         }}
         title="Mentionner (@)"
       />
+      <ToolbarButton
+        icon={isUploadingImage ? Loader2 : ImagePlus}
+        isActive={false}
+        onClick={onImageClick}
+        title={isUploadingImage ? 'Envoi en cours...' : 'Ajouter une image'}
+      />
 
       <div className="flex-1" />
 
-      <button
-        type="button"
-        onClick={onSubmit}
-        disabled={!hasContent || isSubmitting}
-        className="flex h-7 items-center gap-1.5 rounded-md bg-[--k-primary] px-2.5 text-[12px] font-medium text-white transition hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        <Send className="h-3 w-3" />
-        {isSubmitting ? 'Envoi...' : 'Envoyer'}
-      </button>
+      {onSubmit && (
+        <button
+          type="button"
+          onClick={onSubmit}
+          disabled={!hasContent || isSubmitting}
+          className="flex h-7 items-center gap-1.5 rounded-md bg-[--k-primary] px-2.5 text-[12px] font-medium text-white transition hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <Send className="h-3 w-3" />
+          {isSubmitting ? 'Envoi...' : 'Envoyer'}
+        </button>
+      )}
     </div>
   );
 }
@@ -151,7 +167,9 @@ export default function RichTextEditor({
   onSubmitRef.current = onSubmit;
 
   const editorRef = useRef<Editor | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [hasContent, setHasContent] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   const doSubmit = useCallback(() => {
     const ed = editorRef.current;
@@ -160,6 +178,49 @@ export default function RichTextEditor({
     const isEmpty = !html || html === '<p></p>';
     if (isEmpty) return;
     onSubmitRef.current?.(html);
+  }, []);
+
+  const handleImageButtonClick = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleImageSelected = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    // Reset the input so picking the same file twice still triggers onChange.
+    e.target.value = '';
+    if (!file) return;
+    const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowed.includes(file.type)) {
+      // eslint-disable-next-line no-console
+      console.warn('Type d\'image non supporté. Utilisez JPEG, PNG, GIF ou WebP.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      // eslint-disable-next-line no-console
+      console.warn('Image trop volumineuse (max 5 Mo).');
+      return;
+    }
+    setIsUploadingImage(true);
+    try {
+      const fd = new FormData();
+      fd.append('image', file);
+      const res = await api.post<{ success: boolean; data?: { imageUrl: string } }>(
+        '/upload/image',
+        fd,
+        { headers: { 'Content-Type': 'multipart/form-data' } },
+      );
+      const imageUrl = res.data?.data?.imageUrl;
+      if (!imageUrl) return;
+      const apiBase = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/api$/, '');
+      const fullUrl = imageUrl.startsWith('http') ? imageUrl : `${apiBase}${imageUrl}`;
+      const ed = editorRef.current;
+      ed?.chain().focus().setImage({ src: fullUrl, alt: file.name }).run();
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('Upload image RichTextEditor failed', err);
+    } finally {
+      setIsUploadingImage(false);
+    }
   }, []);
 
   const mentionSuggestion: Omit<SuggestionOptions<KnownUser>, 'editor'> = {
@@ -256,6 +317,14 @@ export default function RichTextEditor({
         Placeholder.configure({
           placeholder,
         }),
+        Image.configure({
+          HTMLAttributes: {
+            class: 'rich-editor-image',
+          },
+          // Inline so an image can sit alongside text without forcing a new paragraph.
+          inline: false,
+          allowBase64: false,
+        }),
       ],
       content,
       autofocus: autoFocus,
@@ -303,12 +372,21 @@ export default function RichTextEditor({
   return (
     <div className="rounded-lg border border-[--k-border] bg-white overflow-hidden focus-within:border-[--k-primary] focus-within:ring-1 focus-within:ring-[--k-primary]/20 transition-colors">
       <EditorContent editor={editor} />
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/gif,image/webp"
+        className="hidden"
+        onChange={handleImageSelected}
+      />
       {showToolbar && (
         <Toolbar
           editor={editor}
           onSubmit={doSubmit}
           isSubmitting={isSubmitting}
           hasContent={hasContent}
+          onImageClick={handleImageButtonClick}
+          isUploadingImage={isUploadingImage}
         />
       )}
     </div>

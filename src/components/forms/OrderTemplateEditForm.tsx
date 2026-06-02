@@ -5,6 +5,7 @@ import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
 import SupplierSearch from '../ui/SupplierSearch';
+import RichTextEditor from '../ui/RichTextEditor';
 import api from '../../services/api';
 import type { OrderTemplate, Supplier, Site, Product, ApiResponse, PaginatedResponse } from '../../types';
 
@@ -401,13 +402,11 @@ export default function OrderTemplateEditForm({ template, onSuccess, onCancel }:
         <label className="mb-1 block text-[13px] font-medium text-[--k-text]">
           Commentaire
         </label>
-        <textarea
-          rows={2}
-          className="input-field"
-          style={{ height: 'auto', padding: '0.5rem 0.75rem' }}
+        <RichTextEditor
+          content={comment}
+          onChange={setComment}
           placeholder="Commentaire optionnel..."
-          value={comment}
-          onChange={(e) => setComment(e.target.value)}
+          fetchMentions={() => []}
         />
       </div>
 

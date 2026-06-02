@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Button from '../ui/Button'
 import Input from '../ui/Input'
 import Select from '../ui/Select'
 import ProductSearch from '../ui/ProductSearch'
 import api from '../../services/api'
+import RichTextEditor from '../ui/RichTextEditor'
 import type { Product, Site, ApiResponse, MovementType, ProductCondition, ProductSerialItem } from '../../types'
 
 interface MovementFormData {
@@ -40,6 +41,7 @@ export default function MovementForm({ onSuccess, onCancel, preselectedProductId
     handleSubmit,
     watch,
     setValue,
+    control,
     formState: { errors },
   } = useForm<MovementFormData>({
     defaultValues: {
@@ -386,16 +388,20 @@ export default function MovementForm({ onSuccess, onCancel, preselectedProductId
       />
 
       <div className="space-y-1">
-        <label htmlFor="comment" className="block text-[13px] font-medium text-[--k-text]">
+        <label className="block text-[13px] font-medium text-[--k-text]">
           Commentaire
         </label>
-        <textarea
-          id="comment"
-          rows={3}
-          className="input-field"
-          style={{ height: 'auto', padding: '0.5rem 0.75rem' }}
-          placeholder="Commentaire optionnel..."
-          {...register('comment')}
+        <Controller
+          control={control}
+          name="comment"
+          render={({ field }) => (
+            <RichTextEditor
+              content={field.value || ''}
+              onChange={field.onChange}
+              placeholder="Commentaire optionnel..."
+              fetchMentions={() => []}
+            />
+          )}
         />
       </div>
 

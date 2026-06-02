@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
-import { useForm, useFieldArray } from 'react-hook-form'
+import { useForm, useFieldArray, Controller } from 'react-hook-form'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Trash2, ExternalLink } from 'lucide-react'
 import Button from '../ui/Button'
 import Input from '../ui/Input'
 import Select from '../ui/Select'
 import api from '../../services/api'
+import RichTextEditor from '../ui/RichTextEditor'
 import type { Pack, Site, ApiResponse } from '../../types'
 
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/api$/, '')
@@ -337,12 +338,17 @@ export default function PackMovementForm({ onSuccess, onCancel }: PackMovementFo
 
       <div>
         <label className="block text-[13px] font-medium text-[--k-text] mb-1">Commentaire</label>
-        <textarea
-          {...register('comment')}
-          placeholder="Ajouter un commentaire (optionnel)"
-          rows={3}
-          className="input-field"
-          style={{ height: 'auto', padding: '0.5rem 0.75rem' }}
+        <Controller
+          control={control}
+          name="comment"
+          render={({ field }) => (
+            <RichTextEditor
+              content={field.value || ''}
+              onChange={field.onChange}
+              placeholder="Ajouter un commentaire (optionnel)"
+              fetchMentions={() => []}
+            />
+          )}
         />
       </div>
 

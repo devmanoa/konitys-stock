@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import api from '../../services/api';
+import RichTextEditor from '../ui/RichTextEditor';
 import type { SupplierContact, ApiResponse } from '../../types';
 
 interface CreateSupplierContactInput {
@@ -218,13 +219,11 @@ export default function SupplierContactForm({ supplierId, contact, onSuccess, on
         <label className="mb-1 block text-[13px] font-medium text-[--k-text]">
           Description
         </label>
-        <textarea
-          value={formData.description || ''}
-          onChange={(e) => handleChange('description', e.target.value)}
+        <RichTextEditor
+          content={formData.description || ''}
+          onChange={(html) => handleChange('description', html)}
           placeholder="Notes ou informations supplémentaires..."
-          rows={2}
-          className="input-field"
-          style={{ height: 'auto', padding: '0.5rem 0.75rem' }}
+          fetchMentions={() => []}
         />
       </div>
 
