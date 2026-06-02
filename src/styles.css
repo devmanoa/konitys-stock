@@ -171,27 +171,40 @@ select.input-field {
 }
 .rich-editor-image-wrapper.is-resizing { user-select: none; }
 
-/* Rich editor: file attachment chip */
-.tiptap a.rich-editor-file,
+/* Rich editor: file attachment fallback chip (used when rendered outside the editor) */
 .comment-content a.rich-editor-file {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 10px;
-  border-radius: 8px;
+  padding: 8px 12px;
+  border-radius: 10px;
   background: var(--k-surface-2);
   border: 1px solid var(--k-border);
   color: var(--k-text);
   font-size: 0.9em;
   text-decoration: none;
   margin: 0.25em 0;
-  transition: background 0.15s, border-color 0.15s;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
-.tiptap a.rich-editor-file:hover,
 .comment-content a.rich-editor-file:hover {
   background: var(--k-surface);
   border-color: var(--k-primary);
   color: var(--k-primary);
+}
+
+/* In-editor JIRA-like card: no decoration on the embedded link */
+.tiptap a.rich-editor-file-card,
+.comment-content a.rich-editor-file-card {
+  text-decoration: none;
+  color: inherit;
+}
+.rich-editor-file-card-wrap { display: block; }
+
+/* Drop-zone visual feedback while dragging files over the editor */
+.tiptap.is-drop-target {
+  background-color: rgba(59, 130, 246, 0.04);
+  outline: 2px dashed var(--k-primary);
+  outline-offset: -2px;
 }
 
 /* Scrollbar styling */

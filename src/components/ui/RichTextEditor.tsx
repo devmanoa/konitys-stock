@@ -22,6 +22,7 @@ import api from '../../services/api';
 import MentionList, { type MentionListRef } from './MentionList';
 import { ResizableImage } from './ResizableImage';
 import { FileAttachment } from './FileAttachment';
+import { DropUpload } from './DropUpload';
 import type { KnownUser } from '../../types';
 
 function formatBytes(bytes: number): string {
@@ -200,14 +201,7 @@ export default function RichTextEditor({
     onSubmitRef.current?.(html);
   }, []);
 
-  const handleImageButtonClick = useCallback(() => {
-    fileInputRef.current?.click();
-  }, []);
-
-  const handleImageSelected = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
+  const uploadAndInsertImage = useCallback(async (file: File) => {
     const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     if (!allowed.includes(file.type)) {
       console.warn('Type d\'image non supporté. Utilisez JPEG, PNG, GIF ou WebP.');
@@ -239,14 +233,18 @@ export default function RichTextEditor({
     }
   }, []);
 
-  const handleAttachButtonClick = useCallback(() => {
-    attachInputRef.current?.click();
+  const handleImageButtonClick = useCallback(() => {
+    fileInputRef.current?.click();
   }, []);
 
-  const handleAttachSelected = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageSelected = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
+    await uploadAndInsertImage(file);
+  }, [uploadAndInsertImage]);
+
+  const uploadAndInsertFile = useCallback(async (file: File) => {
     if (file.size > 50 * 1024 * 1024) {
       console.warn('Fichier trop volumineux (max 50 Mo).');
       return;
@@ -276,6 +274,24 @@ export default function RichTextEditor({
       setIsUploadingFile(false);
     }
   }, []);
+
+  const handleAttachButtonClick = useCallback(() => {
+    attachInputRef.current?.click();
+  }, []);
+
+  const handleAttachSelected = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    await uploadAndInsertFile(file);
+  }, [uploadAndInsertFile]);
+
+  // Keep stable refs so the DropUpload plugin (registered once at editor
+  // creation) can always reach the latest closures.
+  const uploadImageRef = useRef(uploadAndInsertImage);
+  uploadImageRef.current = uploadAndInsertImage;
+  const uploadFileRef = useRef(uploadAndInsertFile);
+  uploadFileRef.current = uploadAndInsertFile;
 
   const mentionSuggestion: Omit<SuggestionOptions<KnownUser>, 'editor'> = {
     items: async ({ query }) => {
@@ -379,6 +395,10 @@ export default function RichTextEditor({
           allowBase64: false,
         }),
         FileAttachment,
+        DropUpload.configure({
+          onDropImage: (file) => uploadImageRef.current(file),
+          onDropFile: (file) => uploadFileRef.current(file),
+        }),
       ],
       content,
       autofocus: autoFocus,
