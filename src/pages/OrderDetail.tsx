@@ -26,6 +26,7 @@ import ReceiveAllForm from '../components/forms/ReceiveAllForm';
 import { useToast } from '../components/ui/Toast';
 import Comments from '../components/ProductComments';
 import OrderAttachments from '../components/OrderAttachments';
+import OrderAuditTimeline from '../components/OrderAuditTimeline';
 import api from '../services/api';
 import OperatorAvatar from '../components/OperatorAvatar';
 import type { Order, OrderItem, ApiResponse } from '../types';
@@ -582,6 +583,19 @@ export default function OrderDetail() {
 
       {/* Pièces jointes */}
       <OrderAttachments orderId={id!} />
+
+      {/* Historique d'activité */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="h-5 w-5" />
+            Historique d'activité
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <OrderAuditTimeline orderId={id!} />
+        </CardContent>
+      </Card>
 
       {/* Commentaires */}
       <Comments entityType="orders" entityId={id!} />

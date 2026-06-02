@@ -81,6 +81,7 @@ export default function ReceiveAllForm({ order, onSuccess, onCancel }: ReceiveAl
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: ['order', order.id] });
+      queryClient.invalidateQueries({ queryKey: ['order-audit', order.id] });
       queryClient.invalidateQueries({ queryKey: ['stocks'] });
       queryClient.invalidateQueries({ queryKey: ['movements'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });

@@ -104,6 +104,7 @@ export default function ReceiveOrderForm({ orderId, itemId, onSuccess, onCancel 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] })
       queryClient.invalidateQueries({ queryKey: ['order', orderId] })
+      queryClient.invalidateQueries({ queryKey: ['order-audit', orderId] })
       queryClient.invalidateQueries({ queryKey: ['supplier'] })
       queryClient.invalidateQueries({ queryKey: ['supplier-anomalies'] })
       queryClient.invalidateQueries({ queryKey: ['stocks'] })

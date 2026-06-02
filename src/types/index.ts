@@ -260,6 +260,18 @@ export interface OrderItem {
   anomalies?: OrderItemAnomaly[];
 }
 
+export interface OrderAuditEntry {
+  id: string;
+  orderId: string;
+  action: string;
+  field?: string | null;
+  oldValue?: string | null;
+  newValue?: string | null;
+  changedAt: string;
+  changedById?: string | null;
+  changedByName?: string | null;
+}
+
 export interface OrderAttachment {
   id: string;
   orderId: string;

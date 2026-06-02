@@ -77,6 +77,7 @@ export default function OrderAttachments({ orderId }: Props) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['order-attachments', orderId] })
+      queryClient.invalidateQueries({ queryKey: ['order-audit', orderId] })
       toast.success('Pièce jointe ajoutée')
     },
     onError: (err: any) => {
@@ -93,6 +94,7 @@ export default function OrderAttachments({ orderId }: Props) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['order-attachments', orderId] })
+      queryClient.invalidateQueries({ queryKey: ['order-audit', orderId] })
       setDeleteConfirm(null)
       toast.success('Pièce jointe supprimée')
     },
