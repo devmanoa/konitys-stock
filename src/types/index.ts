@@ -2,7 +2,29 @@
 export type SupplyRisk = 'HIGH' | 'MEDIUM' | 'LOW';
 export type MovementType = 'IN' | 'OUT' | 'TRANSFER';
 export type ProductCondition = 'NEW' | 'USED';
-export type OrderStatus = 'PENDING' | 'COMPLETED' | 'CANCELLED';
+export type OrderStatus = 'PENDING' | 'PARTIAL' | 'COMPLETED' | 'CANCELLED';
+
+export type AnomalyDecision = 'ACCEPTED' | 'REFUSED';
+
+export interface OrderItemAnomaly {
+  id: string;
+  orderItemId: string;
+  quantity: number;
+  decision: AnomalyDecision;
+  comment: string;
+  photoUrls: string[];
+  reportedAt: string;
+  reportedById?: string | null;
+  reportedByName?: string | null;
+}
+
+export interface ReceptionAnomalyWithContext extends OrderItemAnomaly {
+  orderItem: {
+    id: string;
+    order: { id: string; orderNumber: string; orderDate: string };
+    product: { id: string; reference: string; description?: string; imageUrl?: string };
+  };
+}
 export type SiteType = 'STORAGE' | 'EXIT';
 
 // Base interfaces
@@ -220,6 +242,7 @@ export interface OrderItem {
   receivedQty?: number;
   receivedDate?: string;
   condition?: string;
+  anomalies?: OrderItemAnomaly[];
 }
 
 export interface Order {

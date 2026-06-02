@@ -156,6 +156,8 @@ export default function Orders() {
     switch (status) {
       case 'PENDING':
         return <Badge variant="warning">En cours</Badge>;
+      case 'PARTIAL':
+        return <Badge variant="info">Reçu partiellement</Badge>;
       case 'COMPLETED':
         return <Badge variant="success">Terminée</Badge>;
       case 'CANCELLED':

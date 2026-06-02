@@ -27,6 +27,7 @@ import Badge from '../components/ui/Badge';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import Modal from '../components/ui/Modal';
 import SupplierForm from '../components/forms/SupplierForm';
+import SupplierAnomaliesSection from '../components/SupplierAnomaliesSection';
 import SupplierContactForm from '../components/forms/SupplierContactForm';
 import ReceiveOrderForm from '../components/forms/ReceiveOrderForm';
 import { useToast } from '../components/ui/Toast';
@@ -124,13 +125,15 @@ export default function SupplierDetail() {
   };
 
   const getStatusBadge = (status: string) => {
-    const variants: Record<string, 'warning' | 'success' | 'danger'> = {
+    const variants: Record<string, 'warning' | 'success' | 'danger' | 'info'> = {
       PENDING: 'warning',
+      PARTIAL: 'info',
       COMPLETED: 'success',
       CANCELLED: 'danger',
     };
     const labels: Record<string, string> = {
       PENDING: 'En attente',
+      PARTIAL: 'Reçu partiellement',
       COMPLETED: 'Reçue',
       CANCELLED: 'Annulée',
     };
@@ -587,6 +590,9 @@ export default function SupplierDetail() {
           )}
         </CardContent>
       </Card>
+
+      {/* Anomalies de réception */}
+      <SupplierAnomaliesSection supplierId={id!} />
 
       {/* Historique des commandes */}
       <Card>
