@@ -7,11 +7,13 @@ import {
   AlertTriangle,
   AlertOctagon,
   TrendingUp,
-  Truck,
   Building2,
   Euro,
   Factory,
   ChevronRight,
+  ArrowDownCircle,
+  ArrowUpCircle,
+  ArrowLeftRight,
 } from 'lucide-react'
 import { KpiCard } from '../components/KpiCard'
 import { PageHeader } from '../components/PageHeader'
@@ -55,17 +57,6 @@ const ORDER_STATUT_LABELS: Record<string, string> = {
   CANCELLED: 'Annulée',
 }
 
-const MOVEMENT_TYPE_COLORS: Record<string, string> = {
-  IN: 'bg-emerald-50 text-emerald-600',
-  OUT: 'bg-red-50 text-red-600',
-  TRANSFER: 'bg-blue-50 text-blue-600',
-}
-
-const MOVEMENT_TYPE_LABELS: Record<string, string> = {
-  IN: 'Entrée',
-  OUT: 'Sortie',
-  TRANSFER: 'Transfert',
-}
 
 
 export default function Dashboard() {
@@ -476,90 +467,132 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Derniers mouvements */}
-        <div className="rounded-2xl border border-[--k-border] bg-white shadow-sm shadow-black/[0.03] overflow-hidden">
-          <div className="flex items-center justify-between border-b border-[--k-border] bg-gradient-to-r from-emerald-50/40 to-teal-50/20 px-4 py-2.5">
-            <div className="flex items-center gap-2">
-              <Truck className="h-4 w-4 text-[--k-primary]" />
-              <span className="text-lg font-semibold text-[--k-text]">Derniers mouvements</span>
-            </div>
-            <button
-              onClick={() => navigate('/movements')}
-              className="text-[11px] font-medium text-[--k-primary] hover:underline"
-            >
-              Tous
-            </button>
-          </div>
-          {recentMovements && recentMovements.length > 0 ? (
-            <table className="w-full text-[13px]">
-              <thead>
-                <tr className="border-b border-[--k-border] bg-blue-50/30 text-[--k-muted]">
-                  <th className="px-4 py-2 text-left text-xs font-medium">Type</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium">Produit</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium">Qté</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium">Opérateur</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium">Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentMovements.slice(0, 5).map((m) => (
-                  <tr key={m.id} className="border-t border-[--k-border] hover:bg-[--k-surface-2]/30 transition-colors">
-                    <td className="px-4 py-2">
-                      <span className={cn(
-                        'rounded-full px-2 py-0.5 text-[11px] font-semibold',
-                        MOVEMENT_TYPE_COLORS[m.type] || 'bg-gray-50 text-gray-600'
-                      )}>
-                        {MOVEMENT_TYPE_LABELS[m.type] || m.type}
-                      </span>
-                    </td>
-                    <td className="px-4 py-2">
-                      {m.product ? (
-                        <RouterLink
-                          to={`/products/${m.productId}`}
-                          className="block hover:underline"
-                        >
-                          <div className="font-medium text-[--k-primary] truncate max-w-[200px]">
-                            {m.product.description || m.product.reference}
-                          </div>
-                          {m.product.description && (
-                            <div className="text-[10px] text-[--k-muted] font-mono truncate">
-                              {m.product.reference}
-                            </div>
-                          )}
-                        </RouterLink>
-                      ) : '—'}
-                    </td>
-                    <td className="px-4 py-2 tabular-nums">{m.quantity}</td>
-                    <td className="px-4 py-2">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={cn(
-                            'flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-semibold flex-shrink-0',
-                            getOperatorColor(m.operator)
-                          )}
-                          title={m.operator || 'Inconnu'}
-                        >
-                          {getOperatorInitials(m.operator)}
-                        </span>
-                        <span className="text-[--k-text] truncate max-w-[120px]">
-                          {m.operator || <span className="text-[--k-muted] italic">Inconnu</span>}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-2 text-[--k-muted] tabular-nums">
-                      {formatDate(m.movementDate)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <p className="px-4 py-6 text-center text-[13px] text-[--k-muted]">
-              Aucun mouvement récent
-            </p>
-          )}
+        {/* Dernières entrées / sorties / transferts — 3 compact blocks
+            (replace the single mixed list with one block per movement type) */}
+        <div className="space-y-4">
+          <RecentMovementsBlock
+            title="Dernières entrées"
+            type="IN"
+            movements={recentMovements || []}
+            navigate={navigate}
+            formatDate={formatDate}
+          />
+          <RecentMovementsBlock
+            title="Dernières sorties"
+            type="OUT"
+            movements={recentMovements || []}
+            navigate={navigate}
+            formatDate={formatDate}
+          />
+          <RecentMovementsBlock
+            title="Derniers transferts"
+            type="TRANSFER"
+            movements={recentMovements || []}
+            navigate={navigate}
+            formatDate={formatDate}
+          />
         </div>
       </div>
+    </div>
+  )
+}
+
+// Compact "latest movements" block scoped to a single movement type.
+function RecentMovementsBlock({
+  title,
+  type,
+  movements,
+  navigate,
+  formatDate,
+}: {
+  title: string
+  type: 'IN' | 'OUT' | 'TRANSFER'
+  movements: StockMovement[]
+  navigate: (path: string) => void
+  formatDate: (d: string) => string
+}) {
+  const filtered = movements.filter((m) => m.type === type).slice(0, 5)
+  const headerGradient =
+    type === 'IN'
+      ? 'from-emerald-50/40 to-teal-50/20'
+      : type === 'OUT'
+        ? 'from-red-50/40 to-orange-50/20'
+        : 'from-blue-50/40 to-indigo-50/20'
+  const Icon = type === 'IN' ? ArrowDownCircle : type === 'OUT' ? ArrowUpCircle : ArrowLeftRight
+  const iconColor =
+    type === 'IN' ? 'text-emerald-600' : type === 'OUT' ? 'text-red-600' : 'text-blue-600'
+
+  return (
+    <div className="rounded-2xl border border-[--k-border] bg-white shadow-sm shadow-black/[0.03] overflow-hidden">
+      <div
+        className={cn(
+          'flex items-center justify-between border-b border-[--k-border] bg-gradient-to-r px-4 py-2.5',
+          headerGradient,
+        )}
+      >
+        <div className="flex items-center gap-2">
+          <Icon className={cn('h-4 w-4', iconColor)} />
+          <span className="text-sm font-semibold text-[--k-text]">{title}</span>
+          <span className="rounded-full bg-[--k-surface-2] px-1.5 py-0.5 text-[10px] font-medium text-[--k-muted]">
+            {filtered.length}
+          </span>
+        </div>
+        <button
+          onClick={() => navigate(`/movements?type=${type}`)}
+          className="text-[11px] font-medium text-[--k-primary] hover:underline"
+        >
+          Tous
+        </button>
+      </div>
+      {filtered.length > 0 ? (
+        <div className="divide-y divide-[--k-border]">
+          {filtered.map((m) => (
+            <div
+              key={m.id}
+              className="flex items-center gap-2 px-3 py-2 hover:bg-[--k-surface-2]/30 transition-colors"
+            >
+              <span className="text-[13px] font-semibold tabular-nums text-[--k-text] w-8 text-right shrink-0">
+                {m.quantity}
+              </span>
+              <div className="min-w-0 flex-1">
+                {m.product ? (
+                  <RouterLink
+                    to={`/products/${m.productId}`}
+                    className="block hover:underline"
+                  >
+                    <div className="font-medium text-[12px] text-[--k-primary] truncate">
+                      {m.product.description || m.product.reference}
+                    </div>
+                    {m.product.description && (
+                      <div className="text-[10px] text-[--k-muted] font-mono truncate">
+                        {m.product.reference}
+                      </div>
+                    )}
+                  </RouterLink>
+                ) : (
+                  '—'
+                )}
+              </div>
+              <span
+                className={cn(
+                  'flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-semibold flex-shrink-0',
+                  getOperatorColor(m.operator),
+                )}
+                title={m.operator || 'Inconnu'}
+              >
+                {getOperatorInitials(m.operator)}
+              </span>
+              <span className="text-[11px] text-[--k-muted] tabular-nums whitespace-nowrap">
+                {formatDate(m.movementDate)}
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="px-4 py-4 text-center text-[12px] text-[--k-muted] italic">
+          Aucun mouvement
+        </p>
+      )}
     </div>
   )
 }

@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { MapPin, CheckCircle, AlertCircle } from 'lucide-react';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
+import RichTextEditor from '../ui/RichTextEditor';
 import api from '../../services/api';
 import type { Supplier, ApiResponse } from '../../types';
 
@@ -472,13 +473,11 @@ export default function SupplierForm({ supplier, onSuccess, onCancel }: Supplier
         <label className="mb-1 block text-[13px] font-medium text-[--k-text]">
           Commentaire
         </label>
-        <textarea
-          value={formData.comment || ''}
-          onChange={(e) => handleChange('comment', e.target.value)}
+        <RichTextEditor
+          content={formData.comment || ''}
+          onChange={(html) => handleChange('comment', html)}
           placeholder="Notes ou commentaires..."
-          rows={2}
-          className="input-field"
-          style={{ height: 'auto', padding: '0.5rem 0.75rem' }}
+          fetchMentions={() => []}
         />
       </div>
 

@@ -40,10 +40,10 @@ export default function Packs() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['packs'], refetchType: 'all' });
       handleCloseModal();
-      toast.success('Pack de commande créé', 'Le pack de commande a été créé avec succès');
+      toast.success('Pack de pièces créé', 'Le pack de pièces a été créé avec succès');
     },
     onError: () => {
-      toast.error('Erreur', 'Impossible de créer le pack de commande');
+      toast.error('Erreur', 'Impossible de créer le pack de pièces');
     },
   });
 
@@ -54,10 +54,10 @@ export default function Packs() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['packs'], refetchType: 'all' });
       handleCloseModal();
-      toast.success('Pack de commande modifié', 'Le pack de commande a été mis à jour');
+      toast.success('Pack de pièces modifié', 'Le pack de pièces a été mis à jour');
     },
     onError: () => {
-      toast.error('Erreur', 'Impossible de modifier le pack de commande');
+      toast.error('Erreur', 'Impossible de modifier le pack de pièces');
     },
   });
 
@@ -68,10 +68,10 @@ export default function Packs() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['packs'], refetchType: 'all' });
       setDeleteConfirm(null);
-      toast.success('Pack de commande supprimé', 'Le pack de commande a été supprimé');
+      toast.success('Pack de pièces supprimé', 'Le pack de pièces a été supprimé');
     },
     onError: () => {
-      toast.error('Erreur', 'Impossible de supprimer le pack de commande');
+      toast.error('Erreur', 'Impossible de supprimer le pack de pièces');
     },
   });
 
@@ -126,7 +126,7 @@ export default function Packs() {
   const handleSave = () => {
     const validItems = packItems.filter(item => item.productId && item.quantity > 0);
     if (validItems.length === 0) {
-      toast.error('Erreur', 'Ajoutez au moins un produit au pack de commande');
+      toast.error('Erreur', 'Ajoutez au moins un produit au pack de pièces');
       return;
     }
 
@@ -152,10 +152,10 @@ export default function Packs() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <PageHeader title="Packs de commande" subtitle="Groupes de produits pour entrées/sorties rapides">
+      <PageHeader title="Packs de pièces" subtitle="Groupes de produits pour entrées/sorties rapides">
         <Button onClick={() => handleOpenModal()}>
           <Plus className="mr-2 h-4 w-4" />
-          Nouveau pack de commande
+          Nouveau pack de pièces
         </Button>
       </PageHeader>
 
@@ -165,7 +165,7 @@ export default function Packs() {
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[--k-muted]" />
           <input
             type="text"
-            placeholder="Rechercher un pack de commande..."
+            placeholder="Rechercher un pack de pièces..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="input-field !pl-10"
@@ -191,12 +191,12 @@ export default function Packs() {
             <div className="py-8 text-center">
               <PackageOpen className="mx-auto h-12 w-12 text-[--k-muted]" />
               <p className="mt-2 text-[--k-muted]">
-                {searchTerm ? 'Aucun pack de commande trouvé' : 'Aucun pack de commande créé'}
+                {searchTerm ? 'Aucun pack de pièces trouvé' : 'Aucun pack de pièces créé'}
               </p>
               {!searchTerm && (
                 <Button className="mt-4" onClick={() => handleOpenModal()}>
                   <Plus className="mr-2 h-4 w-4" />
-                  Créer un pack de commande
+                  Créer un pack de pièces
                 </Button>
               )}
             </div>
@@ -317,12 +317,12 @@ export default function Packs() {
       <Modal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
-        title={selectedPack ? 'Modifier le pack de commande' : 'Nouveau pack de commande'}
+        title={selectedPack ? 'Modifier le pack de pièces' : 'Nouveau pack de pièces'}
         size="lg"
       >
         <div className="space-y-4">
           <Input
-            label="Nom du pack de commande"
+            label="Nom du pack de pièces"
             value={packName}
             onChange={(e) => setPackName(e.target.value)}
             placeholder="ex: Tête Spherik, Kit Écran"
@@ -420,7 +420,7 @@ export default function Packs() {
       >
         <div className="space-y-4">
           <p className="text-[--k-muted]">
-            Êtes-vous sûr de vouloir supprimer le pack de commande{' '}
+            Êtes-vous sûr de vouloir supprimer le pack de pièces{' '}
             <span className="font-semibold text-[--k-text]">{deleteConfirm?.name}</span> ?
           </p>
           <div className="flex justify-end gap-3 pt-4">

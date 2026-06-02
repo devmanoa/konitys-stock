@@ -33,7 +33,6 @@ const SECTIONS: SidebarSection[] = [
     items: [
       { label: 'Commandes', icon: ShoppingCart, to: '/orders' },
       { label: 'Modèles', icon: FileText, to: '/order-templates' },
-      { label: 'Packs de commande', icon: Boxes, to: '/packs' },
     ],
   },
   {
@@ -48,6 +47,7 @@ const SECTIONS: SidebarSection[] = [
       { label: 'Produits', icon: Package, to: '/products' },
       { label: 'Fournisseurs', icon: Truck, to: '/suppliers' },
       { label: 'Sites', icon: Warehouse, to: '/sites' },
+      { label: 'Packs de pièces', icon: Boxes, to: '/packs' },
       { label: 'Paramètres', icon: Settings, to: '/settings' },
       { label: 'Import / Export', icon: Upload, to: '/import-export' },
     ],

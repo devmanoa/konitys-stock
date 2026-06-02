@@ -252,7 +252,7 @@ export default function OrderDetail() {
               <div>
                 <dt className="text-sm font-medium text-[--k-muted] flex items-center gap-1">
                   <Clock className="h-3.5 w-3.5" />
-                  Date prévue
+                  Date de réception prévue
                 </dt>
                 <dd className="mt-1 text-sm text-[--k-text]">
                   {formatDate(data.expectedDate)}
@@ -263,10 +263,39 @@ export default function OrderDetail() {
                 <div>
                   <dt className="text-sm font-medium text-[--k-muted] flex items-center gap-1">
                     <PackageCheck className="h-3.5 w-3.5" />
-                    Date de réception
+                    Date de réception effective
                   </dt>
-                  <dd className="mt-1 text-sm text-emerald-600 font-medium">
-                    {formatDate(data.receivedDate)}
+                  <dd className="mt-1 text-sm text-emerald-600 font-medium flex items-center gap-2 flex-wrap">
+                    <span>{formatDate(data.receivedDate)}</span>
+                    {data.expectedDate && (() => {
+                      const expected = new Date(data.expectedDate).getTime()
+                      const received = new Date(data.receivedDate).getTime()
+                      const days = Math.round((received - expected) / (1000 * 60 * 60 * 24))
+                      if (days === 0) {
+                        return (
+                          <span className="text-[11px] font-semibold rounded-full bg-emerald-100 text-emerald-700 px-2 py-0.5">
+                            À l'heure
+                          </span>
+                        )
+                      }
+                      // Bucket the lateness magnitude: small delay = orange, big delay = red
+                      const cls =
+                        days > 0
+                          ? days <= 3
+                            ? 'bg-amber-100 text-amber-700'
+                            : 'bg-red-100 text-red-700'
+                          : 'bg-emerald-100 text-emerald-700'
+                      const sign = days > 0 ? '+' : ''
+                      const label = days > 0 ? 'retard' : 'avance'
+                      return (
+                        <span
+                          className={`text-[11px] font-semibold rounded-full px-2 py-0.5 ${cls}`}
+                          title={`Différence entre réception effective et prévue`}
+                        >
+                          {sign}{days} j ({label})
+                        </span>
+                      )
+                    })()}
                   </dd>
                 </div>
               )}

@@ -503,7 +503,7 @@ export default function Orders() {
                       N° Commande
                     </th>
                     <th className="px-4 py-1.5 text-left text-xs font-medium bg-white">
-                      Date
+                      Date commande
                     </th>
                     <th className="px-4 py-1.5 text-left text-xs font-medium bg-white">
                       Commande
@@ -521,7 +521,7 @@ export default function Orders() {
                       Statut
                     </th>
                     <th className="px-4 py-1.5 text-left text-xs font-medium bg-white">
-                      Date prévue
+                      Réception prévue
                     </th>
                     <th className="px-4 py-1.5 text-left text-xs font-medium bg-white">
                       Destination

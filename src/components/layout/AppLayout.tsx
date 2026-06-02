@@ -39,7 +39,6 @@ const SIDEBAR_SECTIONS = [
     items: [
       { icon: ShoppingCart, label: 'Commandes', path: '/orders' },
       { icon: FileText, label: 'Modèles', path: '/order-templates' },
-      { icon: Boxes, label: 'Packs de commande', path: '/packs' },
     ],
   },
   {
@@ -54,6 +53,7 @@ const SIDEBAR_SECTIONS = [
       { icon: Package, label: 'Produits', path: '/products' },
       { icon: Truck, label: 'Fournisseurs', path: '/suppliers' },
       { icon: Warehouse, label: 'Sites', path: '/sites' },
+      { icon: Boxes, label: 'Packs de pièces', path: '/packs' },
       { icon: Settings, label: 'Paramètres', path: '/settings' },
       { icon: Upload, label: 'Import / Export', path: '/import-export' },
     ],

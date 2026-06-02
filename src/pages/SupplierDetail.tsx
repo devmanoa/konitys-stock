@@ -28,6 +28,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card'
 import Modal from '../components/ui/Modal';
 import SupplierForm from '../components/forms/SupplierForm';
 import SupplierAnomaliesSection from '../components/SupplierAnomaliesSection';
+import RichTextEditor from '../components/ui/RichTextEditor';
 import SupplierContactForm from '../components/forms/SupplierContactForm';
 import ReceiveOrderForm from '../components/forms/ReceiveOrderForm';
 import { useToast } from '../components/ui/Toast';
@@ -66,6 +67,7 @@ export default function SupplierDetail() {
   const toast = useToast();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isEditingComment, setIsEditingComment] = useState(false);
+  const [orderStatusFilter, setOrderStatusFilter] = useState<string>('');
   const [commentValue, setCommentValue] = useState('');
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [selectedContact, setSelectedContact] = useState<SupplierContact | undefined>();
@@ -372,13 +374,11 @@ export default function SupplierDetail() {
           <CardContent>
             {isEditingComment ? (
               <div className="space-y-3">
-                <textarea
-                  value={commentValue}
-                  onChange={(e) => setCommentValue(e.target.value)}
+                <RichTextEditor
+                  content={commentValue}
+                  onChange={setCommentValue}
                   placeholder="Ajouter des notes ou commentaires sur ce fournisseur..."
-                  rows={4}
-                  className="input-field"
-                  style={{ height: 'auto', padding: '0.5rem 0.75rem' }}
+                  fetchMentions={() => []}
                 />
                 <div className="flex justify-end gap-2">
                   <Button variant="secondary" size="sm" onClick={cancelEditComment}>
@@ -392,7 +392,10 @@ export default function SupplierDetail() {
                 </div>
               </div>
             ) : (
-              <p className="text-[--k-text] whitespace-pre-wrap">{data.comment}</p>
+              <div
+                className="text-[--k-text] prose prose-sm max-w-none"
+                dangerouslySetInnerHTML={{ __html: data.comment || '' }}
+              />
             )}
           </CardContent>
         </Card>
@@ -522,19 +525,19 @@ export default function SupplierDetail() {
               <table className="w-full text-[13px]">
                 <thead>
                   <tr className="border-b border-[--k-border] text-left text-xs font-medium uppercase text-[--k-muted]">
-                    <th className="pb-2">Description</th>
-                    <th className="pb-2">Référence</th>
-                    <th className="pb-2">Borne</th>
-                    <th className="pb-2">Ref. fournisseur</th>
-                    <th className="pb-2 text-right">Prix HT</th>
-                    <th className="pb-2">Délai</th>
+                    <th className="pb-2 pr-4">Description</th>
+                    <th className="pb-2 pr-4">Référence</th>
+                    <th className="pb-2 pr-4">Borne</th>
+                    <th className="pb-2 pr-4">Ref. fournisseur</th>
+                    <th className="pb-2 pr-4 text-right">Prix HT</th>
+                    <th className="pb-2 pr-4">Délai</th>
                     <th className="pb-2">Principal</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[--k-border]">
                   {data.productSuppliers.map((ps) => (
                     <tr key={ps.id} className="hover:bg-[--k-surface-2]/30 transition-colors">
-                      <td className="py-2">
+                      <td className="py-2 pr-4">
                         <RouterLink
                           to={`/products/${ps.product.id}`}
                           className="flex items-center gap-3 group"
@@ -552,7 +555,7 @@ export default function SupplierDetail() {
                           </span>
                         </RouterLink>
                       </td>
-                      <td className="py-2 text-[15px]">
+                      <td className="py-2 pr-4 text-[15px]">
                         <RouterLink
                           to={`/products/${ps.productId}`}
                           className="text-[--k-muted] hover:text-[--k-primary] hover:underline"
@@ -560,11 +563,11 @@ export default function SupplierDetail() {
                           {ps.product.reference}
                         </RouterLink>
                       </td>
-                      <td className="py-2 text-[--k-muted]">
+                      <td className="py-2 pr-4 text-[--k-muted]">
                         {(ps.product.assemblyTypes || []).map((l: any) => l.assemblyType.name).join(', ') || '-'}
                       </td>
-                      <td className="py-2 text-[--k-muted]">{ps.supplierRef || '-'}</td>
-                      <td className="py-2 text-right text-[--k-text]">
+                      <td className="py-2 pr-4 text-[--k-muted]">{ps.supplierRef || '-'}</td>
+                      <td className="py-2 pr-4 text-right text-[--k-text]">
                         {ps.unitPrice ? (
                           <div className="flex flex-col items-end">
                             <span>{Number(ps.unitPrice).toFixed(2)} €</span>
@@ -578,7 +581,7 @@ export default function SupplierDetail() {
                           '-'
                         )}
                       </td>
-                      <td className="py-2 text-[--k-muted]">{ps.leadTime || '-'}</td>
+                      <td className="py-2 pr-4 text-[--k-muted]">{ps.leadTime || '-'}</td>
                       <td className="py-2">
                         {ps.isPrimary && <Badge variant="warning">Principal</Badge>}
                       </td>
@@ -600,18 +603,52 @@ export default function SupplierDetail() {
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
             Historique des commandes
+            {data.orders && data.orders.length > 0 && (
+              <span className="text-xs text-[--k-muted] font-normal">
+                ({data.orders.length})
+              </span>
+            )}
           </CardTitle>
-          <RouterLink to={`/orders?supplierId=${id}`}>
-            <Button variant="ghost" size="sm">
-              Voir tout
-              <ExternalLink className="ml-1 h-4 w-4" />
-            </Button>
-          </RouterLink>
+          <div className="flex items-center gap-2">
+            {data.orders && data.orders.length > 0 && (
+              <select
+                value={orderStatusFilter}
+                onChange={(e) => setOrderStatusFilter(e.target.value)}
+                className="input-field !py-1 !px-2 text-xs"
+              >
+                <option value="">Tous les statuts</option>
+                <option value="PENDING">En attente</option>
+                <option value="PARTIAL">Reçu partiellement</option>
+                <option value="COMPLETED">Reçue</option>
+                <option value="CANCELLED">Annulée</option>
+              </select>
+            )}
+            <RouterLink to={`/orders?supplierId=${id}`}>
+              <Button variant="ghost" size="sm">
+                Voir tout
+                <ExternalLink className="ml-1 h-4 w-4" />
+              </Button>
+            </RouterLink>
+          </div>
         </CardHeader>
         <CardContent>
-          {!data.orders?.length ? (
-            <p className="text-[--k-muted]">Aucune commande passée auprès de ce fournisseur</p>
-          ) : (
+          {(() => {
+            const filteredOrders = (data.orders || []).filter(
+              (o) => !orderStatusFilter || o.status === orderStatusFilter,
+            )
+            if (!data.orders?.length) {
+              return (
+                <p className="text-[--k-muted]">Aucune commande passée auprès de ce fournisseur</p>
+              )
+            }
+            if (filteredOrders.length === 0) {
+              return (
+                <p className="text-[--k-muted] italic">
+                  Aucune commande avec ce statut.
+                </p>
+              )
+            }
+            return (
             <div className="overflow-x-auto">
               <table className="w-full text-[13px]">
                 <thead>
@@ -628,7 +665,7 @@ export default function SupplierDetail() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[--k-border]">
-                  {data.orders.map((order) => {
+                  {filteredOrders.map((order) => {
                     const totalQty = getOrderTotalQty(order);
                     const receivedQty = getOrderReceivedQty(order);
 
@@ -695,7 +732,8 @@ export default function SupplierDetail() {
                 </tbody>
               </table>
             </div>
-          )}
+            )
+          })()}
         </CardContent>
       </Card>
 
