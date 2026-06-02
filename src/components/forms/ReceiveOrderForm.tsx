@@ -71,9 +71,6 @@ export default function ReceiveOrderForm({ orderId, itemId, onSuccess, onCancel 
   })
 
   const receivedQty = watch('receivedQty')
-  const condition = watch('condition')
-  const siteId = watch('siteId')
-  const selectedSite = storageSites.find((s) => s.id === siteId)
 
   const acceptedAnomalyQty = anomalies
     .filter((a) => a.decision === 'ACCEPTED')
@@ -357,30 +354,6 @@ export default function ReceiveOrderForm({ orderId, itemId, onSuccess, onCancel 
             'Erreur lors de la réception'}
         </div>
       )}
-
-      <div className="rounded-xl bg-emerald-50 p-4 text-[13px] border border-emerald-200">
-        <p className="font-medium text-emerald-900 mb-2">Cette action va :</p>
-        <ul className="list-disc list-inside space-y-1 text-emerald-700">
-          {Number(receivedQty) > 0 ? (
-            <li>
-              Créer un mouvement d'<strong>entrée</strong> de {receivedQty} unité(s)
-              {condition === 'NEW' ? ' (neuf)' : ' (occasion)'} vers{' '}
-              <strong>{selectedSite?.name || 'le site sélectionné'}</strong>
-            </li>
-          ) : (
-            <li>Marquer cet article comme réceptionné avec une quantité de 0 (aucun stock créé)</li>
-          )}
-          {anomalies.length > 0 && (
-            <li>
-              Enregistrer {anomalies.length} anomalie(s) (visibles sur la fiche fournisseur)
-            </li>
-          )}
-          <li>
-            Si tous les articles sont reçus, la commande sera marquée <strong>terminée</strong> ;
-            sinon elle passe en <strong>reçu partiellement</strong>
-          </li>
-        </ul>
-      </div>
 
       <div className="flex justify-end gap-3 pt-4">
         <Button type="button" variant="secondary" onClick={onCancel}>

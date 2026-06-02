@@ -606,6 +606,7 @@ export default function OrderDetail() {
           isOpen={true}
           onClose={() => setReceiveItem(null)}
           title="Réceptionner un article"
+          size="lg"
         >
           <ReceiveOrderForm
             orderId={receiveItem.orderId}

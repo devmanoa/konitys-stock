@@ -813,7 +813,7 @@ export default function SupplierDetail() {
         isOpen={!!receiveItem}
         onClose={() => setReceiveItem(null)}
         title="Réceptionner un article"
-        size="md"
+        size="lg"
       >
         {receiveItem && (
           <ReceiveOrderForm
