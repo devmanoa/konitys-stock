@@ -245,6 +245,18 @@ export interface OrderItem {
   anomalies?: OrderItemAnomaly[];
 }
 
+export interface OrderAttachment {
+  id: string;
+  orderId: string;
+  filename: string;
+  url: string;
+  mimeType?: string | null;
+  size?: number | null;
+  uploadedAt: string;
+  uploadedById?: string | null;
+  uploadedByName?: string | null;
+}
+
 export interface Order {
   id: string;
   orderNumber: string;
@@ -260,8 +272,10 @@ export interface Order {
   responsible?: string;
   supplierRef?: string;
   comment?: string;
+  shippingCost?: number | string | null;
   createdBy?: string;
   items: OrderItem[];
+  attachments?: OrderAttachment[];
   createdAt: string;
   updatedAt: string;
 }
@@ -398,6 +412,7 @@ export interface CreateOrderInput {
   responsible?: string;
   supplierRef?: string;
   comment?: string;
+  shippingCost?: number | null;
   createdBy?: string;
   items: { productId: string; quantity: number; unitPrice?: number }[];
 }

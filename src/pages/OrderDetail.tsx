@@ -25,6 +25,7 @@ import ReceiveOrderForm from '../components/forms/ReceiveOrderForm';
 import ReceiveAllForm from '../components/forms/ReceiveAllForm';
 import { useToast } from '../components/ui/Toast';
 import Comments from '../components/ProductComments';
+import OrderAttachments from '../components/OrderAttachments';
 import api from '../services/api';
 import OperatorAvatar from '../components/OperatorAvatar';
 import type { Order, OrderItem, ApiResponse } from '../types';
@@ -384,11 +385,25 @@ export default function OrderDetail() {
                   {receivedQty}
                 </span>
               </div>
-              <div className="border-t border-[--k-border] pt-4">
+              <div className="border-t border-[--k-border] pt-4 space-y-2">
                 <div className="flex justify-between items-center">
+                  <span className="text-sm text-[--k-muted]">Sous-total articles HT</span>
+                  <span className="text-sm font-medium text-[--k-text]">
+                    {formatPrice(estimatedTotal)}
+                  </span>
+                </div>
+                {data.shippingCost != null && Number(data.shippingCost) > 0 && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-[--k-muted]">Frais de livraison</span>
+                    <span className="text-sm font-medium text-[--k-text]">
+                      {formatPrice(Number(data.shippingCost))}
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center pt-2 border-t border-[--k-border]">
                   <span className="text-sm font-medium text-[--k-muted]">Montant estimé HT</span>
                   <span className="text-lg font-bold text-[--k-text]">
-                    {formatPrice(estimatedTotal)}
+                    {formatPrice(estimatedTotal + Number(data.shippingCost || 0))}
                   </span>
                 </div>
               </div>
@@ -564,6 +579,9 @@ export default function OrderDetail() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Pièces jointes */}
+      <OrderAttachments orderId={id!} />
 
       {/* Commentaires */}
       <Comments entityType="orders" entityId={id!} />

@@ -50,6 +50,9 @@ export default function OrderForm({ onSuccess, onCancel, duplicateFrom }: OrderF
   const [destinationSiteId, setDestinationSiteId] = useState(duplicateFrom?.destinationSiteId || '');
   const [responsible, setResponsible] = useState(duplicateFrom?.responsible || '');
   const [supplierRef, setSupplierRef] = useState('');
+  const [shippingCost, setShippingCost] = useState<string>(
+    duplicateFrom?.shippingCost != null ? String(duplicateFrom.shippingCost) : '',
+  );
   const [comment, setComment] = useState(duplicateFrom?.comment || '');
 
   // Selected product lines — pré-remplies si duplication
@@ -140,6 +143,7 @@ export default function OrderForm({ onSuccess, onCancel, duplicateFrom }: OrderF
         unitPrice: line.unitPrice ? parseFloat(line.unitPrice) : undefined,
       }));
 
+      const parsedShipping = shippingCost.trim() === '' ? null : Number(shippingCost);
       const payload = {
         supplierId: selectedSupplierId,
         title: title || undefined,
@@ -149,6 +153,7 @@ export default function OrderForm({ onSuccess, onCancel, duplicateFrom }: OrderF
         responsible: responsible || undefined,
         supplierRef: supplierRef || undefined,
         comment: comment || undefined,
+        shippingCost: parsedShipping != null && !Number.isNaN(parsedShipping) ? parsedShipping : null,
         items,
       };
 
@@ -288,6 +293,16 @@ export default function OrderForm({ onSuccess, onCancel, duplicateFrom }: OrderF
           placeholder="Nom du responsable"
           value={responsible}
           onChange={(e) => setResponsible(e.target.value)}
+        />
+        <Input
+          id="shippingCost"
+          label="Frais de livraison (€)"
+          type="number"
+          step="0.01"
+          min={0}
+          placeholder="0,00"
+          value={shippingCost}
+          onChange={(e) => setShippingCost(e.target.value)}
         />
       </div>
 
