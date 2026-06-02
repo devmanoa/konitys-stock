@@ -410,6 +410,7 @@ export interface TopProductStock {
   id?: string;
   reference: string;
   description?: string;
+  imageUrl?: string;
   assembly: string;
   totalNew: number;
   totalUsed: number;

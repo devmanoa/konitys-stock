@@ -16,6 +16,7 @@ import {
   ArrowLeftRight,
 } from 'lucide-react'
 import { KpiCard } from '../components/KpiCard'
+import ProductImageLightbox from '../components/ProductImageLightbox'
 import { PageHeader } from '../components/PageHeader'
 import { cn } from '../components/ui/cn'
 import api from '../services/api'
@@ -62,6 +63,10 @@ const ORDER_STATUT_LABELS: Record<string, string> = {
 export default function Dashboard() {
   const navigate = useNavigate()
   const [alertTypeFilter, setAlertTypeFilter] = useState<string>('')
+  // Lightbox state shared by every product thumbnail on the dashboard
+  const [lightboxImage, setLightboxImage] = useState<
+    { url: string | null; alt: string; downloadName: string } | null
+  >(null)
 
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['dashboard-stats'],
@@ -335,12 +340,26 @@ export default function Dashboard() {
                 return (
                   <div key={alert.id} className="px-4 py-2.5 cursor-pointer hover:bg-[--k-surface-2]/30 transition-colors" onClick={() => navigate(`/products/${alert.id}`)}>
                     <div className="flex items-start justify-between mb-1 gap-2">
-                      <img
-                        src={getFullImageUrl(alert.imageUrl)}
-                        alt=""
-                        className="h-8 w-8 shrink-0 rounded object-cover bg-[--k-surface-2]"
-                        onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_PRODUCT_IMAGE }}
-                      />
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setLightboxImage({
+                            url: alert.imageUrl || null,
+                            alt: alert.description || alert.reference,
+                            downloadName: alert.reference,
+                          })
+                        }}
+                        className="shrink-0"
+                        title="Voir l'image en grand"
+                      >
+                        <img
+                          src={getFullImageUrl(alert.imageUrl)}
+                          alt=""
+                          className="h-8 w-8 rounded object-cover bg-[--k-surface-2] border border-[--k-border] hover:ring-2 hover:ring-[--k-primary] transition"
+                          onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_PRODUCT_IMAGE }}
+                        />
+                      </button>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5">
                           {level === 'critical' && (
@@ -420,6 +439,27 @@ export default function Dashboard() {
                   <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[--k-surface-2] text-[11px] font-semibold text-[--k-muted]">
                     {i + 1}
                   </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setLightboxImage({
+                        url: p.imageUrl || null,
+                        alt: p.description || p.reference,
+                        downloadName: p.reference,
+                      })
+                    }
+                    className="shrink-0"
+                    title="Voir l'image en grand"
+                  >
+                    <img
+                      src={getFullImageUrl(p.imageUrl)}
+                      alt=""
+                      className="h-8 w-8 rounded object-cover bg-[--k-surface-2] border border-[--k-border] hover:ring-2 hover:ring-[--k-primary] transition"
+                      onError={(e) => {
+                        ;(e.target as HTMLImageElement).src = DEFAULT_PRODUCT_IMAGE
+                      }}
+                    />
+                  </button>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       {p.id ? (
@@ -476,6 +516,9 @@ export default function Dashboard() {
             movements={recentMovements || []}
             navigate={navigate}
             formatDate={formatDate}
+            onImageClick={(url, alt, downloadName) =>
+              setLightboxImage({ url: url || null, alt, downloadName })
+            }
           />
           <RecentMovementsBlock
             title="Dernières sorties"
@@ -483,6 +526,9 @@ export default function Dashboard() {
             movements={recentMovements || []}
             navigate={navigate}
             formatDate={formatDate}
+            onImageClick={(url, alt, downloadName) =>
+              setLightboxImage({ url: url || null, alt, downloadName })
+            }
           />
           <RecentMovementsBlock
             title="Derniers transferts"
@@ -490,9 +536,20 @@ export default function Dashboard() {
             movements={recentMovements || []}
             navigate={navigate}
             formatDate={formatDate}
+            onImageClick={(url, alt, downloadName) =>
+              setLightboxImage({ url: url || null, alt, downloadName })
+            }
           />
         </div>
       </div>
+
+      {/* Shared image lightbox for every product thumbnail on the dashboard */}
+      <ProductImageLightbox
+        imageUrl={lightboxImage?.url}
+        alt={lightboxImage?.alt || ''}
+        downloadName={lightboxImage?.downloadName}
+        onClose={() => setLightboxImage(null)}
+      />
     </div>
   )
 }
@@ -504,12 +561,14 @@ function RecentMovementsBlock({
   movements,
   navigate,
   formatDate,
+  onImageClick,
 }: {
   title: string
   type: 'IN' | 'OUT' | 'TRANSFER'
   movements: StockMovement[]
   navigate: (path: string) => void
   formatDate: (d: string) => string
+  onImageClick: (url: string | null | undefined, alt: string, downloadName: string) => void
 }) {
   const filtered = movements.filter((m) => m.type === type).slice(0, 5)
   const headerGradient =
@@ -554,6 +613,29 @@ function RecentMovementsBlock({
               <span className="text-[13px] font-semibold tabular-nums text-[--k-text] w-8 text-right shrink-0">
                 {m.quantity}
               </span>
+              {m.product && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    onImageClick(
+                      m.product?.imageUrl,
+                      m.product?.description || m.product?.reference || '',
+                      m.product?.reference || '',
+                    )
+                  }
+                  className="shrink-0"
+                  title="Voir l'image en grand"
+                >
+                  <img
+                    src={getFullImageUrl(m.product.imageUrl)}
+                    alt=""
+                    className="h-7 w-7 rounded object-cover bg-[--k-surface-2] border border-[--k-border] hover:ring-2 hover:ring-[--k-primary] transition"
+                    onError={(e) => {
+                      ;(e.target as HTMLImageElement).src = DEFAULT_PRODUCT_IMAGE
+                    }}
+                  />
+                </button>
+              )}
               <div className="min-w-0 flex-1">
                 {m.product ? (
                   <RouterLink
