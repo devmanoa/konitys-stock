@@ -28,6 +28,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card'
 import Modal from '../components/ui/Modal';
 import SupplierForm from '../components/forms/SupplierForm';
 import SupplierAnomaliesSection from '../components/SupplierAnomaliesSection';
+import SupplierCompanyInfo from '../components/SupplierCompanyInfo';
 import RichTextEditor from '../components/ui/RichTextEditor';
 import SupplierContactForm from '../components/forms/SupplierContactForm';
 import ReceiveOrderForm from '../components/forms/ReceiveOrderForm';
@@ -593,6 +594,9 @@ export default function SupplierDetail() {
           )}
         </CardContent>
       </Card>
+
+      {/* Infos entreprise (recherche-entreprises.api.gouv.fr) */}
+      <SupplierCompanyInfo supplier={data} />
 
       {/* Anomalies de réception */}
       <SupplierAnomaliesSection supplierId={id!} />

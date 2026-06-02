@@ -53,6 +53,7 @@ interface CreateSupplierInput {
   latitude?: number | null;
   longitude?: number | null;
   comment?: string;
+  siret?: string | null;
 }
 
 interface SupplierFormProps {
@@ -94,10 +95,12 @@ export default function SupplierForm({ supplier, onSuccess, onCancel }: Supplier
     latitude: null,
     longitude: null,
     comment: '',
+    siret: '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [geocodeStatus, setGeocodeStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [siretLookupState, setSiretLookupState] = useState<'idle' | 'loading' | 'found' | 'not-found'>('idle');
   const addressInputRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
 
@@ -116,6 +119,7 @@ export default function SupplierForm({ supplier, onSuccess, onCancel }: Supplier
         latitude: supplier.latitude ?? null,
         longitude: supplier.longitude ?? null,
         comment: supplier.comment || '',
+        siret: supplier.siret || '',
       });
       if (supplier.latitude && supplier.longitude) {
         setGeocodeStatus('success');
@@ -188,8 +192,42 @@ export default function SupplierForm({ supplier, onSuccess, onCancel }: Supplier
     }
   }, [initAutocomplete]);
 
+  // Manual SIREN/SIRET lookup against the proxied gouv.fr API. Pre-fills
+  // the name and address fields when the user hasn't touched them yet.
+  const handleSiretLookup = async () => {
+    const raw = (formData.siret || '').replace(/\D/g, '');
+    if (raw.length !== 9 && raw.length !== 14) {
+      setSiretLookupState('not-found');
+      return;
+    }
+    setSiretLookupState('loading');
+    try {
+      const res = await api.get<ApiResponse<any[]>>(
+        `/suppliers/company-search?q=${encodeURIComponent(raw)}`,
+      );
+      const hits = res.data?.data || [];
+      const hit = hits[0];
+      if (!hit) {
+        setSiretLookupState('not-found');
+        return;
+      }
+      setFormData((prev) => ({
+        ...prev,
+        siret: hit.siret || prev.siret,
+        name: prev.name?.trim() ? prev.name : hit.legalName || prev.name,
+        address: prev.address?.trim() ? prev.address : hit.address || prev.address,
+        postalCode: prev.postalCode?.trim() ? prev.postalCode : hit.postalCode || prev.postalCode,
+        city: prev.city?.trim() ? prev.city : hit.city || prev.city,
+      }));
+      setSiretLookupState('found');
+    } catch {
+      setSiretLookupState('not-found');
+    }
+  };
+
   const handleChange = (field: keyof CreateSupplierInput, value: string | number | null) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    if (field === 'siret') setSiretLookupState('idle');
 
     // Validation automatique du téléphone
     if (field === 'phone' && typeof value === 'string') {
@@ -315,6 +353,45 @@ export default function SupplierForm({ supplier, onSuccess, onCancel }: Supplier
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* SIREN / SIRET lookup against api.gouv.fr (recherche-entreprises) */}
+      <div>
+        <label className="mb-1 block text-[13px] font-medium text-[--k-text]">
+          SIREN / SIRET
+        </label>
+        <div className="flex gap-2 items-start">
+          <div className="flex-1">
+            <Input
+              value={formData.siret || ''}
+              onChange={(e) => handleChange('siret', e.target.value)}
+              placeholder="9 ou 14 chiffres"
+              maxLength={14}
+            />
+            {siretLookupState === 'found' && (
+              <p className="mt-1 text-xs text-emerald-600">
+                ✓ Entreprise trouvée — champs pré-remplis
+              </p>
+            )}
+            {siretLookupState === 'not-found' && (
+              <p className="mt-1 text-xs text-amber-600">
+                Aucune entreprise trouvée pour ce numéro
+              </p>
+            )}
+          </div>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={handleSiretLookup}
+            disabled={siretLookupState === 'loading' || !(formData.siret || '').trim()}
+          >
+            {siretLookupState === 'loading' ? 'Recherche…' : 'Rechercher'}
+          </Button>
+        </div>
+        <p className="mt-1 text-[11px] text-[--k-muted]">
+          Pré-remplit nom et adresse depuis la base SIRENE officielle. Données rafraîchies automatiquement à la sauvegarde.
+        </p>
+      </div>
+
       <div>
         <label className="mb-1 block text-[13px] font-medium text-[--k-text]">
           Nom <span className="text-[--k-danger]">*</span>

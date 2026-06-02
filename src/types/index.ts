@@ -109,12 +109,34 @@ export interface Supplier {
   latitude?: number;
   longitude?: number;
   comment?: string;
+  // Company data fetched from api.gouv.fr
+  siret?: string | null;
+  siren?: string | null;
+  legalName?: string | null;
+  legalStatus?: string | null;
+  naf?: string | null;
+  nafLabel?: string | null;
+  creationYear?: number | null;
+  companyInfoUpdatedAt?: string | null;
   createdAt: string;
   contacts?: SupplierContact[];
   _count?: {
     productSuppliers: number;
     orders: number;
   };
+}
+
+export interface CompanyLookupResult {
+  siret: string | null;
+  siren: string | null;
+  legalName: string | null;
+  legalStatus: string | null;
+  naf: string | null;
+  nafLabel: string | null;
+  creationYear: number | null;
+  address: string | null;
+  postalCode: string | null;
+  city: string | null;
 }
 
 export interface Location {
