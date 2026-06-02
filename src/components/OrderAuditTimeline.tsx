@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   PenLine,
@@ -8,10 +9,14 @@ import {
   Paperclip,
   Trash2,
   CircleDot,
+  ChevronDown,
 } from 'lucide-react'
 import api from '../services/api'
 import type { ApiResponse, OrderAuditEntry } from '../types'
 import OperatorAvatar from './OperatorAvatar'
+
+const INITIAL_VISIBLE = 10
+const STEP = 10
 
 interface Props {
   orderId: string
@@ -143,6 +148,7 @@ function renderEntry(entry: OrderAuditEntry) {
 }
 
 export default function OrderAuditTimeline({ orderId }: Props) {
+  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE)
   const { data: entries, isLoading } = useQuery({
     queryKey: ['order-audit', orderId],
     queryFn: async () => {
@@ -169,31 +175,48 @@ export default function OrderAuditTimeline({ orderId }: Props) {
     )
   }
 
+  const visibleEntries = entries.slice(0, visibleCount)
+  const remaining = entries.length - visibleEntries.length
+
   return (
-    <ol className="relative ml-3 border-l border-[--k-border]">
-      {entries.map((entry) => {
-        const date = new Date(entry.changedAt)
-        return (
-          <li key={entry.id} className="ml-4 pb-4 last:pb-0">
-            <span
-              className={`absolute -left-[7px] flex h-3.5 w-3.5 items-center justify-center rounded-full ring-2 ring-[--k-surface] ${actionDotColor(entry.action)}`}
-            >
-              <span className="text-white">{actionIcon(entry.action)}</span>
-            </span>
-            <div className="flex flex-col gap-1">
-              <div className="text-[13px] text-[--k-text]">{renderEntry(entry)}</div>
-              <div className="flex items-center gap-2 text-[11px] text-[--k-muted]">
-                <span className="tabular-nums">
-                  {date.toLocaleDateString('fr-FR')} ·{' '}
-                  {date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                </span>
-                <span>·</span>
-                <OperatorAvatar name={entry.changedByName} size="xs" />
+    <>
+      <ol className="relative ml-3 border-l border-[--k-border]">
+        {visibleEntries.map((entry) => {
+          const date = new Date(entry.changedAt)
+          return (
+            <li key={entry.id} className="ml-4 pb-4 last:pb-0">
+              <span
+                className={`absolute -left-[7px] flex h-3.5 w-3.5 items-center justify-center rounded-full ring-2 ring-[--k-surface] ${actionDotColor(entry.action)}`}
+              >
+                <span className="text-white">{actionIcon(entry.action)}</span>
+              </span>
+              <div className="flex flex-col gap-1">
+                <div className="text-[13px] text-[--k-text]">{renderEntry(entry)}</div>
+                <div className="flex items-center gap-2 text-[11px] text-[--k-muted]">
+                  <span className="tabular-nums">
+                    {date.toLocaleDateString('fr-FR')} ·{' '}
+                    {date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                  <span>·</span>
+                  <OperatorAvatar name={entry.changedByName} size="xs" />
+                </div>
               </div>
-            </div>
-          </li>
-        )
-      })}
-    </ol>
+            </li>
+          )
+        })}
+      </ol>
+      {remaining > 0 && (
+        <div className="mt-3 flex justify-center">
+          <button
+            type="button"
+            onClick={() => setVisibleCount((c) => c + STEP)}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-[--k-border] bg-[--k-surface] px-3 py-1.5 text-[12px] font-medium text-[--k-muted] hover:text-[--k-text] hover:border-[--k-primary] transition"
+          >
+            <ChevronDown className="h-3.5 w-3.5" />
+            Afficher plus ({remaining})
+          </button>
+        </div>
+      )}
+    </>
   )
 }
