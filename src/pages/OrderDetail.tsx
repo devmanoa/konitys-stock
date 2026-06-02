@@ -153,7 +153,8 @@ export default function OrderDetail() {
   const totalQty = data.items?.reduce((s, i) => s + i.quantity, 0) || 0;
   const receivedQty = data.items?.reduce((s, i) => s + (i.receivedQty || 0), 0) || 0;
   const estimatedTotal = data.items?.reduce((s, i) => s + i.quantity * (i.unitPrice || 0), 0) || 0;
-  const hasPendingItems = data.status === 'PENDING' && data.items?.some((i) => i.receivedQty === null || i.receivedQty === undefined);
+  const isReceivable = data.status === 'PENDING' || data.status === 'PARTIAL';
+  const hasPendingItems = isReceivable && data.items?.some((i) => i.receivedQty === null || i.receivedQty === undefined);
 
   return (
     <div className="space-y-6">
@@ -486,7 +487,7 @@ export default function OrderDetail() {
                   <span className="text-[--k-muted]">
                     Qté: {item.quantity} | Prix: {formatPrice(item.unitPrice)}
                   </span>
-                  {data.status === 'PENDING' && (item.receivedQty === null || item.receivedQty === undefined) && (
+                  {isReceivable && (item.receivedQty === null || item.receivedQty === undefined) && (
                     <Button
                       size="sm"
                       onClick={() => setReceiveItem({ orderId: data.id, itemId: item.id })}
@@ -562,7 +563,7 @@ export default function OrderDetail() {
                       {getItemStatusBadge(item)}
                     </td>
                     <td className="px-4 py-3 text-center">
-                      {data.status === 'PENDING' && (item.receivedQty === null || item.receivedQty === undefined) ? (
+                      {isReceivable && (item.receivedQty === null || item.receivedQty === undefined) ? (
                         <Button
                           size="sm"
                           onClick={() => setReceiveItem({ orderId: data.id, itemId: item.id })}

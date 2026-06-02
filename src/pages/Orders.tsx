@@ -255,7 +255,7 @@ export default function Orders() {
               <Eye className="h-4 w-4" />
               Voir détail
             </button>
-            {order.status === 'PENDING' && (
+            {(order.status === 'PENDING' || order.status === 'PARTIAL') && (
               <button
                 type="button"
                 onClick={(e) => {
