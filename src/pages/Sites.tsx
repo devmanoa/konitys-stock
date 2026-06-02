@@ -5,6 +5,7 @@ import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
 import Modal from '../components/ui/Modal';
 import SiteForm from '../components/forms/SiteForm';
+import LocationsManager from '../components/LocationsManager';
 import { PageHeader } from '../components/PageHeader';
 import { useToast } from '../components/ui/Toast';
 import api from '../services/api';
@@ -195,6 +196,11 @@ export default function Sites() {
         <p className="text-sm text-[--k-muted]">
           {filteredSites.length} site(s) trouvé(s)
         </p>
+      )}
+
+      {/* Locations manager — defined per site, up to 2 levels */}
+      {sites && sites.length > 0 && (
+        <LocationsManager sites={sites} />
       )}
 
       {/* Create/Edit Modal */}

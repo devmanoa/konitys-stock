@@ -5,7 +5,7 @@ import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
 import api from '../../services/api';
-import type { Product, CreateProductInput, SupplyRisk, ApiResponse, Assembly, AssemblyType, PartCategory, PaginatedResponse } from '../../types';
+import type { Product, CreateProductInput, SupplyRisk, ApiResponse, Assembly, AssemblyType, PartCategory, PaginatedResponse, Site, Location as LocationType } from '../../types';
 
 // Remove /api suffix for static files URL
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/api$/, '');
@@ -36,6 +36,12 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
   // Selected assembly types with per-type qtyPerUnit
   const [selectedTypes, setSelectedTypes] = useState<{ assemblyTypeId: string; qtyPerUnit: number }[]>([]);
 
+  // Location picker: { siteId, rootId, leafId }. The leaf is what we send as locationId.
+  // If the chosen root has no children, leafId === rootId.
+  const [locSite, setLocSite] = useState<string>('');
+  const [locRoot, setLocRoot] = useState<string>('');
+  const [locLeaf, setLocLeaf] = useState<string>('');
+
   // External links (free-form URLs, ordered)
   const [externalLinks, setExternalLinks] = useState<string[]>([]);
 
@@ -62,6 +68,22 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
     queryKey: ['part-categories'],
     queryFn: async () => {
       const res = await api.get<ApiResponse<PartCategory[]>>('/part-categories');
+      return res.data?.data || [];
+    },
+  });
+
+  const { data: sitesData } = useQuery({
+    queryKey: ['sites'],
+    queryFn: async () => {
+      const res = await api.get<ApiResponse<Site[]>>('/sites');
+      return res.data?.data || [];
+    },
+  });
+
+  const { data: locationsData = [] } = useQuery({
+    queryKey: ['locations'],
+    queryFn: async () => {
+      const res = await api.get<ApiResponse<LocationType[]>>('/locations');
       return res.data?.data || [];
     },
   });
@@ -94,6 +116,18 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
         hasSerialNumber: product.hasSerialNumber || false,
       });
       setExternalLinks((product.externalLinks || []).map((l) => l.url));
+      // Hydrate location picker from the resolved storageLocation (parent + site)
+      const loc = product.storageLocation;
+      if (loc) {
+        const site = loc.site || loc.parent?.site;
+        setLocSite(site?.id || '');
+        setLocRoot(loc.parent?.id || loc.id);
+        setLocLeaf(loc.id);
+      } else {
+        setLocSite('');
+        setLocRoot('');
+        setLocLeaf('');
+      }
       setSelectedTypes(
         (product.assemblyTypes || []).map(l => ({
           assemblyTypeId: l.assemblyTypeId,
@@ -193,6 +227,7 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
       assemblyTypes: selectedTypes.length > 0 ? selectedTypes : undefined,
       partCategoryIds: formData.partCategoryIds?.length ? formData.partCategoryIds : undefined,
       externalLinks: cleanLinks,
+      locationId: locLeaf || null,
     };
 
     if (isEditing) {
@@ -399,11 +434,64 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
           <label className="mb-1 block text-[13px] font-medium text-[--k-text]">
             Emplacement
           </label>
-          <Input
-            value={formData.location || ''}
-            onChange={(e) => handleChange('location', e.target.value)}
-            placeholder="Ex : A1-B2"
-          />
+          {(() => {
+            const allSites = sitesData || [];
+            const allLocs = locationsData || [];
+            const rootsForSite = allLocs.filter(
+              (l) => !l.parentId && l.siteId === locSite,
+            );
+            const childrenForRoot = allLocs.filter((l) => l.parentId === locRoot);
+            return (
+              <div className="grid grid-cols-1 gap-2">
+                <Select
+                  value={locSite}
+                  onChange={(e) => {
+                    setLocSite(e.target.value);
+                    setLocRoot('');
+                    setLocLeaf('');
+                  }}
+                >
+                  <option value="">— Aucun —</option>
+                  {allSites.map((s) => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </Select>
+                {locSite && rootsForSite.length > 0 && (
+                  <Select
+                    value={locRoot}
+                    onChange={(e) => {
+                      const root = e.target.value;
+                      setLocRoot(root);
+                      const hasKids = allLocs.some((l) => l.parentId === root);
+                      // If the chosen root has no children, the leaf == root
+                      setLocLeaf(hasKids ? '' : root);
+                    }}
+                  >
+                    <option value="">Choisir l'emplacement…</option>
+                    {rootsForSite.map((r) => (
+                      <option key={r.id} value={r.id}>{r.name}</option>
+                    ))}
+                  </Select>
+                )}
+                {locRoot && childrenForRoot.length > 0 && (
+                  <Select
+                    value={locLeaf === locRoot ? '' : locLeaf}
+                    onChange={(e) => setLocLeaf(e.target.value || locRoot)}
+                  >
+                    <option value="">— Aucun sous-emplacement —</option>
+                    {childrenForRoot.map((c) => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </Select>
+                )}
+                {locSite && rootsForSite.length === 0 && (
+                  <p className="text-xs italic text-[--k-muted]">
+                    Aucun emplacement défini pour ce lieu. Ajoutez-en depuis la page Sites.
+                  </p>
+                )}
+              </div>
+            );
+          })()}
         </div>
       </div>
 

@@ -117,6 +117,18 @@ export interface Supplier {
   };
 }
 
+export interface Location {
+  id: string;
+  siteId?: string | null;
+  site?: { id: string; name: string } | null;
+  parentId?: string | null;
+  parent?: Location | null;
+  children?: Location[];
+  name: string;
+  position: number;
+  createdAt: string;
+}
+
 export interface Site {
   id: string;
   name: string;
@@ -166,6 +178,9 @@ export interface Product {
   supplyRisk?: SupplyRisk;
   minStock?: number | null;
   location?: string;
+  locationId?: string | null;
+  /** Resolved storage location (with parent + site for label rendering). */
+  storageLocation?: Location | null;
   assemblyId?: string;
   assembly?: Assembly;
   /** Many-to-many: a product may belong to several assembly types, each with its own qtyPerUnit. */
@@ -382,6 +397,7 @@ export interface CreateProductInput {
   supplyRisk?: SupplyRisk;
   minStock?: number | null;
   location?: string;
+  locationId?: string | null;
   assemblyId?: string;
   assemblyTypes?: { assemblyTypeId: string; qtyPerUnit: number }[];
   comment?: string;

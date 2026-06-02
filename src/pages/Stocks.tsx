@@ -9,6 +9,7 @@ import { KpiCard } from '../components/KpiCard';
 import { PageHeader } from '../components/PageHeader';
 import api from '../services/api';
 import { formatStockBreakdown } from '../utils/stockFormat';
+import { locationLabel } from '../utils/locationLabel';
 import type { Stock, Site, Product, ApiResponse, AssemblyType, PaginatedResponse, Assembly } from '../types';
 
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/api$/, '');
@@ -372,6 +373,11 @@ export default function Stocks() {
               <p className="text-[15px] text-[--k-muted] font-mono mt-0.5">
                 {row.product.reference}
               </p>
+              {row.product.storageLocation && (
+                <p className="text-[11px] text-[--k-muted] mt-0.5">
+                  📍 {locationLabel(row.product.storageLocation, { includeSite: true })}
+                </p>
+              )}
               {row.product.supplyRisk && (
                 <Badge
                   variant={
@@ -732,6 +738,13 @@ export default function Stocks() {
                             <span className="text-[15px] text-[--k-muted] font-mono">
                               {row.product.reference}
                             </span>
+                            {row.product.storageLocation && (
+                              <span className="text-[11px] text-[--k-muted] truncate max-w-[250px]">
+                                <span className="inline-block bg-[--k-surface-2] rounded px-1.5 py-0.5">
+                                  {locationLabel(row.product.storageLocation, { includeSite: true })}
+                                </span>
+                              </span>
+                            )}
                             {row.product.supplyRisk && (
                               <Badge
                                 variant={

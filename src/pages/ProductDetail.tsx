@@ -42,6 +42,7 @@ import MovementForm from '../components/forms/MovementForm';
 import MovementDetail from '../components/MovementDetail';
 import OperatorAvatar from '../components/OperatorAvatar';
 import ProductAuditTimeline from '../components/ProductAuditTimeline';
+import { locationLabel } from '../utils/locationLabel';
 import Comments from '../components/ProductComments';
 import SerialItemsPanel from '../components/SerialItemsPanel';
 import api from '../services/api';
@@ -268,10 +269,14 @@ export default function ProductDetail() {
                     <dd className="mt-1">{getRiskBadge(data.supplyRisk)}</dd>
                   </div>
                 )}
-                {data.location && (
+                {(data.storageLocation || data.location) && (
                   <div>
                     <dt className="text-[13px] font-medium text-[--k-muted]">Emplacement</dt>
-                    <dd className="mt-1 text-[--k-text]">{data.location}</dd>
+                    <dd className="mt-1 text-[--k-text]">
+                      {data.storageLocation
+                        ? locationLabel(data.storageLocation, { includeSite: true })
+                        : data.location}
+                    </dd>
                   </div>
                 )}
                 {data.externalLinks && data.externalLinks.length > 0 && (
@@ -585,9 +590,24 @@ export default function ProductDetail() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[--k-border]">
-                  {data.stocks.map((stock) => (
+                  {data.stocks.map((stock) => {
+                    // If the product's storage location belongs to this site, show it
+                    // as a small chip next to the site name. Same data, just shown
+                    // contextually where users expect it.
+                    const locSite = data.storageLocation?.site || data.storageLocation?.parent?.site;
+                    const showLoc = data.storageLocation && locSite?.id === stock.site.id;
+                    return (
                     <tr key={stock.id} className="hover:bg-[--k-surface-2]/30 transition-colors">
-                      <td className="py-2 font-medium text-[--k-text]">{stock.site.name}</td>
+                      <td className="py-2 font-medium text-[--k-text]">
+                        <div className="flex flex-col gap-0.5">
+                          <span>{stock.site.name}</span>
+                          {showLoc && (
+                            <span className="text-[11px] font-normal text-[--k-muted]">
+                              {locationLabel(data.storageLocation)}
+                            </span>
+                          )}
+                        </div>
+                      </td>
                       <td className="py-2">
                         <Badge variant={stock.site.type === 'STORAGE' ? 'success' : 'default'}>
                           {stock.site.type === 'STORAGE' ? 'Stockage' : 'Sortie'}
@@ -599,7 +619,8 @@ export default function ProductDetail() {
                         {stock.quantityNew + stock.quantityUsed}
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
