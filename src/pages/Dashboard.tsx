@@ -435,7 +435,10 @@ export default function Dashboard() {
           <div className="divide-y divide-[--k-border]">
             {topProducts && topProducts.length > 0 ? (
               topProducts.map((p, i) => (
-                <div key={p.id || p.reference} className="flex items-center gap-3 px-4 py-2.5">
+                <div
+                  key={p.id || p.reference}
+                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-[--k-surface-2]/30 transition-colors"
+                >
                   <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[--k-surface-2] text-[11px] font-semibold text-[--k-muted]">
                     {i + 1}
                   </span>
