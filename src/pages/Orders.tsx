@@ -68,13 +68,18 @@ export default function Orders() {
   };
 
   // Fetch orders
+  // "En cours" englobe PENDING + PARTIAL → on ne filtre pas cote serveur dans
+  // ce cas (le filtre cote client ci-dessous s'en occupe), pour rester aligne
+  // avec le KPI qui somme les deux statuts.
   const { data: ordersData, isLoading, refetch } = useQuery({
     queryKey: ['orders', page, statusFilter, supplierFilter, startDate, endDate],
     queryFn: async () => {
       const params = new URLSearchParams();
       params.set('page', page.toString());
       params.set('limit', '20');
-      if (statusFilter && statusFilter !== 'ALL') params.set('status', statusFilter);
+      if (statusFilter && statusFilter !== 'ALL' && statusFilter !== 'PENDING') {
+        params.set('status', statusFilter);
+      }
       if (supplierFilter) params.set('supplierId', supplierFilter);
       if (startDate) params.set('startDate', startDate);
       if (endDate) params.set('endDate', endDate);
@@ -122,8 +127,13 @@ export default function Orders() {
     return `${order.items?.length || 0} article${(order.items?.length || 0) > 1 ? 's' : ''}`;
   };
 
-  // Filter orders by search (client-side)
+  // Filter orders client-side:
+  //  - "En cours" englobe PENDING + PARTIAL (le serveur a renvoye tous les statuts)
+  //  - search libre sur reference / titre / fournisseur / responsable / produit
   const filteredOrders = (ordersData?.data || []).filter((order) => {
+    if (statusFilter === 'PENDING' && order.status !== 'PENDING' && order.status !== 'PARTIAL') {
+      return false;
+    }
     if (!search) return true;
     const searchLower = search.toLowerCase();
     return (
