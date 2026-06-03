@@ -8,6 +8,7 @@ interface User {
   firstName?: string;
   lastName?: string;
   fullName?: string;
+  picture?: string;
   roles: string[];
 }
 
@@ -32,15 +33,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const updateUserInfo = useCallback(() => {
     if (keycloak.tokenParsed) {
       const parsed = keycloak.tokenParsed as Record<string, unknown>;
-      setUser({
+      // Debug: full Keycloak token payload so we can spot which claim
+      // carries the profile picture (varies by Keycloak/realm config).
+      // eslint-disable-next-line no-console
+      console.log('[Auth] Keycloak tokenParsed:', parsed);
+      // Try multiple claim names; Keycloak realms may map the avatar to any
+      // of these depending on protocol mappers configured in the realm.
+      const picture =
+        (parsed.picture as string | undefined) ||
+        (parsed.avatar_url as string | undefined) ||
+        (parsed.avatar as string | undefined) ||
+        (parsed.profile_picture as string | undefined) ||
+        ((parsed.attributes as Record<string, unknown> | undefined)?.picture as string | undefined) ||
+        undefined;
+      const user: User = {
         id: parsed.sub as string,
         email: (parsed.email as string) || '',
         username: (parsed.preferred_username as string) || '',
         firstName: parsed.given_name as string | undefined,
         lastName: parsed.family_name as string | undefined,
         fullName: parsed.name as string | undefined,
+        picture,
         roles: (parsed.realm_access as { roles: string[] })?.roles || [],
-      });
+      };
+      // eslint-disable-next-line no-console
+      console.log('[Auth] Connected user:', user);
+      setUser(user);
       setToken(keycloak.token || null);
     }
   }, []);

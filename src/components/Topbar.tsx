@@ -232,9 +232,21 @@ export function Topbar({ onToggleMobileMenu }: TopbarProps) {
               setNotifOpen(false)
             }}
           >
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-blue-600 text-[11px] font-semibold text-white">
-              {initials}
-            </span>
+            {user?.picture ? (
+              <img
+                src={user.picture}
+                alt={user.fullName || user.username || 'Avatar'}
+                onError={(e) => {
+                  // Fallback to initials if the image fails to load.
+                  (e.currentTarget as HTMLImageElement).style.display = 'none';
+                }}
+                className="h-7 w-7 rounded-lg object-cover"
+              />
+            ) : (
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-blue-600 text-[11px] font-semibold text-white">
+                {initials}
+              </span>
+            )}
             <span className="hidden sm:inline text-[13px] font-medium text-[--k-text]">
               {user?.firstName || user?.username || ''}
             </span>
