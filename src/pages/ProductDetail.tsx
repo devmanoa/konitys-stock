@@ -661,8 +661,8 @@ export default function ProductDetail() {
                     <th className="pb-2">Source</th>
                     <th className="pb-2">Destination</th>
                     <th className="pb-2">État</th>
-                    <th className="pb-2 text-right">Quantité</th>
-                    <th className="pb-2">Opérateur</th>
+                    <th className="pb-2 pr-4 text-right">Quantité</th>
+                    <th className="pb-2 pl-2">Opérateur</th>
                     <th className="pb-2">Commentaire</th>
                   </tr>
                 </thead>
@@ -695,7 +695,7 @@ export default function ProductDetail() {
                           {mvt.condition === 'NEW' ? 'Neuf' : 'Occasion'}
                         </Badge>
                       </td>
-                      <td className="py-2 text-right">
+                      <td className="py-2 pr-4 text-right">
                         <span className={`font-bold ${
                           mvt.type === 'IN'
                             ? 'text-green-600'
@@ -707,7 +707,7 @@ export default function ProductDetail() {
                           {mvt.quantity}
                         </span>
                       </td>
-                      <td className="py-2">
+                      <td className="py-2 pl-2">
                         <OperatorAvatar name={mvt.operator} size="xs" />
                       </td>
                       <td className="py-2 text-[--k-muted]">
