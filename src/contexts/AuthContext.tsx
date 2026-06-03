@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
 import keycloak from '../config/keycloak';
+import api from '../services/api';
 
 interface User {
   id: string;
@@ -88,22 +89,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(baseUser);
     setToken(keycloak.token || null);
 
-    // Enrich with the picture from the gateway profile.
+    // Enrich with the picture from the gateway profile, then sync to our
+    // own users table so other operators' avatars can be rendered later.
     const gateway = import.meta.env.VITE_GATEWAY_URL;
+    let photoNom: string | undefined;
     if (keycloak.token && gateway) {
       const profile = await fetchProfile(keycloak.token);
-      if (profile?.photoNom) {
-        const pictureUrl = `${gateway}/uploads/contacts/${profile.photoNom}`;
-        // eslint-disable-next-line no-console
-        console.log('[Auth] Profile picture URL:', pictureUrl);
-        setUser({
-          ...baseUser,
-          picture: pictureUrl,
-        });
-      } else {
-        // eslint-disable-next-line no-console
-        console.log('[Auth] No photo_nom returned by gateway profile.');
+      photoNom = profile?.photoNom;
+      if (photoNom) {
+        const pictureUrl = `${gateway}/uploads/contacts/${photoNom}`;
+        setUser({ ...baseUser, picture: pictureUrl });
       }
+    }
+    // Fire-and-forget upsert into the local users table.
+    try {
+      await api.post('/users/sync', { photoNom: photoNom ?? null });
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.warn('[Auth] /users/sync failed:', err);
     }
   }, [fetchProfile]);
 

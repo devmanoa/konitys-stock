@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { getOperatorInitials, getOperatorColor } from '../utils/operatorAvatar'
+import { useUsersDirectory } from '../hooks/useUsersDirectory'
 import { cn } from './ui/cn'
 
 interface OperatorAvatarProps {
@@ -25,22 +27,38 @@ export default function OperatorAvatar({
   className,
   fallback = '—',
 }: OperatorAvatarProps) {
+  const { pictureFor } = useUsersDirectory()
+  const [imgFailed, setImgFailed] = useState(false)
+
   if (!name) {
     return <span className={cn('text-[--k-muted]', className)}>{fallback}</span>
   }
+
   const cls = SIZE[size]
+  const pictureUrl = pictureFor(name)
+
   return (
     <span className={cn('inline-flex items-center gap-1.5', className)}>
-      <span
-        className={cn(
-          'flex shrink-0 items-center justify-center rounded-full font-semibold',
-          cls.circle,
-          getOperatorColor(name),
-        )}
-        title={name}
-      >
-        {getOperatorInitials(name)}
-      </span>
+      {pictureUrl && !imgFailed ? (
+        <img
+          src={pictureUrl}
+          alt={name}
+          title={name}
+          onError={() => setImgFailed(true)}
+          className={cn('shrink-0 rounded-full object-cover', cls.circle.split(' ')[0], cls.circle.split(' ')[1])}
+        />
+      ) : (
+        <span
+          className={cn(
+            'flex shrink-0 items-center justify-center rounded-full font-semibold',
+            cls.circle,
+            getOperatorColor(name),
+          )}
+          title={name}
+        >
+          {getOperatorInitials(name)}
+        </span>
+      )}
       {showName && (
         <span className={cn('text-[--k-text] truncate', cls.text)}>{name}</span>
       )}
