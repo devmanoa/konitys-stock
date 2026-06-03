@@ -21,7 +21,13 @@ export function Topbar({ onToggleMobileMenu }: TopbarProps) {
   const [searchOpen, setSearchOpen] = useState(false)
   const [addOpen, setAddOpen] = useState(false)
   const [searchQ, setSearchQ] = useState('')
+  const [pictureFailed, setPictureFailed] = useState(false)
   const searchRef = useRef<HTMLInputElement>(null)
+
+  // Reset failure flag when the user (and thus picture URL) changes.
+  useEffect(() => {
+    setPictureFailed(false)
+  }, [user?.picture])
 
   useEffect(() => {
     if (searchOpen && searchRef.current) searchRef.current.focus()
@@ -232,13 +238,18 @@ export function Topbar({ onToggleMobileMenu }: TopbarProps) {
               setNotifOpen(false)
             }}
           >
-            {user?.picture ? (
+            {user?.picture && !pictureFailed ? (
               <img
                 src={user.picture}
                 alt={user.fullName || user.username || 'Avatar'}
+                onLoad={() => {
+                  // eslint-disable-next-line no-console
+                  console.log('[Topbar] Avatar loaded:', user.picture)
+                }}
                 onError={(e) => {
-                  // Fallback to initials if the image fails to load.
-                  (e.currentTarget as HTMLImageElement).style.display = 'none';
+                  // eslint-disable-next-line no-console
+                  console.warn('[Topbar] Avatar failed to load:', (e.currentTarget as HTMLImageElement).src)
+                  setPictureFailed(true)
                 }}
                 className="h-7 w-7 rounded-lg object-cover"
               />
