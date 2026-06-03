@@ -35,15 +35,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // initials if the gateway is unreachable.
   const fetchProfile = useCallback(async (token: string): Promise<{ photoNom?: string } | null> => {
     const gateway = import.meta.env.VITE_GATEWAY_URL;
-    if (!gateway) return null;
+    if (!gateway) {
+      // eslint-disable-next-line no-console
+      console.warn('[Auth] VITE_GATEWAY_URL is not set.');
+      return null;
+    }
+    const url = `${gateway}/api/users/me`;
+    // eslint-disable-next-line no-console
+    console.log('[Auth] GET', url);
     try {
-      const res = await fetch(`${gateway}/api/users/me`, {
+      const res = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) return null;
-      const json = (await res.json()) as { photo_nom?: string; photoNom?: string };
-      return { photoNom: json.photo_nom || json.photoNom };
-    } catch {
+      // eslint-disable-next-line no-console
+      console.log('[Auth] /api/users/me status:', res.status);
+      if (!res.ok) {
+        // eslint-disable-next-line no-console
+        console.warn('[Auth] /api/users/me failed:', await res.text().catch(() => '(no body)'));
+        return null;
+      }
+      const json = await res.json();
+      // eslint-disable-next-line no-console
+      console.log('[Auth] /api/users/me response:', json);
+      // Try multiple shapes: flat object, { data: {...} }, { user: {...} }
+      const profile = json?.data ?? json?.user ?? json;
+      const photoNom =
+        profile?.photo_nom ??
+        profile?.photoNom ??
+        profile?.photo ??
+        profile?.avatar ??
+        undefined;
+      return { photoNom };
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('[Auth] /api/users/me threw:', err);
       return null;
     }
   }, []);
