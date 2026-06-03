@@ -68,10 +68,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (keycloak.token && gateway) {
       const profile = await fetchProfile(keycloak.token);
       if (profile?.photoNom) {
+        const pictureUrl = `${gateway}/uploads/contacts/${profile.photoNom}`;
+        // eslint-disable-next-line no-console
+        console.log('[Auth] Profile picture URL:', pictureUrl);
         setUser({
           ...baseUser,
-          picture: `${gateway}/uploads/contacts/${profile.photoNom}`,
+          picture: pictureUrl,
         });
+      } else {
+        // eslint-disable-next-line no-console
+        console.log('[Auth] No photo_nom returned by gateway profile.');
       }
     }
   }, [fetchProfile]);
