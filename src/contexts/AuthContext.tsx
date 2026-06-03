@@ -30,38 +30,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
 
-  const updateUserInfo = useCallback(() => {
-    if (keycloak.tokenParsed) {
-      const parsed = keycloak.tokenParsed as Record<string, unknown>;
-      // Debug: full Keycloak token payload so we can spot which claim
-      // carries the profile picture (varies by Keycloak/realm config).
-      // eslint-disable-next-line no-console
-      console.log('[Auth] Keycloak tokenParsed:', parsed);
-      // Try multiple claim names; Keycloak realms may map the avatar to any
-      // of these depending on protocol mappers configured in the realm.
-      const picture =
-        (parsed.picture as string | undefined) ||
-        (parsed.avatar_url as string | undefined) ||
-        (parsed.avatar as string | undefined) ||
-        (parsed.profile_picture as string | undefined) ||
-        ((parsed.attributes as Record<string, unknown> | undefined)?.picture as string | undefined) ||
-        undefined;
-      const user: User = {
-        id: parsed.sub as string,
-        email: (parsed.email as string) || '',
-        username: (parsed.preferred_username as string) || '',
-        firstName: parsed.given_name as string | undefined,
-        lastName: parsed.family_name as string | undefined,
-        fullName: parsed.name as string | undefined,
-        picture,
-        roles: (parsed.realm_access as { roles: string[] })?.roles || [],
-      };
-      // eslint-disable-next-line no-console
-      console.log('[Auth] Connected user:', user);
-      setUser(user);
-      setToken(keycloak.token || null);
+  // Fetch the gateway profile to retrieve photo_nom (and any other CRM data
+  // not present in the JWT). Fails silently — the avatar will fall back to
+  // initials if the gateway is unreachable.
+  const fetchProfile = useCallback(async (token: string): Promise<{ photoNom?: string } | null> => {
+    const gateway = import.meta.env.VITE_GATEWAY_URL;
+    if (!gateway) return null;
+    try {
+      const res = await fetch(`${gateway}/api/users/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return null;
+      const json = (await res.json()) as { photo_nom?: string; photoNom?: string };
+      return { photoNom: json.photo_nom || json.photoNom };
+    } catch {
+      return null;
     }
   }, []);
+
+  const updateUserInfo = useCallback(async () => {
+    if (!keycloak.tokenParsed) return;
+    const parsed = keycloak.tokenParsed as Record<string, unknown>;
+    const baseUser: User = {
+      id: parsed.sub as string,
+      email: (parsed.email as string) || '',
+      username: (parsed.preferred_username as string) || '',
+      firstName: parsed.given_name as string | undefined,
+      lastName: parsed.family_name as string | undefined,
+      fullName: parsed.name as string | undefined,
+      roles: (parsed.realm_access as { roles: string[] })?.roles || [],
+    };
+    setUser(baseUser);
+    setToken(keycloak.token || null);
+
+    // Enrich with the picture from the gateway profile.
+    const gateway = import.meta.env.VITE_GATEWAY_URL;
+    if (keycloak.token && gateway) {
+      const profile = await fetchProfile(keycloak.token);
+      if (profile?.photoNom) {
+        setUser({
+          ...baseUser,
+          picture: `${gateway}/uploads/contacts/${profile.photoNom}`,
+        });
+      }
+    }
+  }, [fetchProfile]);
 
   useEffect(() => {
     const initKeycloak = async () => {
