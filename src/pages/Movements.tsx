@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { useSearchParams, Link } from 'react-router-dom';
 import {
@@ -31,7 +31,28 @@ export default function Movements() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isPackMovementModalOpen, setIsPackMovementModalOpen] = useState(false);
   const [selectedMovement, setSelectedMovement] = useState<StockMovement | null>(null);
+  const [scanPrefill, setScanPrefill] = useState<{
+    productId?: string;
+    type?: 'IN' | 'OUT' | 'TRANSFER';
+  } | null>(null);
   const toast = useToast();
+
+  // Auto-open the create modal when arriving from /scan with prefill params.
+  useEffect(() => {
+    const action = searchParams.get('scanAction') as 'IN' | 'OUT' | 'TRANSFER' | null;
+    const productId = searchParams.get('scanProductId');
+    if (action && productId) {
+      setScanPrefill({ productId, type: action });
+      setIsModalOpen(true);
+      // Consume the query params so a refresh doesn't reopen the modal.
+      const next = new URLSearchParams(searchParams);
+      next.delete('scanAction');
+      next.delete('scanProductId');
+      next.delete('scanSerialId');
+      setSearchParams(next, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // URL params for filters
   const page = parseInt(searchParams.get('page') || '1');
@@ -514,16 +535,25 @@ export default function Movements() {
       {/* Create Movement Modal */}
       <Modal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setScanPrefill(null);
+        }}
         title="Nouveau mouvement de stock"
         size="lg"
       >
         <MovementForm
+          preselectedProductId={scanPrefill?.productId}
+          preselectedType={scanPrefill?.type}
           onSuccess={() => {
             setIsModalOpen(false);
+            setScanPrefill(null);
             toast.success('Mouvement créé', 'Le mouvement de stock a été enregistré avec succès');
           }}
-          onCancel={() => setIsModalOpen(false)}
+          onCancel={() => {
+            setIsModalOpen(false);
+            setScanPrefill(null);
+          }}
         />
       </Modal>
 

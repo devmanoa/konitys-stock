@@ -25,9 +25,10 @@ interface MovementFormProps {
   onCancel: () => void
   preselectedProductId?: string
   preselectedProduct?: Product | null
+  preselectedType?: 'IN' | 'OUT' | 'TRANSFER'
 }
 
-export default function MovementForm({ onSuccess, onCancel, preselectedProductId, preselectedProduct }: MovementFormProps) {
+export default function MovementForm({ onSuccess, onCancel, preselectedProductId, preselectedProduct, preselectedType }: MovementFormProps) {
   const queryClient = useQueryClient()
   const [selectedProductId, setSelectedProductId] = useState(preselectedProductId || '')
   const [productError, setProductError] = useState<string | undefined>()
@@ -46,7 +47,7 @@ export default function MovementForm({ onSuccess, onCancel, preselectedProductId
   } = useForm<MovementFormData>({
     defaultValues: {
       productId: preselectedProductId || '',
-      type: 'IN',
+      type: preselectedType || 'IN',
       condition: 'NEW',
       movementDate: new Date().toISOString().split('T')[0],
       quantity: 1,

@@ -706,58 +706,83 @@ export default function Orders() {
               </p>
             </div>
           ) : (
-            templatesData.map((template) => (
-              <button
-                key={template.id}
-                type="button"
-                onClick={() => {
-                  // Convertir le template en objet Order-like pour duplicateFrom
-                  const orderFromTemplate = {
-                    supplierId: template.supplierId,
-                    supplier: template.supplier,
-                    destinationSiteId: template.destinationSiteId,
-                    destinationSite: template.destinationSite,
-                    responsible: template.responsible,
-                    comment: template.comment,
-                    title: template.name,
-                    items: template.items.map((item) => ({
-                      productId: item.productId,
-                      product: item.product,
-                      quantity: item.quantity,
-                      unitPrice: item.unitPrice,
-                    })),
-                    id: '',
-                    orderNumber: '',
-                    status: 'PENDING' as const,
-                    orderDate: '',
-                    createdAt: '',
-                    updatedAt: '',
-                  } as Order;
-                  setIsTemplatePickerOpen(false);
-                  setDuplicateOrder(orderFromTemplate);
-                  setIsCreateModalOpen(true);
-                }}
-                className="flex w-full items-center gap-3 rounded-lg border border-[--k-border] bg-[--k-surface] p-3 text-left transition-colors hover:border-[--k-primary] hover:bg-indigo-50/50"
-              >
-                <div className="rounded-lg bg-indigo-100 p-2 text-[--k-primary]">
-                  <FileText className="h-5 w-5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-[--k-text] truncate">
-                    {template.name}
-                  </p>
-                  <div className="flex items-center gap-2 text-xs text-[--k-muted]">
-                    <span className="flex items-center gap-1">
+            (() => {
+              // Group templates by supplier name so the picker scales when
+              // there are many of them.
+              const groups = new Map<string, typeof templatesData>();
+              for (const t of templatesData) {
+                const key = t.supplier?.name || 'Sans fournisseur';
+                const arr = groups.get(key) || [];
+                arr.push(t);
+                groups.set(key, arr);
+              }
+              const sortedSuppliers = Array.from(groups.keys()).sort((a, b) =>
+                a.localeCompare(b, 'fr', { sensitivity: 'base' }),
+              );
+              return sortedSuppliers.map((supplierName) => {
+                const list = groups.get(supplierName)!;
+                return (
+                  <div key={supplierName} className="space-y-1.5">
+                    <div className="flex items-center gap-2 px-1 pt-1 text-[11px] font-semibold uppercase tracking-wide text-[--k-muted]">
                       <Truck className="h-3 w-3" />
-                      {template.supplier?.name}
-                    </span>
-                    <span>·</span>
-                    <span>{template.items?.length || 0} article{(template.items?.length || 0) > 1 ? 's' : ''}</span>
+                      <span>{supplierName}</span>
+                      <span className="text-[10px] font-normal normal-case text-[--k-muted]/70">
+                        ({list.length})
+                      </span>
+                    </div>
+                    {list.map((template) => (
+                      <button
+                        key={template.id}
+                        type="button"
+                        onClick={() => {
+                          const orderFromTemplate = {
+                            supplierId: template.supplierId,
+                            supplier: template.supplier,
+                            destinationSiteId: template.destinationSiteId,
+                            destinationSite: template.destinationSite,
+                            responsible: template.responsible,
+                            comment: template.comment,
+                            title: template.name,
+                            items: template.items.map((item) => ({
+                              productId: item.productId,
+                              product: item.product,
+                              quantity: item.quantity,
+                              unitPrice: item.unitPrice,
+                            })),
+                            id: '',
+                            orderNumber: '',
+                            status: 'PENDING' as const,
+                            orderDate: '',
+                            createdAt: '',
+                            updatedAt: '',
+                          } as Order;
+                          setIsTemplatePickerOpen(false);
+                          setDuplicateOrder(orderFromTemplate);
+                          setIsCreateModalOpen(true);
+                        }}
+                        className="flex w-full items-center gap-3 rounded-lg border border-[--k-border] bg-[--k-surface] p-3 text-left transition-colors hover:border-[--k-primary] hover:bg-indigo-50/50"
+                      >
+                        <div className="rounded-lg bg-indigo-100 p-2 text-[--k-primary]">
+                          <FileText className="h-5 w-5" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-[--k-text] truncate">
+                            {template.name}
+                          </p>
+                          <div className="flex items-center gap-2 text-xs text-[--k-muted]">
+                            <span>
+                              {template.items?.length || 0} article
+                              {(template.items?.length || 0) > 1 ? 's' : ''}
+                            </span>
+                          </div>
+                        </div>
+                        <Hash className="h-4 w-4 text-[--k-muted]" />
+                      </button>
+                    ))}
                   </div>
-                </div>
-                <Hash className="h-4 w-4 text-[--k-muted]" />
-              </button>
-            ))
+                );
+              });
+            })()
           )}
         </div>
       </Modal>

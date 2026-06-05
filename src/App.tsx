@@ -22,6 +22,7 @@ import OrderTemplateDetail from './pages/OrderTemplateDetail'
 import BuildableBornes from './pages/BuildableBornes'
 import AssemblyTypeEdit from './pages/AssemblyTypeEdit'
 import StockAlerts from './pages/StockAlerts'
+import Scan from './pages/Scan'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -39,6 +40,14 @@ function App() {
         <ToastProvider>
           <BrowserRouter>
             <Routes>
+              <Route
+                path="/scan"
+                element={
+                  <ProtectedRoute>
+                    <Scan />
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path="/"
                 element={

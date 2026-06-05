@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import {
   Bell, HelpCircle, Search, User, LogOut, Settings,
   ChevronDown, X, Menu, Plus,
-  ListTodo, ShoppingCart, Package, Truck,
+  ListTodo, ShoppingCart, Package, Truck, QrCode,
 } from 'lucide-react'
 import { cn } from './ui/cn'
 import { useAuth } from '../contexts/AuthContext'
@@ -180,6 +180,15 @@ export function Topbar({ onToggleMobileMenu }: TopbarProps) {
             </>
           )}
         </div>
+
+        {/* Scanner */}
+        <button
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-[--k-muted] hover:bg-[--k-surface-2] hover:text-[--k-text] transition"
+          title="Scanner un QR code"
+          onClick={() => navigate('/scan')}
+        >
+          <QrCode className="h-[18px] w-[18px]" />
+        </button>
 
         {/* Tasks — placeholder */}
         <button
