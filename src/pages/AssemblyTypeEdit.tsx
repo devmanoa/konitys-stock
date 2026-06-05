@@ -1,12 +1,13 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, Package } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, Package, QrCode } from 'lucide-react'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
 import ProductSearch from '../components/ui/ProductSearch'
 import RichTextEditor from '../components/ui/RichTextEditor'
+import PrintLabels, { type LabelPayload } from '../components/PrintLabels'
 import { useToast } from '../components/ui/Toast'
 import api from '../services/api'
 import type { ApiResponse, AssemblyType, PartCategory, Product } from '../types'
@@ -38,6 +39,7 @@ export default function AssemblyTypeEdit() {
   const [description, setDescription] = useState('')
   const [items, setItems] = useState<AssemblyTypeItemDraft[]>([])
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
+  const [printLabels, setPrintLabels] = useState<LabelPayload[] | null>(null)
 
   const { data: assemblyType, isLoading: isLoadingType } = useQuery({
     queryKey: ['assembly-type', id],
@@ -225,6 +227,23 @@ export default function AssemblyTypeEdit() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {!isCreating && id && (
+            <Button
+              variant="secondary"
+              onClick={() =>
+                setPrintLabels([
+                  {
+                    qrValue: `${window.location.origin}/assembly-types/${id}`,
+                    title: assemblyType?.name || name,
+                    reference: assemblyType?.name || name,
+                  },
+                ])
+              }
+            >
+              <QrCode className="mr-2 h-4 w-4" />
+              QR
+            </Button>
+          )}
           <Button variant="secondary" onClick={() => navigate('/settings')}>
             Annuler
           </Button>
@@ -379,6 +398,12 @@ export default function AssemblyTypeEdit() {
           })}
         </CardContent>
       </Card>
+
+      <PrintLabels
+        isOpen={!!printLabels && printLabels.length > 0}
+        onClose={() => setPrintLabels(null)}
+        labels={printLabels || []}
+      />
     </div>
   )
 }

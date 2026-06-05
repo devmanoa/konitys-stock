@@ -21,6 +21,7 @@ import {
   TrendingUp,
   Hash,
   Clock,
+  QrCode,
 } from 'lucide-react';
 import {
   LineChart,
@@ -45,6 +46,7 @@ import ProductAuditTimeline from '../components/ProductAuditTimeline';
 import { locationLabel } from '../utils/locationLabel';
 import Comments from '../components/ProductComments';
 import SerialItemsPanel from '../components/SerialItemsPanel';
+import PrintLabels, { type LabelPayload } from '../components/PrintLabels';
 import api from '../services/api';
 import type { Product, ApiResponse, ProductPriceHistoryEntry, StockMovement } from '../types';
 
@@ -120,6 +122,8 @@ export default function ProductDetail() {
   const [isMovementModalOpen, setIsMovementModalOpen] = useState(false);
   const [isImageOpen, setIsImageOpen] = useState(false);
   const [selectedMovement, setSelectedMovement] = useState<StockMovement | null>(null);
+  const [printLabels, setPrintLabels] = useState<LabelPayload[] | null>(null);
+  const [showPrintMenu, setShowPrintMenu] = useState(false);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['product', id],
@@ -219,6 +223,73 @@ export default function ProductDetail() {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            <div className="relative">
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  if (data.hasSerialNumber) {
+                    setShowPrintMenu((v) => !v);
+                  } else {
+                    setPrintLabels([
+                      {
+                        qrValue: `${API_BASE_URL.replace(/\/api$/, '')}/products/${data.id}`,
+                        title: data.description || data.reference,
+                        reference: data.reference,
+                      },
+                    ]);
+                  }
+                }}
+              >
+                <QrCode className="mr-2 h-4 w-4" />
+                QR
+              </Button>
+              {showPrintMenu && (
+                <>
+                  <div className="fixed inset-0 z-30" onClick={() => setShowPrintMenu(false)} />
+                  <div className="absolute right-0 z-40 mt-2 w-[260px] rounded-2xl border border-[--k-border] bg-white shadow-xl shadow-black/8 py-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowPrintMenu(false);
+                        setPrintLabels([
+                          {
+                            qrValue: `${API_BASE_URL.replace(/\/api$/, '')}/products/${data.id}`,
+                            title: data.description || data.reference,
+                            reference: data.reference,
+                          },
+                        ]);
+                      }}
+                      className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[13px] text-[--k-text] hover:bg-[--k-surface-2]"
+                    >
+                      <QrCode className="h-4 w-4 text-[--k-primary]" />
+                      QR du produit (1 étiquette)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowPrintMenu(false);
+                        const serials = (data as any).serialItems || [];
+                        if (serials.length === 0) {
+                          alert('Aucun numéro de série enregistré pour ce produit.');
+                          return;
+                        }
+                        setPrintLabels(
+                          serials.map((s: any) => ({
+                            qrValue: `${API_BASE_URL.replace(/\/api$/, '')}/serial/${s.id}`,
+                            title: data.description || data.reference,
+                            reference: s.serialNumber,
+                          })),
+                        );
+                      }}
+                      className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[13px] text-[--k-text] hover:bg-[--k-surface-2]"
+                    >
+                      <Hash className="h-4 w-4 text-[--k-primary]" />
+                      QR par numéro de série
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
             <Button variant="secondary" onClick={() => setIsMovementModalOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
               Mouvement
@@ -849,6 +920,13 @@ export default function ProductDetail() {
           </div>
         </div>
       )}
+
+      {/* QR labels print modal */}
+      <PrintLabels
+        isOpen={!!printLabels && printLabels.length > 0}
+        onClose={() => setPrintLabels(null)}
+        labels={printLabels || []}
+      />
 
     </div>
   );
