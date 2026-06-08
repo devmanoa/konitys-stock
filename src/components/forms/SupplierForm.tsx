@@ -388,7 +388,7 @@ export default function SupplierForm({ supplier, onSuccess, onCancel }: Supplier
           </Button>
         </div>
         <p className="mt-1 text-[11px] text-[--k-muted]">
-          Pré-remplit nom et adresse depuis la base SIRENE officielle. Données rafraîchies automatiquement à la sauvegarde.
+          Pré-remplit nom, adresse, code postal, ville et activité NAF depuis la base SIRENE officielle (INSEE). E-mail, téléphone et site web ne sont pas exposés par la SIRENE et restent à saisir manuellement.
         </p>
       </div>
 
