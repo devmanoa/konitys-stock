@@ -40,11 +40,22 @@ export function useUsersDirectory() {
     return `${gateway}/uploads/contacts/${photoNom}`;
   };
 
+  // Debug: dump the directory once when it lands so we can see what fullName
+  // and photoNom values the server stored for each user.
+  if (query.data && !(globalThis as any).__usersDirectoryLogged) {
+    // eslint-disable-next-line no-console
+    console.log('[UsersDirectory] users =', query.data);
+    (globalThis as any).__usersDirectoryLogged = true;
+  }
+
   const findByName = (name?: string | null): DirectoryUser | undefined => {
     if (!name) return undefined;
     const trimmed = name.trim().toLowerCase();
     if (!trimmed) return undefined;
-    return query.data?.find((u) => (u.fullName || '').toLowerCase() === trimmed);
+    const match = query.data?.find((u) => (u.fullName || '').toLowerCase() === trimmed);
+    // eslint-disable-next-line no-console
+    if (query.data && !match) console.log('[UsersDirectory] no match for', JSON.stringify(name));
+    return match;
   };
 
   const findByKeycloakId = (kid?: string | null): DirectoryUser | undefined => {
