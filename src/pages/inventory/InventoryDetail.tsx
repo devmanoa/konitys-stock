@@ -51,6 +51,9 @@ export default function InventoryDetail() {
 
   // All entries for this inventory (across zones). Capped at 100 — for a full
   // export the admin should hit the API directly until we add a paginated list.
+  //
+  // refetchOnMount: 'always' so navigating back here from /zone/:locationId
+  // always shows the latest saisies, even if invalidation was missed.
   const { data: entries, refetch: refetchEntries } = useQuery({
     queryKey: ['inventory-entries-all', id],
     queryFn: async () => {
@@ -60,20 +63,19 @@ export default function InventoryDetail() {
       return res.data?.data || []
     },
     enabled: !!id,
+    refetchOnMount: 'always',
   })
 
   const { data: unknowns } = useQuery({
     queryKey: ['inventory-unknowns-all', id],
     queryFn: async () => {
-      // No dedicated endpoint yet — we filter from the inventory's _count to
-      // know if any exist, then fetch through the entries route if needed.
-      // For now we expose them through a tiny dedicated GET we'll add server-side.
       const res = await api.get<ApiResponse<UnknownEntry[]>>(
         `/inventories/${id}/unknowns`,
       )
       return res.data?.data || []
     },
     enabled: !!id,
+    refetchOnMount: 'always',
   })
 
   const deleteEntryMutation = useMutation({

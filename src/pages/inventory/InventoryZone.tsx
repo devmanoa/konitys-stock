@@ -76,14 +76,22 @@ export default function InventoryZone() {
     enabled: !!debouncedQuery && !picked,
   })
 
+  // Invalidate every cache that depends on this inventory's entries/unknowns
+  // so the parent /inventory/:id page reflects the saisie when we navigate back.
+  const invalidateAll = () => {
+    refetchEntries()
+    qc.invalidateQueries({ queryKey: ['inventory', id] })
+    qc.invalidateQueries({ queryKey: ['inventory-entries-all', id] })
+    qc.invalidateQueries({ queryKey: ['inventory-unknowns-all', id] })
+    qc.invalidateQueries({ queryKey: ['zone-summary', id] })
+    qc.invalidateQueries({ queryKey: ['inventories'] })
+  }
+
   const deleteMutation = useMutation({
     mutationFn: async (entryId: string) => {
       await api.delete(`/inventories/${id}/entries/${entryId}`)
     },
-    onSuccess: () => {
-      refetchEntries()
-      qc.invalidateQueries({ queryKey: ['inventory', id] })
-    },
+    onSuccess: invalidateAll,
   })
 
   const handleScan = async (parsed: ParsedQr) => {
@@ -268,8 +276,7 @@ export default function InventoryZone() {
                 setPicked(null)
                 setPrefilledSerial(null)
                 setSearch('')
-                refetchEntries()
-                qc.invalidateQueries({ queryKey: ['inventory', id] })
+                invalidateAll()
               }}
             />
           )}
@@ -334,7 +341,7 @@ export default function InventoryZone() {
           onClose={() => setUnknownOpen(false)}
           onSaved={() => {
             setUnknownOpen(false)
-            qc.invalidateQueries({ queryKey: ['inventory', id] })
+            invalidateAll()
           }}
         />
       )}
