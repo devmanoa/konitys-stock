@@ -23,6 +23,7 @@ import BuildableBornes from './pages/BuildableBornes'
 import AssemblyTypeEdit from './pages/AssemblyTypeEdit'
 import StockAlerts from './pages/StockAlerts'
 import Scan from './pages/Scan'
+import Inventory from './pages/Inventory'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -45,6 +46,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Scan />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/inventory"
+                element={
+                  <ProtectedRoute>
+                    <Inventory />
                   </ProtectedRoute>
                 }
               />

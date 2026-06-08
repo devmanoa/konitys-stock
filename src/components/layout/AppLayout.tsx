@@ -13,6 +13,7 @@ import {
   Upload,
   Settings,
   Factory,
+  ClipboardList,
 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { loadRemoteComponent } from '../../remoteLoader'
@@ -32,6 +33,7 @@ const SIDEBAR_SECTIONS = [
       { icon: LayoutDashboard, label: 'Tableau de bord', path: '/' },
       { icon: Layers, label: 'Stocks', path: '/stocks' },
       { icon: ArrowLeftRight, label: 'Mouvements', path: '/movements' },
+      { icon: ClipboardList, label: 'Inventaire', path: '/inventory' },
     ],
   },
   {
