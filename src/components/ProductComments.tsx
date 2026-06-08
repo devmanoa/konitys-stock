@@ -6,6 +6,7 @@ import { useToast } from './ui/Toast';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/Card';
 import Button from './ui/Button';
 import RichTextEditor from './ui/RichTextEditor';
+import OperatorAvatar from './OperatorAvatar';
 import api from '../services/api';
 import type { ProductComment, KnownUser, ApiResponse } from '../types';
 
@@ -25,17 +26,7 @@ function formatRelativeTime(dateStr: string): string {
 }
 
 function AuthorAvatar({ name }: { name: string }) {
-  const initials = name
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
-  return (
-    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[--k-primary] text-xs font-bold text-white">
-      {initials}
-    </div>
-  );
+  return <OperatorAvatar name={name} size="md" showName={false} />;
 }
 
 // Render comment HTML content safely with styled elements

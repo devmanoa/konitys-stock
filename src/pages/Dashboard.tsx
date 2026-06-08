@@ -21,7 +21,7 @@ import { PageHeader } from '../components/PageHeader'
 import { cn } from '../components/ui/cn'
 import api from '../services/api'
 import { formatStockBreakdown } from '../utils/stockFormat'
-import { getOperatorInitials, getOperatorColor } from '../utils/operatorAvatar'
+import OperatorAvatar from '../components/OperatorAvatar'
 import type {
   DashboardStats,
   StockMovement,
@@ -658,15 +658,8 @@ function RecentMovementsBlock({
                   '—'
                 )}
               </div>
-              <span
-                className={cn(
-                  'flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-semibold flex-shrink-0',
-                  getOperatorColor(m.operator),
-                )}
-                title={m.operator || 'Inconnu'}
-              >
-                {getOperatorInitials(m.operator)}
-              </span>
+              <OperatorAvatar name={m.operator} size="sm" showName={false} />
+
               <span className="text-[11px] text-[--k-muted] tabular-nums whitespace-nowrap">
                 {formatDate(m.movementDate)}
               </span>

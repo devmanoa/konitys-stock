@@ -1,18 +1,9 @@
 import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
+import OperatorAvatar from '../OperatorAvatar';
 import type { KnownUser } from '../../types';
 
 function AuthorAvatar({ name }: { name: string }) {
-  const initials = name
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
-  return (
-    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[--k-primary] text-[10px] font-bold text-white">
-      {initials}
-    </div>
-  );
+  return <OperatorAvatar name={name} size="md" showName={false} />;
 }
 
 export interface MentionListRef {
