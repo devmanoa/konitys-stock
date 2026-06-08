@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   X, ArrowLeft, ClipboardList, MapPin, Search, ChevronRight, Camera,
-  PackageX, ImagePlus, Loader2, Trash2, CheckCircle, AlertTriangle,
+  PackageX, ImagePlus, Loader2, Trash2, CheckCircle, AlertTriangle, Plus,
 } from 'lucide-react'
 import api from '../services/api'
 import QrScannerModal, { type ParsedQr } from '../components/QrScannerModal'
@@ -85,6 +85,9 @@ export default function Inventory() {
 // 1) List of active inventories
 // =====================================================================
 function InventoryList({ onPick, onClose }: { onPick: (id: string) => void; onClose: () => void }) {
+  const qc = useQueryClient()
+  const [createOpen, setCreateOpen] = useState(false)
+
   const { data, isLoading } = useQuery({
     queryKey: ['inventories'],
     queryFn: async () => {
@@ -95,13 +98,22 @@ function InventoryList({ onPick, onClose }: { onPick: (id: string) => void; onCl
 
   return (
     <Shell title="Inventaires" onClose={onClose}>
+      <button
+        type="button"
+        onClick={() => setCreateOpen(true)}
+        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-4 py-3 text-[14px] font-medium text-white hover:bg-indigo-700 active:scale-[0.99]"
+      >
+        <Plus className="h-4 w-4" />
+        Nouvel inventaire
+      </button>
+
       {isLoading ? (
         <Spinner />
       ) : !data?.length ? (
         <EmptyState
           icon={ClipboardList}
           title="Aucun inventaire"
-          subtitle="Aucun inventaire actif. L'admin doit en créer un avant la saisie."
+          subtitle="Créez un inventaire pour commencer la saisie."
         />
       ) : (
         <ul className="space-y-2">
@@ -135,7 +147,102 @@ function InventoryList({ onPick, onClose }: { onPick: (id: string) => void; onCl
           ))}
         </ul>
       )}
+
+      {createOpen && (
+        <CreateInventoryModal
+          onClose={() => setCreateOpen(false)}
+          onCreated={(id) => {
+            setCreateOpen(false)
+            qc.invalidateQueries({ queryKey: ['inventories'] })
+            onPick(id)
+          }}
+        />
+      )}
     </Shell>
+  )
+}
+
+function CreateInventoryModal({
+  onClose,
+  onCreated,
+}: {
+  onClose: () => void
+  onCreated: (id: string) => void
+}) {
+  const [name, setName] = useState('')
+  const [siteId, setSiteId] = useState('')
+
+  const { data: sites } = useQuery({
+    queryKey: ['sites'],
+    queryFn: async () => {
+      const res = await api.get<ApiResponse<Site[]>>('/sites')
+      return res.data?.data || []
+    },
+  })
+
+  const mutation = useMutation({
+    mutationFn: async () => {
+      const res = await api.post<ApiResponse<Inventory>>('/inventories', {
+        name: name.trim(),
+        siteId: siteId || null,
+      })
+      return res.data?.data
+    },
+    onSuccess: (inv) => {
+      if (inv?.id) onCreated(inv.id)
+    },
+  })
+
+  return (
+    <ModalShell title="Nouvel inventaire" onClose={onClose}>
+      <div className="space-y-3">
+        <div>
+          <label className="mb-1 block text-[12px] font-medium text-slate-700">Nom</label>
+          <input
+            autoFocus
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Ex : Stock Plérin — Juin 2026"
+            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-[14px] focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-[12px] font-medium text-slate-700">Site (optionnel)</label>
+          <select
+            value={siteId}
+            onChange={(e) => setSiteId(e.target.value)}
+            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-[14px]"
+          >
+            <option value="">— Aucun —</option>
+            {sites?.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 text-[11px] text-slate-500">
+            Filtre les zones proposées au moment de la saisie.
+          </p>
+        </div>
+        <div className="flex gap-2 pt-1">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 rounded-xl border border-slate-200 bg-white py-2.5 text-[14px] font-medium text-slate-700 hover:bg-slate-50"
+          >
+            Annuler
+          </button>
+          <button
+            type="button"
+            onClick={() => mutation.mutate()}
+            disabled={!name.trim() || mutation.isPending}
+            className="flex-1 rounded-xl bg-indigo-600 py-2.5 text-[14px] font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+          >
+            {mutation.isPending ? 'Création…' : 'Créer et commencer'}
+          </button>
+        </div>
+      </div>
+    </ModalShell>
   )
 }
 
