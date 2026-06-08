@@ -1,18 +1,33 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { ArrowLeft, MapPin, ChevronRight, Loader2, ClipboardList } from 'lucide-react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { ArrowLeft, MapPin, ChevronRight, Loader2, ClipboardList, PackageX, Trash2 } from 'lucide-react'
 import { PageHeader } from '../../components/PageHeader'
 import Button from '../../components/ui/Button'
 import { Card, CardContent } from '../../components/ui/Card'
 import api from '../../services/api'
+import { getFullImageUrl } from '../../utils/imageUrl'
 import type { ApiResponse, Location } from '../../types'
-import type { Inventory } from './types'
+import { type Inventory, type InventoryEntry, STATE_LABEL, STATE_BADGE } from './types'
+
+interface UnknownEntry {
+  id: string
+  description: string
+  category: string | null
+  quantity: number
+  comment: string | null
+  photoUrl: string | null
+  operatorName: string | null
+  createdAt: string
+  location?: { id: string; name: string } | null
+}
 
 export default function InventoryDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const qc = useQueryClient()
   const [parentId, setParentId] = useState<string | null>(null)
+  const [tab, setTab] = useState<'entries' | 'unknowns'>('entries')
 
   const { data: inv, isLoading } = useQuery({
     queryKey: ['inventory', id],
@@ -31,6 +46,43 @@ export default function InventoryDetail() {
       return res.data?.data || []
     },
     enabled: !!inv,
+  })
+
+  // All entries for this inventory (across zones). Capped at 100 — for a full
+  // export the admin should hit the API directly until we add a paginated list.
+  const { data: entries, refetch: refetchEntries } = useQuery({
+    queryKey: ['inventory-entries-all', id],
+    queryFn: async () => {
+      const res = await api.get<ApiResponse<InventoryEntry[]>>(
+        `/inventories/${id}/entries?limit=100`,
+      )
+      return res.data?.data || []
+    },
+    enabled: !!id,
+  })
+
+  const { data: unknowns } = useQuery({
+    queryKey: ['inventory-unknowns-all', id],
+    queryFn: async () => {
+      // No dedicated endpoint yet — we filter from the inventory's _count to
+      // know if any exist, then fetch through the entries route if needed.
+      // For now we expose them through a tiny dedicated GET we'll add server-side.
+      const res = await api.get<ApiResponse<UnknownEntry[]>>(
+        `/inventories/${id}/unknowns`,
+      )
+      return res.data?.data || []
+    },
+    enabled: !!id,
+  })
+
+  const deleteEntryMutation = useMutation({
+    mutationFn: async (entryId: string) => {
+      await api.delete(`/inventories/${id}/entries/${entryId}`)
+    },
+    onSuccess: () => {
+      refetchEntries()
+      qc.invalidateQueries({ queryKey: ['inventory', id] })
+    },
   })
 
   const currentList = useMemo(() => {
@@ -162,18 +214,216 @@ export default function InventoryDetail() {
 
       <Card>
         <CardContent>
-          <div className="flex items-center gap-2 text-[13px] text-[--k-muted]">
-            <ClipboardList className="h-4 w-4" />
-            <span>{inv._count?.entries ?? 0} saisies enregistrées</span>
-            {(inv._count?.unknowns ?? 0) > 0 && (
-              <>
-                <span>·</span>
-                <span>{inv._count!.unknowns} produits non trouvés</span>
-              </>
-            )}
+          <div className="mb-3 flex items-center gap-1 border-b border-[--k-border] -mx-4 px-4 -mt-4 pt-2 sm:-mx-6 sm:px-6">
+            <TabButton
+              active={tab === 'entries'}
+              onClick={() => setTab('entries')}
+              icon={ClipboardList}
+              label="Saisies"
+              count={entries?.length ?? inv._count?.entries ?? 0}
+            />
+            <TabButton
+              active={tab === 'unknowns'}
+              onClick={() => setTab('unknowns')}
+              icon={PackageX}
+              label="Produits non trouvés"
+              count={unknowns?.length ?? inv._count?.unknowns ?? 0}
+            />
           </div>
+
+          {tab === 'entries' ? (
+            !entries || entries.length === 0 ? (
+              <EmptyBlock
+                icon={ClipboardList}
+                title="Aucune saisie"
+                subtitle="Choisissez une zone pour commencer."
+              />
+            ) : (
+              <div className="overflow-x-auto -mx-4 sm:-mx-6">
+                <table className="w-full text-[13px]">
+                  <thead>
+                    <tr className="border-b border-[--k-border] text-left text-xs font-medium uppercase text-[--k-muted]">
+                      <th className="px-4 py-2 sm:px-6">Heure</th>
+                      <th className="px-4 py-2">Produit</th>
+                      <th className="px-4 py-2">Zone</th>
+                      <th className="px-4 py-2">Qté / N° série</th>
+                      <th className="px-4 py-2">État</th>
+                      <th className="px-4 py-2">Opérateur</th>
+                      <th className="px-4 py-2 sm:px-6" />
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[--k-border]">
+                    {entries.map((e) => (
+                      <tr key={e.id} className="hover:bg-[--k-surface-2]/30">
+                        <td className="px-4 py-2 sm:px-6 font-mono text-[11px] text-[--k-muted] tabular-nums">
+                          {new Date(e.createdAt).toLocaleString('fr-FR', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </td>
+                        <td className="px-4 py-2">
+                          <div className="flex items-center gap-2">
+                            {e.product.imageUrl ? (
+                              <img
+                                src={getFullImageUrl(e.product.imageUrl)}
+                                alt=""
+                                className="h-7 w-7 rounded object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-7 w-7 items-center justify-center rounded bg-[--k-surface-2] text-[--k-muted]">
+                                <ClipboardList className="h-3.5 w-3.5" />
+                              </div>
+                            )}
+                            <div className="min-w-0">
+                              <div className="truncate font-medium text-[--k-text]">
+                                {e.product.description || e.product.reference}
+                              </div>
+                              <div className="font-mono text-[10px] text-[--k-muted]">
+                                {e.product.reference}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-2 text-[--k-muted]">
+                          {e.location?.name || <span className="italic">—</span>}
+                        </td>
+                        <td className="px-4 py-2">
+                          {e.product.hasSerialNumber ? (
+                            <span className="font-mono text-[11px]">
+                              {e.serialNumber || <span className="italic text-[--k-muted]">inconnu</span>}
+                            </span>
+                          ) : (
+                            <span className="font-medium tabular-nums">Qté {e.quantity}</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-2">
+                          <span
+                            className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium ${STATE_BADGE[e.state]}`}
+                          >
+                            {STATE_LABEL[e.state]}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2 text-[12px] text-[--k-muted]">
+                          {e.operatorName || <span className="italic">—</span>}
+                        </td>
+                        <td className="px-4 py-2 sm:px-6">
+                          <button
+                            type="button"
+                            onClick={() => deleteEntryMutation.mutate(e.id)}
+                            className="rounded p-1 text-[--k-muted] hover:bg-[--k-surface-2] hover:text-[--k-danger]"
+                            title="Supprimer cette saisie"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )
+          ) : !unknowns || unknowns.length === 0 ? (
+            <EmptyBlock
+              icon={PackageX}
+              title="Aucun produit non trouvé"
+              subtitle="Tout ce qui a été vu sur le terrain a pu être rattaché à un produit du catalogue."
+            />
+          ) : (
+            <div className="overflow-x-auto -mx-4 sm:-mx-6">
+              <table className="w-full text-[13px]">
+                <thead>
+                  <tr className="border-b border-[--k-border] text-left text-xs font-medium uppercase text-[--k-muted]">
+                    <th className="px-4 py-2 sm:px-6">Heure</th>
+                    <th className="px-4 py-2">Description</th>
+                    <th className="px-4 py-2">Catégorie</th>
+                    <th className="px-4 py-2">Zone</th>
+                    <th className="px-4 py-2 text-right">Qté</th>
+                    <th className="px-4 py-2">Opérateur</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[--k-border]">
+                  {unknowns.map((u) => (
+                    <tr key={u.id} className="hover:bg-[--k-surface-2]/30">
+                      <td className="px-4 py-2 sm:px-6 font-mono text-[11px] text-[--k-muted] tabular-nums">
+                        {new Date(u.createdAt).toLocaleString('fr-FR', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </td>
+                      <td className="px-4 py-2">
+                        <div className="font-medium text-[--k-text]">{u.description}</div>
+                        {u.comment && (
+                          <div className="mt-0.5 text-[11px] italic text-[--k-muted]">{u.comment}</div>
+                        )}
+                      </td>
+                      <td className="px-4 py-2 text-[--k-muted]">
+                        {u.category || <span className="italic">—</span>}
+                      </td>
+                      <td className="px-4 py-2 text-[--k-muted]">
+                        {u.location?.name || <span className="italic">—</span>}
+                      </td>
+                      <td className="px-4 py-2 text-right font-medium tabular-nums">{u.quantity}</td>
+                      <td className="px-4 py-2 text-[12px] text-[--k-muted]">
+                        {u.operatorName || <span className="italic">—</span>}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </CardContent>
       </Card>
+    </div>
+  )
+}
+
+function TabButton({
+  active,
+  onClick,
+  icon: Icon,
+  label,
+  count,
+}: {
+  active: boolean
+  onClick: () => void
+  icon: typeof ClipboardList
+  label: string
+  count: number
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex items-center gap-2 px-3 py-2 text-[13px] font-medium transition border-b-2 -mb-px ${
+        active
+          ? 'border-[--k-primary] text-[--k-primary]'
+          : 'border-transparent text-[--k-muted] hover:text-[--k-text]'
+      }`}
+    >
+      <Icon className="h-4 w-4" />
+      <span>{label}</span>
+      <span
+        className={`rounded-full px-1.5 py-0.5 text-[10px] tabular-nums ${
+          active ? 'bg-[--k-primary]/15 text-[--k-primary]' : 'bg-[--k-surface-2] text-[--k-muted]'
+        }`}
+      >
+        {count}
+      </span>
+    </button>
+  )
+}
+
+function EmptyBlock({ icon: Icon, title, subtitle }: { icon: typeof ClipboardList; title: string; subtitle?: string }) {
+  return (
+    <div className="rounded-xl border border-dashed border-[--k-border] bg-[--k-surface-2]/30 px-3 py-8 text-center">
+      <Icon className="mx-auto mb-2 h-6 w-6 text-[--k-muted]" />
+      <div className="text-[14px] font-medium text-[--k-text]">{title}</div>
+      {subtitle && <p className="mt-1 text-[12px] text-[--k-muted]">{subtitle}</p>}
     </div>
   )
 }
