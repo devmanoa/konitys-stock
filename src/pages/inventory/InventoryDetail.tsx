@@ -7,6 +7,7 @@ import Button from '../../components/ui/Button'
 import { Card, CardContent } from '../../components/ui/Card'
 import api from '../../services/api'
 import { getFullImageUrl } from '../../utils/imageUrl'
+import OperatorAvatar from '../../components/OperatorAvatar'
 import type { ApiResponse, Location } from '../../types'
 import { type Inventory, type InventoryEntry, STATE_LABEL, STATE_BADGE } from './types'
 
@@ -305,8 +306,8 @@ export default function InventoryDetail() {
                             {STATE_LABEL[e.state]}
                           </span>
                         </td>
-                        <td className="px-4 py-2 text-[12px] text-[--k-muted]">
-                          {e.operatorName || <span className="italic">—</span>}
+                        <td className="px-4 py-2">
+                          <OperatorAvatar name={e.operatorName} size="xs" />
                         </td>
                         <td className="px-4 py-2 sm:px-6">
                           <button
@@ -367,8 +368,8 @@ export default function InventoryDetail() {
                         {u.location?.name || <span className="italic">—</span>}
                       </td>
                       <td className="px-4 py-2 text-right font-medium tabular-nums">{u.quantity}</td>
-                      <td className="px-4 py-2 text-[12px] text-[--k-muted]">
-                        {u.operatorName || <span className="italic">—</span>}
+                      <td className="px-4 py-2">
+                        <OperatorAvatar name={u.operatorName} size="xs" />
                       </td>
                     </tr>
                   ))}
