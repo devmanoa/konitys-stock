@@ -6,6 +6,7 @@ import {
   PackageX, ImagePlus, Loader2, Trash2, CheckCircle, AlertTriangle,
 } from 'lucide-react'
 import api from '../services/api'
+import QrScannerModal, { type ParsedQr } from '../components/QrScannerModal'
 import type { ApiResponse, Product, Location, Site } from '../types'
 
 type State = 'OK' | 'TO_CHECK' | 'DAMAGED' | 'OUT_OF_SERVICE'
@@ -255,8 +256,55 @@ function ZoneEntry({
   const qc = useQueryClient()
   const [search, setSearch] = useState('')
   const [picked, setPicked] = useState<Product | null>(null)
+  const [prefilledSerial, setPrefilledSerial] = useState<string | null>(null)
   const [unknownOpen, setUnknownOpen] = useState(false)
   const [finishOpen, setFinishOpen] = useState(false)
+  const [scannerOpen, setScannerOpen] = useState(false)
+  const [scanError, setScanError] = useState<string | null>(null)
+  const [scanLoading, setScanLoading] = useState(false)
+
+  const handleScan = async (parsed: ParsedQr) => {
+    setScannerOpen(false)
+    setScanError(null)
+    if (parsed.kind === 'unknown') {
+      setScanError(`QR non reconnu : ${parsed.raw.slice(0, 60)}`)
+      return
+    }
+    setScanLoading(true)
+    try {
+      if (parsed.kind === 'product') {
+        const res = await api.get<ApiResponse<Product>>(`/products/${parsed.id}`)
+        const product = res.data?.data
+        if (!product) {
+          setScanError('Produit introuvable.')
+          return
+        }
+        setPrefilledSerial(null)
+        setPicked(product)
+        return
+      }
+      // serial
+      const res = await api.get<ApiResponse<any>>(`/serial-items/${parsed.id}`)
+      const item = res.data?.data
+      if (!item) {
+        setScanError('Numéro de série introuvable.')
+        return
+      }
+      const prodRes = await api.get<ApiResponse<Product>>(`/products/${item.productId}`)
+      const product = prodRes.data?.data
+      if (!product) {
+        setScanError('Produit lié au numéro de série introuvable.')
+        return
+      }
+      setPrefilledSerial(item.serialNumber || null)
+      setPicked(product)
+    } catch (err) {
+      console.error('Scan lookup failed:', err)
+      setScanError('Erreur lors de la récupération du produit scanné.')
+    } finally {
+      setScanLoading(false)
+    }
+  }
 
   const { data: inv } = useQuery({
     queryKey: ['inventory', inventoryId],
@@ -349,11 +397,15 @@ function ZoneEntry({
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
-              onClick={() => alert('Le scan caméra arrive bientôt — pour l\'instant utilisez la recherche.')}
-              className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-[13px] font-medium text-slate-700 hover:bg-slate-50"
+              onClick={() => {
+                setScanError(null)
+                setScannerOpen(true)
+              }}
+              disabled={scanLoading}
+              className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-[13px] font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
             >
               <Camera className="h-4 w-4" />
-              Scanner
+              {scanLoading ? 'Chargement…' : 'Scanner'}
             </button>
             <button
               type="button"
@@ -364,6 +416,16 @@ function ZoneEntry({
               Produit non trouvé
             </button>
           </div>
+
+          {scanError && (
+            <div className="flex items-start gap-2 rounded-xl bg-rose-50 border border-rose-200 px-3 py-2 text-[12px] text-rose-700">
+              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              <span className="flex-1">{scanError}</span>
+              <button onClick={() => setScanError(null)} className="text-rose-500">
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
 
           {/* Search results */}
           {debouncedQuery && (
@@ -419,9 +481,15 @@ function ZoneEntry({
           product={picked}
           inventoryId={inventoryId}
           locationId={locationId}
-          onCancel={() => setPicked(null)}
+          initialSerial={prefilledSerial}
+          source={prefilledSerial ? 'SCAN' : 'SEARCH'}
+          onCancel={() => {
+            setPicked(null)
+            setPrefilledSerial(null)
+          }}
           onSaved={() => {
             setPicked(null)
+            setPrefilledSerial(null)
             setSearch('')
             refetchEntries()
             qc.invalidateQueries({ queryKey: ['inventory', inventoryId] })
@@ -520,6 +588,15 @@ function ZoneEntry({
           }}
         />
       )}
+
+      {/* QR scanner modal */}
+      <QrScannerModal
+        isOpen={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+        onScan={handleScan}
+        title="Scanner un produit"
+        hint="Pointez la caméra vers le QR du produit ou du numéro de série"
+      />
     </Shell>
   )
 }
@@ -531,12 +608,16 @@ function EntryForm({
   product,
   inventoryId,
   locationId,
+  initialSerial,
+  source = 'SEARCH',
   onCancel,
   onSaved,
 }: {
   product: Product
   inventoryId: string
   locationId: string
+  initialSerial?: string | null
+  source?: 'SCAN' | 'SEARCH' | 'CATEGORY' | 'UNKNOWN'
   onCancel: () => void
   onSaved: () => void
 }) {
@@ -546,7 +627,7 @@ function EntryForm({
     : ['OK', 'TO_CHECK', 'DAMAGED']
 
   const [quantity, setQuantity] = useState(1)
-  const [serial, setSerial] = useState('')
+  const [serial, setSerial] = useState(initialSerial || '')
   const [serialUnknown, setSerialUnknown] = useState(false)
   const [state, setState] = useState<State>('OK')
   const [comment, setComment] = useState('')
@@ -644,7 +725,7 @@ function EntryForm({
         state,
         comment: comment || (serialUnknown ? 'Numéro de série illisible / inconnu' : ''),
         photoUrl,
-        source: 'SEARCH',
+        source,
       })
       return
     }
