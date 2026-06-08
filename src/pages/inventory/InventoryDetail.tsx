@@ -298,7 +298,7 @@ export default function InventoryDetail() {
                               {e.serialNumber || <span className="italic text-[--k-muted]">inconnu</span>}
                             </span>
                           ) : (
-                            <span className="font-medium tabular-nums">Qté {e.quantity}</span>
+                            <span className="font-medium tabular-nums">{e.quantity}</span>
                           )}
                         </td>
                         <td className="px-4 py-2">

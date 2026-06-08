@@ -311,7 +311,7 @@ export default function InventoryZone() {
                         {e.product.hasSerialNumber ? (
                           <span className="font-mono truncate">{e.serialNumber || '— inconnu —'}</span>
                         ) : (
-                          <span>Qté {e.quantity}</span>
+                          <span>{e.quantity}</span>
                         )}
                         <span className={`inline-flex rounded-full px-1.5 py-0.5 font-medium ${STATE_BADGE[e.state]}`}>
                           {STATE_LABEL[e.state]}
