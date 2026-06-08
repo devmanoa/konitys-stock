@@ -23,7 +23,9 @@ import BuildableBornes from './pages/BuildableBornes'
 import AssemblyTypeEdit from './pages/AssemblyTypeEdit'
 import StockAlerts from './pages/StockAlerts'
 import Scan from './pages/Scan'
-import Inventory from './pages/Inventory'
+import InventoryList from './pages/inventory/InventoryList'
+import InventoryDetail from './pages/inventory/InventoryDetail'
+import InventoryZone from './pages/inventory/InventoryZone'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -50,14 +52,6 @@ function App() {
                 }
               />
               <Route
-                path="/inventory"
-                element={
-                  <ProtectedRoute>
-                    <Inventory />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
                 path="/"
                 element={
                   <ProtectedRoute>
@@ -75,6 +69,9 @@ function App() {
                 <Route path="stocks" element={<Stocks />} />
                 <Route path="stocks/alerts" element={<StockAlerts />} />
                 <Route path="movements" element={<Movements />} />
+                <Route path="inventory" element={<InventoryList />} />
+                <Route path="inventory/:id" element={<InventoryDetail />} />
+                <Route path="inventory/:id/zone/:locationId" element={<InventoryZone />} />
                 <Route path="sites" element={<Sites />} />
                 <Route path="packs" element={<Packs />} />
                 <Route path="buildable-bornes" element={<BuildableBornes />} />
