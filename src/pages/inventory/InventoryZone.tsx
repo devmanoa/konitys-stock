@@ -12,6 +12,7 @@ import Modal from '../../components/ui/Modal'
 import Input from '../../components/ui/Input'
 import Select from '../../components/ui/Select'
 import api from '../../services/api'
+import { getFullImageUrl } from '../../utils/imageUrl'
 import QrScannerModal, { type ParsedQr } from '../../components/QrScannerModal'
 import type { ApiResponse, Product, Location } from '../../types'
 import { type Inventory, type InventoryEntry, type ItemState, STATE_LABEL, STATE_BADGE } from './types'
@@ -224,7 +225,7 @@ export default function InventoryZone() {
                               className="flex w-full items-center gap-3 px-3 py-2.5 text-left hover:bg-[--k-surface-2]/30"
                             >
                               {p.imageUrl ? (
-                                <img src={p.imageUrl} alt="" className="h-10 w-10 rounded-md object-cover" />
+                                <img src={getFullImageUrl(p.imageUrl)} alt="" className="h-10 w-10 rounded-md object-cover" />
                               ) : (
                                 <div className="flex h-10 w-10 items-center justify-center rounded-md bg-[--k-surface-2] text-[--k-muted]">
                                   <ClipboardList className="h-4 w-4" />
@@ -506,7 +507,7 @@ function EntryForm({
       <CardContent className="space-y-4">
         <div className="flex items-start gap-3">
           {product.imageUrl ? (
-            <img src={product.imageUrl} alt="" className="h-14 w-14 rounded-lg object-cover" />
+            <img src={getFullImageUrl(product.imageUrl)} alt="" className="h-14 w-14 rounded-lg object-cover" />
           ) : (
             <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-[--k-surface-2] text-[--k-muted]">
               <ClipboardList className="h-5 w-5" />
