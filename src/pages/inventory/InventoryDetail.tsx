@@ -1,7 +1,10 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, MapPin, ChevronRight, Loader2, ClipboardList, PackageX, Trash2 } from 'lucide-react'
+import {
+  ArrowLeft, MapPin, ChevronRight, Loader2, ClipboardList, PackageX, Trash2,
+  Lock, LockOpen, GitCompareArrows, AlertTriangle,
+} from 'lucide-react'
 import { PageHeader } from '../../components/PageHeader'
 import Button from '../../components/ui/Button'
 import { Card, CardContent } from '../../components/ui/Card'
@@ -88,6 +91,28 @@ export default function InventoryDetail() {
     },
   })
 
+  const closeMutation = useMutation({
+    mutationFn: async () => {
+      await api.post(`/inventories/${id}/close`)
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['inventory', id] })
+      qc.invalidateQueries({ queryKey: ['inventories'] })
+    },
+  })
+
+  const reopenMutation = useMutation({
+    mutationFn: async () => {
+      await api.post(`/inventories/${id}/reopen`)
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['inventory', id] })
+      qc.invalidateQueries({ queryKey: ['inventories'] })
+    },
+  })
+
+  const isClosed = inv?.status === 'CLOSED'
+
   const currentList = useMemo(() => {
     if (!locations) return []
     return locations.filter((l: any) => (l.parentId || null) === parentId)
@@ -116,14 +141,63 @@ export default function InventoryDetail() {
     <div className="space-y-4 md:space-y-6">
       <PageHeader
         title={inv.name}
-        subtitle={inv.site?.name ? `Site : ${inv.site.name}` : 'Choisissez la zone à inventorier'}
+        subtitle={
+          isClosed
+            ? `Clôturé ${inv.closedAt ? `le ${new Date(inv.closedAt).toLocaleDateString('fr-FR')}` : ''}${inv.closedByName ? ` par ${inv.closedByName}` : ''}`
+            : inv.site?.name
+              ? `Site : ${inv.site.name}`
+              : 'Choisissez la zone à inventorier'
+        }
       >
         <Button variant="secondary" size="sm" onClick={() => navigate('/inventory')}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Tous les inventaires
         </Button>
+        {isClosed && (
+          <Button variant="secondary" size="sm" onClick={() => navigate(`/inventory/${id}/compare`)}>
+            <GitCompareArrows className="mr-2 h-4 w-4" />
+            Comparer
+          </Button>
+        )}
+        {isClosed ? (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => reopenMutation.mutate()}
+            disabled={reopenMutation.isPending}
+          >
+            <LockOpen className="mr-2 h-4 w-4" />
+            Rouvrir
+          </Button>
+        ) : (
+          <Button
+            size="sm"
+            onClick={() => {
+              if (confirm(`Clôturer l'inventaire « ${inv.name} » ? Plus aucune saisie ne pourra être ajoutée.`)) {
+                closeMutation.mutate()
+              }
+            }}
+            disabled={closeMutation.isPending}
+          >
+            <Lock className="mr-2 h-4 w-4" />
+            Clôturer
+          </Button>
+        )}
       </PageHeader>
 
+      {isClosed && (
+        <div className="flex items-start gap-2 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-[13px] text-amber-800">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <div className="flex-1">
+            <div className="font-medium">Inventaire clôturé</div>
+            <p className="mt-0.5 text-[12px]">
+              Plus aucune saisie ne peut être ajoutée ni modifiée. Utilisez « Comparer » pour voir les écarts avec le stock théorique.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {!isClosed && (
       <Card>
         <CardContent>
           <div className="mb-3 flex items-center justify-between">
@@ -214,6 +288,7 @@ export default function InventoryDetail() {
           )}
         </CardContent>
       </Card>
+      )}
 
       <Card>
         <CardContent>

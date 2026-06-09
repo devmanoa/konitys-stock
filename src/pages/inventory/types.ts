@@ -2,12 +2,19 @@ import type { Site } from '../../types'
 
 export type ItemState = 'OK' | 'TO_CHECK' | 'DAMAGED' | 'OUT_OF_SERVICE'
 
+export type InventoryStatus = 'DRAFT' | 'CLOSED'
+
 export interface Inventory {
   id: string
   name: string
   siteId: string | null
   site?: Site | null
+  status: InventoryStatus
   startedAt: string
+  closedAt: string | null
+  closedByName: string | null
+  correctionsApplied: boolean
+  correctionsAppliedAt: string | null
   _count?: { entries: number; unknowns: number }
 }
 

@@ -26,6 +26,7 @@ import Scan from './pages/Scan'
 import InventoryList from './pages/inventory/InventoryList'
 import InventoryDetail from './pages/inventory/InventoryDetail'
 import InventoryZone from './pages/inventory/InventoryZone'
+import InventoryCompare from './pages/inventory/InventoryCompare'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -71,6 +72,7 @@ function App() {
                 <Route path="movements" element={<Movements />} />
                 <Route path="inventory" element={<InventoryList />} />
                 <Route path="inventory/:id" element={<InventoryDetail />} />
+                <Route path="inventory/:id/compare" element={<InventoryCompare />} />
                 <Route path="inventory/:id/zone/:locationId" element={<InventoryZone />} />
                 <Route path="sites" element={<Sites />} />
                 <Route path="packs" element={<Packs />} />

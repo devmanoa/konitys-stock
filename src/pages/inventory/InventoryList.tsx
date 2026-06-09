@@ -55,6 +55,7 @@ export default function InventoryList() {
                 <thead>
                   <tr className="border-b border-[--k-border] text-left text-xs font-medium uppercase text-[--k-muted]">
                     <th className="px-4 py-3">Nom</th>
+                    <th className="px-4 py-3">Statut</th>
                     <th className="px-4 py-3">Site</th>
                     <th className="px-4 py-3 text-right">Saisies</th>
                     <th className="px-4 py-3 text-right">Non trouvés</th>
@@ -76,6 +77,17 @@ export default function InventoryList() {
                           </div>
                           <span className="font-medium text-[--k-text]">{inv.name}</span>
                         </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        {inv.status === 'CLOSED' ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-slate-200 px-2 py-0.5 text-[11px] font-medium text-slate-700">
+                            Clôturé
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
+                            En cours
+                          </span>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-[--k-muted]">
                         {inv.site?.name || <span className="italic">—</span>}
