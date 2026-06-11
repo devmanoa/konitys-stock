@@ -428,16 +428,18 @@ function EntryForm({
 
   useEffect(() => {
     if (hasSerial) return
+    let cancelled = false
     ;(async () => {
       try {
-        const res = await api.get<ApiResponse<InventoryEntry[]>>(
-          `/inventories/${inventoryId}/entries?locationId=${locationId}&limit=200`,
+        const res = await api.get<ApiResponse<{ id: string; quantity: number } | null>>(
+          `/inventories/${inventoryId}/find-quantitative?productId=${product.id}&locationId=${locationId}`,
         )
-        const list = res.data?.data || []
-        const found = list.find((e) => e.productId === product.id)
+        if (cancelled) return
+        const found = res.data?.data
         if (found) setDupQuantitative({ id: found.id, quantity: found.quantity })
       } catch { /* ignore */ }
     })()
+    return () => { cancelled = true }
   }, [hasSerial, inventoryId, locationId, product.id])
 
   const uploadPhoto = async (file: File) => {

@@ -1,10 +1,10 @@
+import { useCallback, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
 
 export interface DirectoryUser {
   id: string;
   keycloakId: string;
-  email: string | null;
   firstName: string | null;
   lastName: string | null;
   fullName: string | null;
@@ -21,8 +21,12 @@ interface ListUsersResponse {
  * at login via /users/sync). Cached for 5 minutes so repeated avatar lookups
  * cost nothing.
  *
- * Returns helpers to look users up by name (case-insensitive) or by
- * keycloak id. Each helper returns the photo URL or null.
+ * Two indexes are built once when the query data lands:
+ *   - byName     fullName.toLowerCase().trim() -> user (O(1) for OperatorAvatar)
+ *   - byKid      keycloakId -> user
+ *
+ * Without these, rendering a table with N rows did N linear scans of the
+ * directory per render.
  */
 export function useUsersDirectory() {
   const query = useQuery({
@@ -35,38 +39,50 @@ export function useUsersDirectory() {
   });
 
   const gateway = import.meta.env.VITE_GATEWAY_URL as string | undefined;
-  const photoUrl = (photoNom: string | null | undefined): string | null => {
-    if (!photoNom || !gateway) return null;
-    return `${gateway}/uploads/contacts/${photoNom}`;
-  };
 
-  // Debug: dump the directory once when it lands so we can see what fullName
-  // and photoNom values the server stored for each user.
-  if (query.data && !(globalThis as any).__usersDirectoryLogged) {
-    // eslint-disable-next-line no-console
-    console.log('[UsersDirectory] users =', query.data);
-    (globalThis as any).__usersDirectoryLogged = true;
-  }
+  const photoUrl = useCallback(
+    (photoNom: string | null | undefined): string | null => {
+      if (!photoNom || !gateway) return null;
+      return `${gateway}/uploads/contacts/${photoNom}`;
+    },
+    [gateway],
+  );
 
-  const findByName = (name?: string | null): DirectoryUser | undefined => {
-    if (!name) return undefined;
-    const trimmed = name.trim().toLowerCase();
-    if (!trimmed) return undefined;
-    const match = query.data?.find((u) => (u.fullName || '').toLowerCase() === trimmed);
-    // eslint-disable-next-line no-console
-    if (query.data && !match) console.log('[UsersDirectory] no match for', JSON.stringify(name));
-    return match;
-  };
+  const { byName, byKid } = useMemo(() => {
+    const byName = new Map<string, DirectoryUser>();
+    const byKid = new Map<string, DirectoryUser>();
+    for (const u of query.data || []) {
+      if (u.fullName) byName.set(u.fullName.trim().toLowerCase(), u);
+      if (u.keycloakId) byKid.set(u.keycloakId, u);
+    }
+    return { byName, byKid };
+  }, [query.data]);
 
-  const findByKeycloakId = (kid?: string | null): DirectoryUser | undefined => {
-    if (!kid) return undefined;
-    return query.data?.find((u) => u.keycloakId === kid);
-  };
+  const findByName = useCallback(
+    (name?: string | null): DirectoryUser | undefined => {
+      if (!name) return undefined;
+      const key = name.trim().toLowerCase();
+      if (!key) return undefined;
+      return byName.get(key);
+    },
+    [byName],
+  );
 
-  const pictureFor = (name?: string | null): string | null => {
-    const u = findByName(name);
-    return photoUrl(u?.photoNom);
-  };
+  const findByKeycloakId = useCallback(
+    (kid?: string | null): DirectoryUser | undefined => {
+      if (!kid) return undefined;
+      return byKid.get(kid);
+    },
+    [byKid],
+  );
+
+  const pictureFor = useCallback(
+    (name?: string | null): string | null => {
+      const u = findByName(name);
+      return photoUrl(u?.photoNom);
+    },
+    [findByName, photoUrl],
+  );
 
   return {
     users: query.data || [],

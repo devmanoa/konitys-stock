@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { memo, useState } from 'react'
 import { getOperatorInitials, getOperatorColor } from '../utils/operatorAvatar'
 import { useUsersDirectory } from '../hooks/useUsersDirectory'
 import { cn } from './ui/cn'
@@ -20,7 +20,7 @@ const SIZE = {
   md: { circle: 'h-6 w-6 text-[11px]', text: 'text-sm' },
 }
 
-export default function OperatorAvatar({
+function OperatorAvatarImpl({
   name,
   showName = true,
   size = 'sm',
@@ -65,3 +65,8 @@ export default function OperatorAvatar({
     </span>
   )
 }
+
+// Wrap in memo: a table of 100 saisies renders OperatorAvatar 100 times,
+// most with identical props across re-renders.
+const OperatorAvatar = memo(OperatorAvatarImpl)
+export default OperatorAvatar

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, useCallback, type ReactNode } from 'react';
 import keycloak from '../config/keycloak';
 import api from '../services/api';
 
@@ -30,34 +30,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  // Tracks the last photoNom we POSTed to /users/sync. Avoids spamming the
+  // endpoint every 60s when the token refreshes but nothing has changed.
+  const lastSyncedPhotoRef = useRef<string | null | undefined>(undefined);
+  // Guards against double Keycloak.init() (React StrictMode mounts twice)
+  // and lets us clear the refresh interval on unmount.
+  const initStartedRef = useRef(false);
+  const refreshIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Fetch the gateway profile to retrieve photo_nom (and any other CRM data
   // not present in the JWT). Fails silently — the avatar will fall back to
   // initials if the gateway is unreachable.
+  // NB: every log here gates on import.meta.env.DEV so we don't leak emails,
+  // tokens, or auth response bodies in prod browser consoles (shared / remote
+  // debugging contexts).
   const fetchProfile = useCallback(async (token: string): Promise<{ photoNom?: string } | null> => {
     const gateway = import.meta.env.VITE_GATEWAY_URL;
     if (!gateway) {
-      // eslint-disable-next-line no-console
-      console.warn('[Auth] VITE_GATEWAY_URL is not set.');
+      if (import.meta.env.DEV) console.warn('[Auth] VITE_GATEWAY_URL is not set.');
       return null;
     }
     const url = `${gateway}/api/users/me`;
-    // eslint-disable-next-line no-console
-    console.log('[Auth] GET', url);
     try {
       const res = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      // eslint-disable-next-line no-console
-      console.log('[Auth] /api/users/me status:', res.status);
       if (!res.ok) {
-        // eslint-disable-next-line no-console
-        console.warn('[Auth] /api/users/me failed:', await res.text().catch(() => '(no body)'));
+        if (import.meta.env.DEV) {
+          // eslint-disable-next-line no-console
+          console.warn('[Auth] /api/users/me failed:', res.status);
+        }
         return null;
       }
       const json = await res.json();
-      // eslint-disable-next-line no-console
-      console.log('[Auth] /api/users/me response:', json);
       // Try multiple shapes: flat object, { data: {...} }, { user: {...} }
       const profile = json?.data ?? json?.user ?? json;
       const photoNom =
@@ -68,8 +73,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         undefined;
       return { photoNom };
     } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error('[Auth] /api/users/me threw:', err);
+      if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
+        console.error('[Auth] /api/users/me threw:', err);
+      }
       return null;
     }
   }, []);
@@ -101,16 +108,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser({ ...baseUser, picture: pictureUrl });
       }
     }
-    // Fire-and-forget upsert into the local users table.
-    try {
-      await api.post('/users/sync', { photoNom: photoNom ?? null });
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.warn('[Auth] /users/sync failed:', err);
+    // Fire-and-forget upsert into the local users table — only when the
+    // photoNom actually changed, so the 60s token refresh interval doesn't
+    // hammer /users/sync forever.
+    const nextPhoto = photoNom ?? null;
+    if (nextPhoto !== lastSyncedPhotoRef.current) {
+      lastSyncedPhotoRef.current = nextPhoto;
+      try {
+        await api.post('/users/sync', { photoNom: nextPhoto });
+      } catch (err) {
+        if (import.meta.env.DEV) {
+          // eslint-disable-next-line no-console
+          console.warn('[Auth] /users/sync failed:', err);
+        }
+      }
     }
   }, [fetchProfile]);
 
   useEffect(() => {
+    // React StrictMode mounts the provider twice in dev. Calling keycloak.init
+    // a second time crashes the lib ("can only be called once"), so we guard.
+    if (initStartedRef.current) return;
+    initStartedRef.current = true;
+
     const initKeycloak = async () => {
       try {
         const authenticated = await keycloak.init({
@@ -123,8 +143,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (authenticated) {
           updateUserInfo();
 
-          // Setup token refresh
-          setInterval(async () => {
+          // Token refresh — keep a handle so we can clear it on unmount.
+          refreshIntervalRef.current = setInterval(async () => {
             if (keycloak.authenticated) {
               try {
                 const refreshed = await keycloak.updateToken(70);
@@ -132,14 +152,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                   updateUserInfo();
                 }
               } catch (error) {
-                console.error('Token refresh failed:', error);
+                if (import.meta.env.DEV) {
+                  // eslint-disable-next-line no-console
+                  console.error('Token refresh failed:', error);
+                }
                 keycloak.logout();
               }
             }
           }, 60000);
         }
       } catch (error) {
-        console.error('Keycloak initialization failed:', error);
+        if (import.meta.env.DEV) {
+          // eslint-disable-next-line no-console
+          console.error('Keycloak initialization failed:', error);
+        }
         setIsAuthenticated(false);
       } finally {
         setIsLoading(false);
@@ -147,6 +173,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     initKeycloak();
+
+    return () => {
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current);
+        refreshIntervalRef.current = null;
+      }
+    };
   }, [updateUserInfo]);
 
   const login = useCallback(() => {

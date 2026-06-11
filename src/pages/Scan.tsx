@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowDownCircle, ArrowUpCircle, ArrowLeftRight, X } from 'lucide-react'
+import { ArrowDownCircle, ArrowUpCircle, ArrowLeftRight, X, Loader2 } from 'lucide-react'
+import api from '../services/api'
 import QrScannerModal, { type ParsedQr } from '../components/QrScannerModal'
+import type { ApiResponse } from '../types'
 
 /**
  * Mobile-first scanner for stock movements.
@@ -43,17 +45,47 @@ export default function Scan() {
   const navigate = useNavigate()
   const [action, setAction] = useState<Action | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [resolving, setResolving] = useState(false)
 
-  const handleScan = (parsed: ParsedQr) => {
+  const handleScan = async (parsed: ParsedQr) => {
     if (!action) return
     if (parsed.kind === 'unknown') {
       setError(`QR non reconnu : ${parsed.raw.slice(0, 60)}`)
       setAction(null)
       return
     }
+    let productId = parsed.kind === 'product' ? parsed.id : null
+    // For a serial QR, resolve the underlying product so MovementForm gets
+    // a preselectedProductId — Movements.tsx ignores scanSerialId alone.
+    if (parsed.kind === 'serial') {
+      setResolving(true)
+      try {
+        const res = await api.get<ApiResponse<{ productId: string }>>(
+          `/serial-items/${parsed.id}`,
+        )
+        productId = res.data?.data?.productId ?? null
+        if (!productId) {
+          setError("Numéro de série introuvable.")
+          setAction(null)
+          return
+        }
+      } catch {
+        setError("Erreur lors de la récupération du numéro de série.")
+        setAction(null)
+        return
+      } finally {
+        setResolving(false)
+      }
+    }
+    if (!productId) {
+      setError(`QR non reconnu : ${parsed.raw.slice(0, 60)}`)
+      setAction(null)
+      return
+    }
     const params = new URLSearchParams({
       scanAction: action,
-      ...(parsed.kind === 'product' ? { scanProductId: parsed.id } : { scanSerialId: parsed.id }),
+      scanProductId: productId,
+      ...(parsed.kind === 'serial' ? { scanSerialId: parsed.id } : {}),
     })
     navigate(`/movements?${params.toString()}`)
   }
@@ -108,8 +140,17 @@ export default function Scan() {
           onClose={() => setAction(null)}
           onScan={handleScan}
           title={action ? ACTIONS.find((a) => a.key === action)!.label : 'Scanner'}
-          hint="Pointez la caméra vers le QR code du produit"
+          hint="Pointez la caméra vers le QR code du produit ou du numéro de série"
         />
+
+        {resolving && (
+          <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/40">
+            <div className="rounded-xl bg-white px-4 py-3 shadow-lg flex items-center gap-2 text-slate-700">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span className="text-[13px]">Résolution du QR…</span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

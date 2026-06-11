@@ -19,13 +19,21 @@ export interface ParsedQr {
   raw: string
 }
 
+// Strict UUID v4-ish: 8-4-4-4-12 hex chars. The previous `[0-9a-f-]{8,}`
+// was too lax — it matched query params or random ids accidentally
+// shaped like an UUID and gave us bogus productIds.
+const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i
+const STRICT_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 export function parseQr(payload: string): ParsedQr {
+  // Strip any query string or fragment before matching paths.
   const raw = payload.trim()
-  const productMatch = raw.match(/\/products\/([0-9a-f-]{8,})/i)
-  if (productMatch) return { kind: 'product', id: productMatch[1], raw }
-  const serialMatch = raw.match(/\/serial(?:-items)?\/([0-9a-f-]{8,})/i)
-  if (serialMatch) return { kind: 'serial', id: serialMatch[1], raw }
-  if (/^[0-9a-f-]{8,}$/i.test(raw)) return { kind: 'product', id: raw, raw }
+  const path = raw.split(/[?#]/, 1)[0] ?? raw
+  const productMatch = path.match(new RegExp(`/products/(${UUID_RE.source})`, 'i'))
+  if (productMatch) return { kind: 'product', id: productMatch[1].toLowerCase(), raw }
+  const serialMatch = path.match(new RegExp(`/serial(?:-items)?/(${UUID_RE.source})`, 'i'))
+  if (serialMatch) return { kind: 'serial', id: serialMatch[1].toLowerCase(), raw }
+  if (STRICT_UUID_RE.test(raw)) return { kind: 'product', id: raw.toLowerCase(), raw }
   return { kind: 'unknown', id: '', raw }
 }
 
@@ -46,6 +54,13 @@ export default function QrScannerModal({ isOpen, onClose, onScan, title = 'Scann
   const scannerRef = useRef<any>(null)
   const [scanning, setScanning] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Stable ref to the latest onScan so the camera isn't torn down and rebuilt
+  // every time the parent re-renders (which used to cause video flicker).
+  const onScanRef = useRef(onScan)
+  useEffect(() => {
+    onScanRef.current = onScan
+  }, [onScan])
 
   useEffect(() => {
     if (!isOpen) return
@@ -70,7 +85,7 @@ export default function QrScannerModal({ isOpen, onClose, onScan, title = 'Scann
               .catch(() => {})
               .finally(() => {
                 if (!active) return
-                onScan(parsed)
+                onScanRef.current(parsed)
               })
           },
           () => {
@@ -79,7 +94,10 @@ export default function QrScannerModal({ isOpen, onClose, onScan, title = 'Scann
         )
       } catch (err: any) {
         if (!active) return
-        console.error('Camera start failed:', err)
+        if (import.meta.env.DEV) {
+          // eslint-disable-next-line no-console
+          console.error('Camera start failed:', err)
+        }
         setError(err?.message || "Impossible d'accéder à la caméra")
         setScanning(false)
       }
@@ -95,7 +113,7 @@ export default function QrScannerModal({ isOpen, onClose, onScan, title = 'Scann
         scannerRef.current = null
       }
     }
-  }, [isOpen, onScan])
+  }, [isOpen])
 
   if (!isOpen) return null
 
