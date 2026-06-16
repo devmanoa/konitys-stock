@@ -335,7 +335,7 @@ export default function Settings() {
                     {assemblyTypesData.map((assemblyType) => {
                       const totals = summarizeAssemblyTypeItems(assemblyType.items)
                       return (
-                      <tr key={assemblyType.id} className="border-t border-[--k-border] hover:bg-[--k-surface-2]/30 transition-colors">
+                      <tr key={assemblyType.id} className="border-t border-[--k-border] row-hover transition-colors">
                         <td className="px-4 py-1.5 font-medium text-[--k-text]">
                           {assemblyType.name}
                         </td>
@@ -599,7 +599,7 @@ export default function Settings() {
                   </thead>
                   <tbody>
                     {(assembliesData ?? []).map((assembly) => (
-                      <tr key={assembly.id} className="border-t border-[--k-border] hover:bg-[--k-surface-2]/30 transition-colors">
+                      <tr key={assembly.id} className="border-t border-[--k-border] row-hover transition-colors">
                         <td className="px-4 py-1.5 font-medium text-[--k-text]">
                           {assembly.name}
                         </td>

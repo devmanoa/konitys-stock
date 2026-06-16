@@ -561,7 +561,7 @@ export default function Orders() {
                       <tr
                         key={order.id}
                         onClick={() => navigate(`/orders/${order.id}`)}
-                        className="border-b border-[--k-border] cursor-pointer hover:bg-[--k-surface-2]/30 transition-colors"
+                        className="border-b border-[--k-border] cursor-pointer row-hover transition-colors"
                       >
                         <td className="px-4 py-1.5">
                           <span className="font-mono text-xs font-medium text-[--k-primary]">

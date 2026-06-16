@@ -264,7 +264,7 @@ export default function Packs() {
                   </thead>
                   <tbody>
                     {filteredPacks.map((pack) => (
-                      <tr key={pack.id} className="border-t border-[--k-border] hover:bg-[--k-surface-2]/30 transition-colors">
+                      <tr key={pack.id} className="border-t border-[--k-border] row-hover transition-colors">
                         <td className="px-4 py-1.5">
                           <div className="font-medium text-[--k-text]">
                             {pack.name}

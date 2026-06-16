@@ -441,7 +441,7 @@ export default function Movements() {
                   <tr
                     key={movement.id}
                     onClick={() => setSelectedMovement(movement)}
-                    className="border-b border-[--k-border] hover:bg-[--k-surface-2]/30 transition-colors cursor-pointer"
+                    className="border-b border-[--k-border] row-hover transition-colors cursor-pointer"
                   >
                     <td className="px-4 py-1.5">
                       <div className="flex flex-col">

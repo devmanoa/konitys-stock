@@ -706,7 +706,7 @@ export default function Stocks() {
                   {filteredData.map((row) => (
                     <tr
                       key={row.product.id}
-                      className="border-b border-[--k-border] hover:bg-[--k-surface-2]/30 transition-colors"
+                      className="border-b border-[--k-border] row-hover transition-colors"
                     >
                       <td className="sticky left-0 z-10 bg-inherit px-4 py-1.5">
                         <div className="flex items-center gap-3">

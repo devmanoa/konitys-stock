@@ -269,7 +269,7 @@ export default function SerialItemsPanel({ productId }: Props) {
             </thead>
             <tbody>
               {pagedItems.map((it) => (
-                <tr key={it.id} className="border-t border-[--k-border] hover:bg-[--k-surface-2]/30">
+                <tr key={it.id} className="border-t border-[--k-border] row-hover">
                   <td className="px-3 py-1.5 font-mono">
                     {it.serialNumber ? (
                       <span className="text-[--k-text]">{it.serialNumber}</span>

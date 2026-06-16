@@ -296,7 +296,7 @@ export default function Suppliers() {
                 {(data?.data || []).map((supplier) => (
                   <tr
                     key={supplier.id}
-                    className="border-b border-[--k-border] hover:bg-[--k-surface-2]/30 transition-colors"
+                    className="border-b border-[--k-border] row-hover transition-colors"
                   >
                     <td className="px-4 py-1.5">
                       <Link

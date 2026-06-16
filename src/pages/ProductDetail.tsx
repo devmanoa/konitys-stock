@@ -511,7 +511,7 @@ export default function ProductDetail() {
                 </thead>
                 <tbody className="divide-y divide-[--k-border]">
                   {data.productSuppliers.map((ps) => (
-                    <tr key={ps.id} className="hover:bg-[--k-surface-2]/30 transition-colors">
+                    <tr key={ps.id} className="row-hover transition-colors">
                       <td className="py-2 font-medium">
                         <RouterLink
                           to={`/suppliers/${ps.supplier.id}`}
@@ -583,7 +583,7 @@ export default function ProductDetail() {
                       deltaPct = (delta / current) * 100;
                     }
                     return (
-                      <tr key={entry.id} className="border-t border-[--k-border] hover:bg-[--k-surface-2]/30 transition-colors">
+                      <tr key={entry.id} className="border-t border-[--k-border] row-hover transition-colors">
                         <td className="px-4 py-1.5 text-[--k-muted] tabular-nums">
                           {new Date(entry.changedAt).toLocaleDateString('fr-FR')}
                         </td>
@@ -668,7 +668,7 @@ export default function ProductDetail() {
                     const locSite = data.storageLocation?.site || data.storageLocation?.parent?.site;
                     const showLoc = data.storageLocation && locSite?.id === stock.site.id;
                     return (
-                    <tr key={stock.id} className="hover:bg-[--k-surface-2]/30 transition-colors">
+                    <tr key={stock.id} className="row-hover transition-colors">
                       <td className="py-2 font-medium text-[--k-text]">
                         <div className="flex flex-col gap-0.5">
                           <span>{stock.site.name}</span>
@@ -742,7 +742,7 @@ export default function ProductDetail() {
                     <tr
                       key={mvt.id}
                       onClick={() => setSelectedMovement({ ...mvt, product: data } as StockMovement)}
-                      className="hover:bg-[--k-surface-2]/30 transition-colors cursor-pointer"
+                      className="row-hover transition-colors cursor-pointer"
                     >
                       <td className="py-2 text-[--k-muted]">
                         {new Date(mvt.movementDate).toLocaleDateString('fr-FR')}

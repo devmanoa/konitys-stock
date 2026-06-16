@@ -73,7 +73,7 @@ export default function SupplierAnomaliesSection({ supplierId }: Props) {
             </thead>
             <tbody className="divide-y divide-[--k-border]">
               {list.map((a) => (
-                <tr key={a.id} className="hover:bg-[--k-surface-2]/30 transition-colors">
+                <tr key={a.id} className="row-hover transition-colors">
                   <td className="px-2 py-2 text-[--k-muted] tabular-nums whitespace-nowrap">
                     {new Date(a.reportedAt).toLocaleDateString('fr-FR')}
                   </td>

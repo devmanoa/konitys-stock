@@ -441,7 +441,7 @@ export default function Products() {
                 </tr>
               ) : (
                 (data?.data || []).map((product) => (
-                  <tr key={product.id} className="border-t border-[--k-border] hover:bg-[--k-surface-2]/30 transition-colors">
+                  <tr key={product.id} className="border-t border-[--k-border] row-hover transition-colors">
                     <td className="px-4 py-1.5">
                       <div className="flex items-center gap-3">
                         <button

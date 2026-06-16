@@ -9,6 +9,11 @@
   --k-bg: #EBF0FA;
   --k-surface: #FFFFFF;
   --k-surface-2: #E3EAF5;
+  /* Pre-computed surface-2 @ 30% alpha for table row hovers.
+     Tailwind can't combine [--k-surface-2] with /30 (alpha needs RGB, var()
+     doesn't expose channels), so we expose a ready-made rgba token used by
+     the `.row-hover` utility below. */
+  --k-surface-2-30: rgba(227, 234, 245, 0.3);
   --k-border: #D6DFED;
 
   --k-text: #1A1D2B;
@@ -101,6 +106,19 @@ select.input-field {
   opacity: 0.5;
   pointer-events: none;
   height: 0;
+}
+
+/* Table row hover.
+   Targets:
+   - .row-hover applied explicitly on a <tr>
+   - or any <tr> inside .table-hover (apply on the <table> or <tbody> once)
+   We avoid Tailwind's `hover:bg-[--k-surface-2]/30` because alpha on a
+   CSS-var bg isn't supported by Tailwind's JIT — the class was silently
+   generated but produced no visible color. */
+.row-hover:hover,
+.table-hover tbody tr:hover {
+  background-color: var(--k-surface-2-30);
+  cursor: pointer;
 }
 
 .tiptap {

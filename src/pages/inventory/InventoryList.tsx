@@ -68,7 +68,7 @@ export default function InventoryList() {
                     <tr
                       key={inv.id}
                       onClick={() => navigate(`/inventory/${inv.id}`)}
-                      className="cursor-pointer hover:bg-[--k-surface-2]/30 transition-colors"
+                      className="cursor-pointer row-hover transition-colors"
                     >
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2.5">

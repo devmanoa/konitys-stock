@@ -332,7 +332,7 @@ export default function InventoryDetail() {
                   </thead>
                   <tbody className="divide-y divide-[--k-border]">
                     {entries.map((e) => (
-                      <tr key={e.id} className="hover:bg-[--k-surface-2]/30">
+                      <tr key={e.id} className="row-hover">
                         <td className="px-4 py-2 sm:px-6 font-mono text-[11px] text-[--k-muted] tabular-nums">
                           {new Date(e.createdAt).toLocaleString('fr-FR', {
                             day: '2-digit',
@@ -423,7 +423,7 @@ export default function InventoryDetail() {
                 </thead>
                 <tbody className="divide-y divide-[--k-border]">
                   {unknowns.map((u) => (
-                    <tr key={u.id} className="hover:bg-[--k-surface-2]/30">
+                    <tr key={u.id} className="row-hover">
                       <td className="px-4 py-2 sm:px-6 font-mono text-[11px] text-[--k-muted] tabular-nums">
                         {new Date(u.createdAt).toLocaleString('fr-FR', {
                           day: '2-digit',

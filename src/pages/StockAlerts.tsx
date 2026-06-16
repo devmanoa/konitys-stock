@@ -323,7 +323,7 @@ export default function StockAlerts() {
                     <tr
                       key={a.id}
                       onClick={() => navigate(`/products/${a.id}`)}
-                      className="cursor-pointer hover:bg-[--k-surface-2]/30 transition-colors"
+                      className="cursor-pointer row-hover transition-colors"
                     >
                       <td className="px-3 py-2 w-12">
                         <img

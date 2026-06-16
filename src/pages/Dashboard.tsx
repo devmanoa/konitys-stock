@@ -256,7 +256,7 @@ export default function Dashboard() {
                 {pendingOrders.slice(0, 5).map((order) => (
                   <tr
                     key={order.id}
-                    className="border-t border-[--k-border] hover:bg-[--k-surface-2]/30 transition-colors cursor-pointer"
+                    className="border-t border-[--k-border] row-hover transition-colors cursor-pointer"
                     onClick={() => navigate(`/orders/${order.id}`)}
                   >
                     <td className="px-4 py-2 font-medium tabular-nums text-[--k-primary]">
@@ -338,7 +338,7 @@ export default function Dashboard() {
                 const level = alert.supplyRisk === 'HIGH' ? 'critical' : 'low'
                 const typeName = alert.assemblyType?.name || alert.assembly
                 return (
-                  <div key={alert.id} className="px-4 py-2.5 cursor-pointer hover:bg-[--k-surface-2]/30 transition-colors" onClick={() => navigate(`/products/${alert.id}`)}>
+                  <div key={alert.id} className="px-4 py-2.5 cursor-pointer row-hover transition-colors" onClick={() => navigate(`/products/${alert.id}`)}>
                     <div className="flex items-start justify-between mb-1 gap-2">
                       <button
                         type="button"
@@ -411,7 +411,7 @@ export default function Dashboard() {
             {filteredAlerts.length > 5 && (
               <button
                 onClick={() => navigate('/stocks/alerts')}
-                className="w-full px-4 py-2 text-center text-[11px] font-medium text-[--k-primary] hover:bg-[--k-surface-2]/30 transition-colors"
+                className="w-full px-4 py-2 text-center text-[11px] font-medium text-[--k-primary] row-hover transition-colors"
               >
                 + {filteredAlerts.length - 5} autres alertes — voir tout
               </button>
@@ -437,7 +437,7 @@ export default function Dashboard() {
               topProducts.map((p, i) => (
                 <div
                   key={p.id || p.reference}
-                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-[--k-surface-2]/30 transition-colors"
+                  className="flex items-center gap-3 px-4 py-2.5 row-hover transition-colors"
                 >
                   <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[--k-surface-2] text-[11px] font-semibold text-[--k-muted]">
                     {i + 1}
@@ -611,7 +611,7 @@ function RecentMovementsBlock({
           {filtered.map((m) => (
             <div
               key={m.id}
-              className="flex items-center gap-2 px-3 py-2 hover:bg-[--k-surface-2]/30 transition-colors"
+              className="flex items-center gap-2 px-3 py-2 row-hover transition-colors"
             >
               <span className="text-[13px] font-semibold tabular-nums text-[--k-text] w-8 text-right shrink-0">
                 {m.quantity}

@@ -229,7 +229,7 @@ export default function OrderTemplates() {
                     <tr
                       key={template.id}
                       onClick={() => navigate(`/order-templates/${template.id}`)}
-                      className="border-b border-[--k-border] cursor-pointer hover:bg-[--k-surface-2]/30 transition-colors"
+                      className="border-b border-[--k-border] cursor-pointer row-hover transition-colors"
                     >
                       <td className="px-4 py-1.5">
                         <span className="font-medium text-[--k-primary] hover:text-indigo-700 flex items-center gap-1">

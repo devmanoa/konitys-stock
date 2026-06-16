@@ -168,7 +168,7 @@ export default function OrderAttachments({ orderId }: Props) {
             {attachments.map((a) => (
               <li
                 key={a.id}
-                className="flex items-center gap-3 px-1 py-2 hover:bg-[--k-surface-2]/30 transition-colors rounded"
+                className="flex items-center gap-3 px-1 py-2 row-hover transition-colors rounded"
               >
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-[--k-surface-2]">
                   {fileTypeIcon(a.mimeType, a.filename)}

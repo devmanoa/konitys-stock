@@ -230,7 +230,7 @@ export default function InventoryZone() {
                             <button
                               type="button"
                               onClick={() => setPicked(p)}
-                              className="flex w-full items-center gap-3 px-3 py-2.5 text-left hover:bg-[--k-surface-2]/30"
+                              className="flex w-full items-center gap-3 px-3 py-2.5 text-left row-hover"
                             >
                               {p.imageUrl ? (
                                 <img src={getFullImageUrl(p.imageUrl)} alt="" className="h-10 w-10 rounded-md object-cover" />

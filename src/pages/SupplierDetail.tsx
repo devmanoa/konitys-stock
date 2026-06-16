@@ -433,7 +433,7 @@ export default function SupplierDetail() {
                 </thead>
                 <tbody className="divide-y divide-[--k-border]">
                   {data.contacts.map((contact) => (
-                    <tr key={contact.id} className="hover:bg-[--k-surface-2]/30 transition-colors">
+                    <tr key={contact.id} className="row-hover transition-colors">
                       <td className="py-3">
                         <span className="font-medium text-[--k-text]">
                           {contact.firstName} {contact.lastName}
@@ -537,7 +537,7 @@ export default function SupplierDetail() {
                 </thead>
                 <tbody className="divide-y divide-[--k-border]">
                   {data.productSuppliers.map((ps) => (
-                    <tr key={ps.id} className="hover:bg-[--k-surface-2]/30 transition-colors">
+                    <tr key={ps.id} className="row-hover transition-colors">
                       <td className="py-2 pr-4">
                         <RouterLink
                           to={`/products/${ps.product.id}`}
@@ -674,7 +674,7 @@ export default function SupplierDetail() {
                     const receivedQty = getOrderReceivedQty(order);
 
                     return (
-                      <tr key={order.id} className="hover:bg-[--k-surface-2]/30 transition-colors">
+                      <tr key={order.id} className="row-hover transition-colors">
                         <td className="py-2 pr-4">
                           <RouterLink
                             to={`/orders/${order.id}`}

@@ -221,7 +221,7 @@ export default function InventoryCompare() {
                 </thead>
                 <tbody className="divide-y divide-[--k-border]">
                   {filtered.map((l) => (
-                    <tr key={l.productId} className="hover:bg-[--k-surface-2]/30">
+                    <tr key={l.productId} className="row-hover">
                       <td className="px-4 py-2 sm:px-6">
                         <div className="flex items-center gap-2">
                           {l.imageUrl ? (
