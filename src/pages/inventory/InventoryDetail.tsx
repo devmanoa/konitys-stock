@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   ArrowLeft, MapPin, ChevronRight, Loader2, ClipboardList, PackageX, Trash2,
-  Lock, LockOpen, GitCompareArrows, AlertTriangle,
+  Lock, LockOpen, GitCompareArrows, AlertTriangle, FileSpreadsheet,
 } from 'lucide-react'
 import { PageHeader } from '../../components/PageHeader'
 import Button from '../../components/ui/Button'
@@ -111,6 +111,24 @@ export default function InventoryDetail() {
     },
   })
 
+  const handleExport = async () => {
+    const res = await api.get(`/inventories/${id}/export?tab=${tab}`, {
+      responseType: 'blob',
+    })
+    const blob = new Blob([res.data], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    const suffix = tab === 'entries' ? 'saisies' : 'non_trouves'
+    a.download = `${(inv?.name || 'inventaire').replace(/[^a-zA-Z0-9_-]+/g, '_')}_${suffix}.xlsx`
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
+  }
+
   const isClosed = inv?.status === 'CLOSED'
 
   const currentList = useMemo(() => {
@@ -152,6 +170,16 @@ export default function InventoryDetail() {
         <Button variant="secondary" size="sm" onClick={() => navigate('/inventory')}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Tous les inventaires
+        </Button>
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={handleExport}
+          data-perm="stock:inventories.export"
+          title={`Exporter l'onglet « ${tab === 'entries' ? 'Saisies' : 'Produits non trouvés'} »`}
+        >
+          <FileSpreadsheet className="mr-2 h-4 w-4" />
+          Export Excel
         </Button>
         {isClosed && (
           <Button variant="secondary" size="sm" onClick={() => navigate(`/inventory/${id}/compare`)}>

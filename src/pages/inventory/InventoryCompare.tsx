@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   ArrowLeft, Loader2, GitCompareArrows, CheckCircle2, AlertTriangle,
-  ClipboardList, Wand2,
+  ClipboardList, Wand2, FileSpreadsheet,
 } from 'lucide-react'
 import { PageHeader } from '../../components/PageHeader'
 import Button from '../../components/ui/Button'
@@ -49,6 +49,24 @@ export default function InventoryCompare() {
     },
     enabled: !!id,
   })
+
+  const handleExport = async () => {
+    const res = await api.get(`/inventories/${id}/export?tab=compare&filter=${filter}`, {
+      responseType: 'blob',
+    })
+    const blob = new Blob([res.data], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    const name = (data?.inventory?.name || 'inventaire').replace(/[^a-zA-Z0-9_-]+/g, '_')
+    a.download = `${name}_comparaison_${filter}.xlsx`
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
+  }
 
   const applyMutation = useMutation({
     mutationFn: async () => {
@@ -121,6 +139,16 @@ export default function InventoryCompare() {
         <Button variant="secondary" size="sm" onClick={() => navigate(`/inventory/${id}`)}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Retour à l'inventaire
+        </Button>
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={handleExport}
+          data-perm="stock:inventories.export"
+          title={`Exporter la comparaison (filtre : ${filter})`}
+        >
+          <FileSpreadsheet className="mr-2 h-4 w-4" />
+          Export Excel
         </Button>
         {isClosed && !alreadyApplied && totals.productsWithGap > 0 && (
           <Button
