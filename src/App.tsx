@@ -30,6 +30,7 @@ import InventoryCompare from './pages/inventory/InventoryCompare'
 import MobileInventory from './pages/inventory/mobile/MobileInventory'
 import MobileInventoryZone from './pages/inventory/mobile/MobileInventoryZone'
 import MobileInventoryRecent from './pages/inventory/mobile/MobileInventoryRecent'
+import DebugConsole from './components/DebugConsole'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -45,6 +46,10 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
         <BrowserRouter>
+          {/* Floating debug console — opt-in via ?debug=1 or localStorage.debug=1.
+              Mounted outside <Routes> so it's available on every page including
+              the public mobile share-link routes. */}
+          <DebugConsole />
           <Routes>
             {/* Mobile share-link routes — NO Keycloak. The linkId in the URL
                 is the credential. Anything below /m/:linkId calls
