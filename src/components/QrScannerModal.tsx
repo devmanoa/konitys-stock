@@ -80,13 +80,22 @@ export default function QrScannerModal({ isOpen, onClose, onScan, title = 'Scann
           { fps: 10, qrbox: { width: 240, height: 240 } },
           (decoded) => {
             const parsed = parseQr(decoded)
-            scanner
-              .stop()
-              .catch(() => {})
-              .finally(() => {
-                if (!active) return
-                onScanRef.current(parsed)
-              })
+            // Same defensive try/catch as the unmount cleanup: stop() can
+            // throw synchronously if the lib's state machine drifted.
+            const finish = () => {
+              if (!active) return
+              onScanRef.current(parsed)
+            }
+            try {
+              const p = scanner.stop()
+              if (p && typeof p.catch === 'function') {
+                p.catch(() => {}).finally(finish)
+              } else {
+                finish()
+              }
+            } catch {
+              finish()
+            }
           },
           () => {
             // ignore per-frame decode errors
@@ -106,11 +115,33 @@ export default function QrScannerModal({ isOpen, onClose, onScan, title = 'Scann
     return () => {
       active = false
       const sc = scannerRef.current
-      if (sc) {
-        sc.stop?.()
-          .catch(() => {})
-          .finally(() => sc.clear?.())
-        scannerRef.current = null
+      scannerRef.current = null
+      if (!sc) return
+      // html5-qrcode throws "Cannot stop, scanner is not running or paused"
+      // synchronously when the scanner has already been stopped (which we do
+      // ourselves inside the decode callback above). The promise never gets
+      // a chance to reject, so .catch() doesn't help — we need a sync try.
+      // Also guard via getState() when available so we skip the call entirely
+      // when nothing is running.
+      try {
+        const state = typeof sc.getState === 'function' ? sc.getState() : null
+        // 2 = SCANNING, 3 = PAUSED (from Html5QrcodeScannerState). Only stop
+        // if the scanner is in one of those states.
+        if (state == null || state === 2 || state === 3) {
+          const p = sc.stop?.()
+          if (p && typeof p.catch === 'function') {
+            p.catch(() => {}).finally(() => {
+              try { sc.clear?.() } catch { /* ignore */ }
+            })
+          } else {
+            try { sc.clear?.() } catch { /* ignore */ }
+          }
+        } else {
+          try { sc.clear?.() } catch { /* ignore */ }
+        }
+      } catch {
+        // sync throw from stop() — ignore, the scanner is already dead.
+        try { sc.clear?.() } catch { /* ignore */ }
       }
     }
   }, [isOpen])
