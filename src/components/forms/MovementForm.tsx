@@ -37,6 +37,18 @@ export default function MovementForm({ onSuccess, onCancel, preselectedProductId
     if (preselectedProductId) setSelectedProductId(preselectedProductId)
   }, [preselectedProductId])
 
+  // When opened from /scan we only get a preselectedProductId (UUID), not the
+  // full Product object — so ProductSearch can't display anything until we
+  // fetch it. Skip when the caller already passed preselectedProduct.
+  const { data: fetchedPreselectedProduct } = useQuery({
+    queryKey: ['product', preselectedProductId],
+    queryFn: async () => {
+      const res = await api.get<ApiResponse<Product>>(`/products/${preselectedProductId}`)
+      return res.data?.data ?? null
+    },
+    enabled: !!preselectedProductId && !preselectedProduct,
+  })
+
   const {
     register,
     handleSubmit,
@@ -62,6 +74,15 @@ export default function MovementForm({ onSuccess, onCancel, preselectedProductId
   const condition = watch('condition')
   const quantity = watch('quantity')
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(preselectedProduct || null)
+
+  // Adopt the fetched preselected product as soon as it lands — ProductSearch's
+  // `initialProduct` useEffect will sync its own state, but we also need to
+  // keep `selectedProduct` in sync for sourceSite filtering & serial flows.
+  useEffect(() => {
+    if (fetchedPreselectedProduct && !selectedProduct) {
+      setSelectedProduct(fetchedPreselectedProduct)
+    }
+  }, [fetchedPreselectedProduct, selectedProduct])
 
   // Serial-tracked workflow state
   const [serialInputs, setSerialInputs] = useState<string[]>([])
@@ -215,7 +236,7 @@ export default function MovementForm({ onSuccess, onCancel, preselectedProductId
       <ProductSearch
         onChange={handleProductChange}
         error={productError}
-        initialProduct={preselectedProduct}
+        initialProduct={preselectedProduct || fetchedPreselectedProduct || null}
       />
 
       <Select id="type" label="Type de mouvement *" error={errors.type?.message} {...register('type')}>
