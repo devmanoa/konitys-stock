@@ -186,7 +186,7 @@ export default function Movements() {
   const pagination = movementsData?.pagination;
 
   return (
-    <div className="space-y-4 md:space-y-6">
+    <div className="space-y-4 md:space-y-6 p-3 md:p-0">
       {/* Header */}
       <PageHeader
         title="Mouvements de Stock"

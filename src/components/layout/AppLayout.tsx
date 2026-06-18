@@ -100,10 +100,23 @@ class RemoteErrorBoundary extends Component<RemoteErrorBoundaryProps, RemoteErro
   }
 }
 
+// Routes that should render in fullscreen mobile mode: no topbar, no main
+// padding. The page becomes the whole viewport on small screens but stays
+// normal on desktop. Keep this list small — it exists to support pages that
+// were designed as a "task-focused mobile screen" (movements, soon others).
+const MOBILE_FULLSCREEN_ROUTES = ['/movements']
+
+function isFullscreenMobileRoute(pathname: string): boolean {
+  return MOBILE_FULLSCREEN_ROUTES.some(
+    (r) => pathname === r || pathname.startsWith(r + '/'),
+  )
+}
+
 export default function AppLayout() {
   const { user, logout } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
+  const fullscreenMobile = isFullscreenMobileRoute(location.pathname)
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     try {
@@ -162,17 +175,21 @@ export default function AppLayout() {
 
   return (
     <div className="h-screen flex flex-col bg-[--k-bg]">
-      {/* Header — remote with local fallback */}
-      <RemoteErrorBoundary fallback={localTopbar}>
-        <Suspense fallback={<HeaderFallback />}>
-          <RemoteHeaderBar
-            user={headerUser}
-            onLogout={logout}
-            currentAppName="Stock Manager"
-            onNavigate={handleNavigate}
-          />
-        </Suspense>
-      </RemoteErrorBoundary>
+      {/* Header — remote with local fallback.
+          Hidden on mobile for fullscreen routes (e.g. /movements). The page
+          is task-focused on a phone; we don't want app chrome eating viewport. */}
+      <div className={fullscreenMobile ? 'hidden md:block' : ''}>
+        <RemoteErrorBoundary fallback={localTopbar}>
+          <Suspense fallback={<HeaderFallback />}>
+            <RemoteHeaderBar
+              user={headerUser}
+              onLogout={logout}
+              currentAppName="Stock Manager"
+              onNavigate={handleNavigate}
+            />
+          </Suspense>
+        </RemoteErrorBoundary>
+      </div>
 
       <div className="flex flex-1 min-h-0">
         {/* Desktop sidebar — remote with local fallback */}
@@ -215,8 +232,12 @@ export default function AppLayout() {
           </>
         )}
 
-        {/* Main content */}
-        <main className="flex-1 min-w-0 overflow-y-auto p-3 md:p-5">
+        {/* Main content. Fullscreen mobile routes get zero padding on small
+            screens so the page can use the full viewport; desktop keeps the
+            standard padding. */}
+        <main
+          className={`flex-1 min-w-0 overflow-y-auto md:p-5 ${fullscreenMobile ? 'p-0' : 'p-3'}`}
+        >
           <ErrorBoundary>
             <Outlet />
           </ErrorBoundary>

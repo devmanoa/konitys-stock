@@ -102,7 +102,7 @@ export default function Scan() {
           </div>
           <button
             type="button"
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/movements')}
             className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
             aria-label="Quitter"
           >
