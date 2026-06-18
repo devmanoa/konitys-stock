@@ -19,6 +19,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card'
 import Modal from '../components/ui/Modal';
 import OrderTemplateEditForm from '../components/forms/OrderTemplateEditForm';
 import OperatorAvatar from '../components/OperatorAvatar';
+import RichTextDisplay from '../components/ui/RichTextDisplay';
 import { useToast } from '../components/ui/Toast';
 import api from '../services/api';
 import type { OrderTemplate, ApiResponse } from '../types';
@@ -260,9 +261,7 @@ export default function OrderTemplateDetail() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-[--k-text] whitespace-pre-wrap">
-              {data.comment}
-            </p>
+            <RichTextDisplay content={data.comment} className="text-sm" emptyFallback={null} />
           </CardContent>
         </Card>
       )}

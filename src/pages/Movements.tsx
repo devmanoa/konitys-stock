@@ -17,6 +17,7 @@ import {
 import Button from '../components/ui/Button';
 import MobileMovementCard from './movements/MobileMovementCard';
 import MobileFilterDrawer from './movements/MobileFilterDrawer';
+import { stripHtml } from '../components/ui/RichTextDisplay';
 import Badge from '../components/ui/Badge';
 import SearchSelect from '../components/ui/SearchSelect';
 import { KpiCard } from '../components/KpiCard';
@@ -120,9 +121,9 @@ export default function Movements() {
     const searchLower = search.toLowerCase();
     return (
       movement.product?.reference?.toLowerCase().includes(searchLower) ||
-      movement.product?.description?.toLowerCase().includes(searchLower) ||
+      stripHtml(movement.product?.description).toLowerCase().includes(searchLower) ||
       movement.operator?.toLowerCase().includes(searchLower) ||
-      movement.comment?.toLowerCase().includes(searchLower)
+      stripHtml(movement.comment).toLowerCase().includes(searchLower)
     );
   });
 
@@ -517,9 +518,9 @@ export default function Movements() {
                       {movement.comment ? (
                         <span
                           className="text-[--k-muted] truncate max-w-[150px] block"
-                          title={movement.comment}
+                          title={stripHtml(movement.comment)}
                         >
-                          {movement.comment}
+                          {stripHtml(movement.comment)}
                         </span>
                       ) : (
                         <span className="text-[--k-muted]">-</span>

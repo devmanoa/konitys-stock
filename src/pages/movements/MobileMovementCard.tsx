@@ -4,6 +4,7 @@ import {
   ArrowDownCircle, ArrowUpCircle, ArrowLeftRight, ArrowRight, ChevronDown,
 } from 'lucide-react'
 import OperatorAvatar from '../../components/OperatorAvatar'
+import RichTextDisplay from '../../components/ui/RichTextDisplay'
 import type { StockMovement } from '../../types'
 
 /**
@@ -130,7 +131,7 @@ export default function MobileMovementCard({
           {movement.comment && (
             <div>
               <div className="text-[--k-muted] mb-0.5">Commentaire</div>
-              <p className="text-[--k-text] whitespace-pre-wrap">{movement.comment}</p>
+              <RichTextDisplay content={movement.comment} className="text-[--k-text]" emptyFallback={null} />
             </div>
           )}
 

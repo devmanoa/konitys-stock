@@ -30,6 +30,7 @@ import SupplierForm from '../components/forms/SupplierForm';
 import SupplierAnomaliesSection from '../components/SupplierAnomaliesSection';
 import SupplierCompanyInfo from '../components/SupplierCompanyInfo';
 import RichTextEditor from '../components/ui/RichTextEditor';
+import RichTextDisplay, { stripHtml } from '../components/ui/RichTextDisplay';
 import SupplierContactForm from '../components/forms/SupplierContactForm';
 import ReceiveOrderForm from '../components/forms/ReceiveOrderForm';
 import { useToast } from '../components/ui/Toast';
@@ -393,9 +394,10 @@ export default function SupplierDetail() {
                 </div>
               </div>
             ) : (
-              <div
+              <RichTextDisplay
+                content={data.comment}
                 className="text-[--k-text] prose prose-sm max-w-none"
-                dangerouslySetInnerHTML={{ __html: data.comment || '' }}
+                emptyFallback={null}
               />
             )}
           </CardContent>
@@ -470,8 +472,8 @@ export default function SupplierDetail() {
                       </td>
                       <td className="py-3 text-[--k-muted] max-w-[200px]">
                         {contact.description ? (
-                          <span className="truncate block" title={contact.description}>
-                            {contact.description}
+                          <span className="truncate block" title={stripHtml(contact.description)}>
+                            {stripHtml(contact.description)}
                           </span>
                         ) : (
                           '-'

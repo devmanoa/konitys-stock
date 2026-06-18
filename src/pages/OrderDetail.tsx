@@ -25,6 +25,7 @@ import ReceiveOrderForm from '../components/forms/ReceiveOrderForm';
 import ReceiveAllForm from '../components/forms/ReceiveAllForm';
 import { useToast } from '../components/ui/Toast';
 import Comments from '../components/ProductComments';
+import RichTextDisplay from '../components/ui/RichTextDisplay';
 import OrderAttachments from '../components/OrderAttachments';
 import OrderAuditTimeline from '../components/OrderAuditTimeline';
 import api from '../services/api';
@@ -441,9 +442,7 @@ export default function OrderDetail() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-[--k-text] whitespace-pre-wrap">
-              {data.comment}
-            </p>
+            <RichTextDisplay content={data.comment} className="text-sm" emptyFallback={null} />
           </CardContent>
         </Card>
       )}

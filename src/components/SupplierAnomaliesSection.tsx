@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { AlertTriangle, Check, X as XIcon } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from './ui/Card'
 import OperatorAvatar from './OperatorAvatar'
+import { stripHtml } from './ui/RichTextDisplay'
 import api from '../services/api'
 import type { ApiResponse, ReceptionAnomalyWithContext } from '../types'
 
@@ -125,8 +126,8 @@ export default function SupplierAnomaliesSection({ supplierId }: Props) {
                     )}
                   </td>
                   <td className="px-2 py-2 text-[--k-text] max-w-[280px]">
-                    <span className="line-clamp-2" title={a.comment}>
-                      {a.comment}
+                    <span className="line-clamp-2" title={stripHtml(a.comment)}>
+                      {stripHtml(a.comment)}
                     </span>
                   </td>
                   <td className="px-2 py-2">

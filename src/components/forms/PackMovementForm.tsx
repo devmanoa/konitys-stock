@@ -7,6 +7,7 @@ import Input from '../ui/Input'
 import Select from '../ui/Select'
 import api from '../../services/api'
 import RichTextEditor from '../ui/RichTextEditor'
+import { stripHtml } from '../ui/RichTextDisplay'
 import type { Pack, Site, ApiResponse } from '../../types'
 
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/api$/, '')
@@ -212,7 +213,7 @@ export default function PackMovementForm({ onSuccess, onCancel }: PackMovementFo
           <h4 className="font-medium text-blue-900 mb-2 text-[13px]">Détails du pack</h4>
           <div className="space-y-1 text-[13px] text-blue-800">
             <p><strong>Nom:</strong> {selectedPack.name}</p>
-            {selectedPack.description && <p><strong>Description:</strong> {selectedPack.description}</p>}
+            {selectedPack.description && <p><strong>Description:</strong> {stripHtml(selectedPack.description)}</p>}
             <p><strong>Nombre d'articles:</strong> {selectedPack.items?.length || 0}</p>
           </div>
         </div>

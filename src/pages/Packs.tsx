@@ -8,6 +8,7 @@ import { PageHeader } from '../components/PageHeader';
 import { useToast } from '../components/ui/Toast';
 import ProductSearch from '../components/ui/ProductSearch';
 import RichTextEditor from '../components/ui/RichTextEditor';
+import { stripHtml } from '../components/ui/RichTextDisplay';
 import api from '../services/api';
 import type { Pack, Product, ApiResponse } from '../types';
 
@@ -147,7 +148,7 @@ export default function Packs() {
   // Filter packs
   const filteredPacks = packsData?.data?.filter(pack =>
     pack.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    pack.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    stripHtml(pack.description).toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
   return (
@@ -239,7 +240,7 @@ export default function Packs() {
                     </div>
                     {pack.description && (
                       <p className="mt-2 text-sm text-[--k-muted] line-clamp-2">
-                        {pack.description}
+                        {stripHtml(pack.description)}
                       </p>
                     )}
                     <div className="mt-3 pt-3 border-t border-[--k-border]">
@@ -271,7 +272,7 @@ export default function Packs() {
                           </div>
                         </td>
                         <td className="px-4 py-1.5 text-[--k-muted] max-w-xs truncate">
-                          {pack.description || '-'}
+                          {stripHtml(pack.description) || '-'}
                         </td>
                         <td className="px-4 py-1.5 text-center">
                           <span className="inline-flex items-center rounded-full bg-[--k-surface-2] px-2.5 py-1 text-xs font-medium text-[--k-text]">

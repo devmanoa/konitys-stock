@@ -5,6 +5,7 @@ import { Factory, AlertTriangle, CheckCircle2, ChevronRight, ArrowLeft, Package,
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import { PageHeader } from '../components/PageHeader';
+import { stripHtml } from '../components/ui/RichTextDisplay';
 import api from '../services/api';
 import type { ApiResponse, BuildableBorne, BuildableComponent } from '../types';
 
@@ -53,7 +54,7 @@ function BorneCard({ borne, onSelect }: { borne: BuildableBorne; onSelect: () =>
           <div className="min-w-0">
             <h3 className="font-semibold text-[--k-text] truncate">{borne.name}</h3>
             {borne.description && (
-              <p className="text-xs text-[--k-muted] truncate">{borne.description}</p>
+              <p className="text-xs text-[--k-muted] truncate">{stripHtml(borne.description)}</p>
             )}
           </div>
         </div>

@@ -45,6 +45,7 @@ import OperatorAvatar from '../components/OperatorAvatar';
 import ProductAuditTimeline from '../components/ProductAuditTimeline';
 import { locationLabel } from '../utils/locationLabel';
 import Comments from '../components/ProductComments';
+import RichTextDisplay, { stripHtml } from '../components/ui/RichTextDisplay';
 import SerialItemsPanel from '../components/SerialItemsPanel';
 import PrintLabels, { type LabelPayload } from '../components/PrintLabels';
 import api from '../services/api';
@@ -449,7 +450,9 @@ export default function ProductDetail() {
                 {data.comment && (
                   <div className="col-span-2">
                     <dt className="text-[13px] font-medium text-[--k-muted]">Commentaire</dt>
-                    <dd className="mt-1 text-[--k-text]">{data.comment}</dd>
+                    <dd className="mt-1 text-[--k-text]">
+                      <RichTextDisplay content={data.comment} emptyFallback={null} />
+                    </dd>
                   </div>
                 )}
               </dl>
@@ -783,8 +786,8 @@ export default function ProductDetail() {
                       </td>
                       <td className="py-2 text-[--k-muted]">
                         {mvt.comment ? (
-                          <span className="truncate max-w-[100px] block" title={mvt.comment}>
-                            {mvt.comment}
+                          <span className="truncate max-w-[100px] block" title={stripHtml(mvt.comment)}>
+                            {stripHtml(mvt.comment)}
                           </span>
                         ) : (
                           '-'

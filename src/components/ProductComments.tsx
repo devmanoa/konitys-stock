@@ -6,6 +6,7 @@ import { useToast } from './ui/Toast';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/Card';
 import Button from './ui/Button';
 import RichTextEditor from './ui/RichTextEditor';
+import RichTextDisplay from './ui/RichTextDisplay';
 import OperatorAvatar from './OperatorAvatar';
 import api from '../services/api';
 import type { ProductComment, KnownUser, ApiResponse } from '../types';
@@ -29,12 +30,15 @@ function AuthorAvatar({ name }: { name: string }) {
   return <OperatorAvatar name={name} size="md" showName={false} />;
 }
 
-// Render comment HTML content safely with styled elements
+// Render comment HTML content safely with styled elements. Goes through
+// DOMPurify via RichTextDisplay to strip any script tags / event handlers
+// that might have been injected by a malicious commenter.
 function CommentContent({ html }: { html: string }) {
   return (
-    <div
-      className="comment-content text-[13px] text-[--k-text] break-words"
-      dangerouslySetInnerHTML={{ __html: html }}
+    <RichTextDisplay
+      content={html}
+      className="text-[13px] text-[--k-text] break-words"
+      emptyFallback={null}
     />
   );
 }

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import OperatorAvatar from './OperatorAvatar'
+import RichTextDisplay from './ui/RichTextDisplay'
 import type { StockMovement } from '../types'
 
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/api$/, '')
@@ -139,8 +140,8 @@ export default function MovementDetail({ movement }: { movement: StockMovement }
       {/* Comment */}
       <div>
         <div className="text-xs font-medium uppercase tracking-wide text-[--k-muted]">Commentaire</div>
-        <div className="mt-1 whitespace-pre-wrap rounded-lg border border-[--k-border] bg-[--k-surface] p-3 text-sm text-[--k-text]">
-          {movement.comment || <span className="italic text-[--k-muted]">Aucun commentaire</span>}
+        <div className="mt-1 rounded-lg border border-[--k-border] bg-[--k-surface] p-3 text-sm text-[--k-text]">
+          <RichTextDisplay content={movement.comment} />
         </div>
       </div>
     </div>

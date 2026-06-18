@@ -8,6 +8,7 @@ import Modal from '../components/ui/Modal';
 import { PageHeader } from '../components/PageHeader';
 import Input from '../components/ui/Input';
 import RichTextEditor from '../components/ui/RichTextEditor';
+import { stripHtml } from '../components/ui/RichTextDisplay';
 import { useToast } from '../components/ui/Toast';
 import api from '../services/api';
 import type { AssemblyType, Assembly, PartCategory, PaginatedResponse } from '../types';
@@ -278,7 +279,7 @@ export default function Settings() {
                         <h3 className="font-semibold text-[--k-text]">{assemblyType.name}</h3>
                         {assemblyType.description && (
                           <p className="mt-1 text-sm text-[--k-muted] line-clamp-2">
-                            {assemblyType.description}
+                            {stripHtml(assemblyType.description)}
                           </p>
                         )}
                         <p className="mt-2 text-xs text-[--k-muted]">
@@ -544,7 +545,7 @@ export default function Settings() {
                         <h3 className="font-semibold text-[--k-text]">{assembly.name}</h3>
                         {assembly.description && (
                           <p className="mt-1 text-sm text-[--k-muted] line-clamp-2">
-                            {assembly.description}
+                            {stripHtml(assembly.description)}
                           </p>
                         )}
                         {assembly.assemblyTypes?.length ? (
