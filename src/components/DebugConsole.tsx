@@ -57,11 +57,30 @@ export default function DebugConsole() {
   useEffect(() => {
     if (!enabledRef.current) return
 
+    // Persist to localStorage so entries survive a full page reload — which
+    // is exactly the case we're trying to debug (page blanche after crash).
+    const STORAGE_KEY = 'debug.entries'
+    try {
+      const stored = window.localStorage.getItem(STORAGE_KEY)
+      if (stored) {
+        const parsed = JSON.parse(stored) as Entry[]
+        idRef.current = parsed.reduce((m, e) => Math.max(m, e.id), 0)
+        setEntries(parsed)
+      }
+    } catch {
+      /* corrupt storage, ignore */
+    }
+
     const push = (kind: Entry['kind'], message: string, stack?: string) => {
       setEntries((prev) => {
         const next = [...prev, { id: ++idRef.current, kind, message, stack, at: Date.now() }]
-        // Keep memory bounded — 200 entries is enough for one bug.
-        return next.length > 200 ? next.slice(next.length - 200) : next
+        const trimmed = next.length > 200 ? next.slice(next.length - 200) : next
+        try {
+          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed))
+        } catch {
+          /* quota / unavailable */
+        }
+        return trimmed
       })
     }
 
@@ -128,7 +147,14 @@ export default function DebugConsole() {
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={() => setEntries([])}
+                onClick={() => {
+                  setEntries([])
+                  try {
+                    window.localStorage.removeItem('debug.entries')
+                  } catch {
+                    /* ignore */
+                  }
+                }}
                 className="px-3 py-1 rounded border border-white/30 text-[12px]"
               >
                 Clear
@@ -154,6 +180,7 @@ export default function DebugConsole() {
                 onClick={() => {
                   try {
                     window.localStorage.removeItem('debug')
+                    window.localStorage.removeItem('debug.entries')
                   } catch {
                     /* ignore */
                   }

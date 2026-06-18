@@ -87,7 +87,9 @@ export default function Scan() {
       scanProductId: productId,
       ...(parsed.kind === 'serial' ? { scanSerialId: parsed.id } : {}),
     })
-    navigate(`/movements?${params.toString()}`)
+    const target = `/movements?${params.toString()}`
+    console.log('[scan] resolved', { action, kind: parsed.kind, productId, target })
+    navigate(target)
   }
 
   return (
