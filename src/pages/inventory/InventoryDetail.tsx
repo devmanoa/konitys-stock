@@ -11,6 +11,7 @@ import { Card, CardContent } from '../../components/ui/Card'
 import api from '../../services/api'
 import { getFullImageUrl } from '../../utils/imageUrl'
 import OperatorAvatar from '../../components/OperatorAvatar'
+import ShareLinksPanel from './ShareLinksPanel'
 import type { ApiResponse, Location } from '../../types'
 import { type Inventory, type InventoryEntry, STATE_LABEL, STATE_BADGE } from './types'
 
@@ -224,6 +225,8 @@ export default function InventoryDetail() {
           </div>
         </div>
       )}
+
+      {id && <ShareLinksPanel inventoryId={id} inventoryClosed={isClosed} />}
 
       {!isClosed && (
       <Card>
