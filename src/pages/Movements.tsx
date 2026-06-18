@@ -11,8 +11,12 @@ import {
   ArrowRight,
   Package,
   Camera,
+  SlidersHorizontal,
+  X as XIcon,
 } from 'lucide-react';
 import Button from '../components/ui/Button';
+import MobileMovementCard from './movements/MobileMovementCard';
+import MobileFilterDrawer from './movements/MobileFilterDrawer';
 import Badge from '../components/ui/Badge';
 import SearchSelect from '../components/ui/SearchSelect';
 import { KpiCard } from '../components/KpiCard';
@@ -37,6 +41,7 @@ export default function Movements() {
     productId?: string;
     type?: 'IN' | 'OUT' | 'TRANSFER';
   } | null>(null);
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const toast = useToast();
 
   // Auto-open the create modal when arriving from /scan with prefill params.
@@ -165,104 +170,20 @@ export default function Movements() {
 
   const hasFilters = typeFilter || siteFilter || startDate || endDate || search || conditionFilter;
 
+  // Mobile-only: count of filters currently active (search excluded — it has
+  // its own visible input and clear button). Drives the badge on the
+  // "Filtres" button and the row of removable chips below it.
+  const activeFilterCount =
+    (typeFilter ? 1 : 0) +
+    (siteFilter ? 1 : 0) +
+    (conditionFilter ? 1 : 0) +
+    (startDate || endDate ? 1 : 0);
+
   const resetFilters = () => {
     setSearchParams(new URLSearchParams());
   };
 
   const pagination = movementsData?.pagination;
-
-  // Mobile card component
-  const MovementCard = ({ movement }: { movement: StockMovement }) => (
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={() => setSelectedMovement(movement)}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          setSelectedMovement(movement);
-        }
-      }}
-      className="rounded-2xl border border-[--k-border] bg-[--k-surface] p-4 cursor-pointer hover:border-[--k-primary]/60 transition-colors">
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-2">
-          {getTypeIcon(movement.type)}
-          {getTypeBadge(movement.type)}
-        </div>
-        <div className="text-right">
-          <p className="text-sm font-medium text-[--k-text]">
-            {formatDate(movement.movementDate)}
-          </p>
-        </div>
-      </div>
-
-      <div className="mt-3">
-        <Link
-          to={`/products/${movement.productId}`}
-          onClick={(e) => e.stopPropagation()}
-          className="block font-medium text-[--k-primary] hover:text-indigo-700"
-        >
-          {movement.product?.description || movement.product?.reference || 'Produit inconnu'}
-        </Link>
-        {movement.product?.description && (
-          <Link
-            to={`/products/${movement.productId}`}
-            onClick={(e) => e.stopPropagation()}
-            className="block text-xs text-[--k-muted] font-mono hover:text-[--k-primary] truncate mt-0.5"
-          >
-            {movement.product.reference}
-          </Link>
-        )}
-      </div>
-
-      <div className="mt-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className={`text-lg font-bold ${
-            movement.type === 'IN'
-              ? 'text-green-600'
-              : movement.type === 'OUT'
-              ? 'text-red-600'
-              : 'text-blue-600'
-          }`}>
-            {movement.type === 'IN' ? '+' : movement.type === 'OUT' ? '-' : ''}
-            {movement.quantity}
-          </span>
-          {getConditionBadge(movement.condition)}
-        </div>
-      </div>
-
-      <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
-        <div className="col-span-2">
-          <span className="text-[--k-muted]">Sites :</span>
-          {movement.sourceSite && movement.targetSite ? (
-            <p className="text-[--k-text] flex items-center gap-1">
-              {movement.sourceSite.name}
-              <ArrowRight className="h-3 w-3 shrink-0 text-[--k-muted]" />
-              {movement.targetSite.name}
-            </p>
-          ) : (
-            <p className="text-[--k-text]">
-              {movement.targetSite?.name || movement.sourceSite?.name || '-'}
-            </p>
-          )}
-        </div>
-        {movement.operator && (
-          <div className="col-span-2">
-            <span className="text-[--k-muted]">Opérateur :</span>
-            <div className="mt-0.5">
-              <OperatorAvatar name={movement.operator} />
-            </div>
-          </div>
-        )}
-        {movement.comment && (
-          <div className="col-span-2">
-            <span className="text-[--k-muted]">Commentaire:</span>
-            <p className="text-[--k-text] text-sm">{movement.comment}</p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
 
   return (
     <div className="space-y-4 md:space-y-6">
@@ -271,38 +192,115 @@ export default function Movements() {
         title="Mouvements de Stock"
         subtitle="Historique des entrées, sorties et transferts"
       >
-        {/* Scanner: mobile only — redirige vers /scan (3 boutons IN/OUT/TRANSFER). */}
-        <Button
-          variant="secondary"
-          onClick={() => navigate('/scan')}
-          className="flex-1 sm:hidden"
-        >
-          <Camera className="mr-1 h-4 w-4" />
-          Scanner
-        </Button>
         <Button onClick={() => setIsModalOpen(true)} className="flex-1 sm:flex-none">
           <Plus className="mr-1 h-4 w-4" />
           <span className="sm:hidden">Mouvement</span>
           <span className="hidden sm:inline">Nouveau mouvement</span>
         </Button>
-        <Button variant="secondary" onClick={() => setIsPackMovementModalOpen(true)} className="flex-1 sm:flex-none">
+        {/* Pack: desktop only — mobile users have the FAB + standard mouvement,
+            pack is too niche to fight for header space on small screens. */}
+        <Button
+          variant="secondary"
+          onClick={() => setIsPackMovementModalOpen(true)}
+          className="hidden sm:inline-flex sm:flex-none"
+        >
           <Package className="mr-1 h-4 w-4" />
-          <span className="sm:hidden">Pack</span>
-          <span className="hidden sm:inline">Mouvement pack</span>
+          Mouvement pack
         </Button>
       </PageHeader>
 
 
-      {/* Summary stats */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      {/* Mobile: KPI pills scrollable + search + Filtres button. */}
+      <div className="space-y-3 sm:hidden">
+        <div className="flex gap-2 overflow-x-auto -mx-4 px-4">
+          <KpiPill
+            label="Entrées"
+            value={filteredMovements?.filter((m) => m.type === 'IN').length || 0}
+            color="emerald"
+            Icon={ArrowDownCircle}
+          />
+          <KpiPill
+            label="Sorties"
+            value={filteredMovements?.filter((m) => m.type === 'OUT').length || 0}
+            color="rose"
+            Icon={ArrowUpCircle}
+          />
+          <KpiPill
+            label="Transferts"
+            value={filteredMovements?.filter((m) => m.type === 'TRANSFER').length || 0}
+            color="blue"
+            Icon={ArrowLeftRight}
+          />
+          <KpiPill label="Total" value={pagination?.total || 0} color="slate" Icon={Package} />
+        </div>
+
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[--k-muted]" />
+            <input
+              type="text"
+              placeholder="Rechercher…"
+              value={search}
+              onChange={(e) => updateParams({ search: e.target.value })}
+              className="input-field !pl-10"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => setFilterDrawerOpen(true)}
+            className="relative shrink-0 h-9 px-3 rounded-lg border border-[--k-border] bg-[--k-surface] flex items-center gap-1 text-[13px] font-medium"
+          >
+            <SlidersHorizontal className="h-4 w-4" />
+            Filtres
+            {activeFilterCount > 0 && (
+              <span className="ml-0.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-[--k-primary] text-white text-[10px] font-bold">
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* Active filter chips */}
+        {activeFilterCount > 0 && (
+          <div className="flex gap-1.5 flex-wrap">
+            {typeFilter && (
+              <ActiveChip onRemove={() => updateParams({ type: '' })}>
+                {typeFilter === 'IN' ? 'Entrée' : typeFilter === 'OUT' ? 'Sortie' : 'Transfert'}
+              </ActiveChip>
+            )}
+            {siteFilter && (
+              <ActiveChip onRemove={() => updateParams({ site: '' })}>
+                {sites?.find((s) => s.id === siteFilter)?.name || 'Site'}
+              </ActiveChip>
+            )}
+            {conditionFilter && (
+              <ActiveChip onRemove={() => updateParams({ condition: '' })}>
+                {conditionFilter === 'NEW' ? 'Neuf' : 'Occasion'}
+              </ActiveChip>
+            )}
+            {(startDate || endDate) && (
+              <ActiveChip onRemove={() => updateParams({ startDate: '', endDate: '' })}>
+                {startDate && endDate
+                  ? `${startDate} → ${endDate}`
+                  : startDate
+                    ? `dès ${startDate}`
+                    : `jusqu'à ${endDate}`}
+              </ActiveChip>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Desktop: original KPI cards. */}
+      <div className="hidden sm:grid sm:grid-cols-2 sm:gap-3 lg:grid-cols-4">
         <KpiCard title="Entrées" value={filteredMovements?.filter(m => m.type === 'IN').length || 0} icon={ArrowDownCircle} colorIndex={2} />
         <KpiCard title="Sorties" value={filteredMovements?.filter(m => m.type === 'OUT').length || 0} icon={ArrowUpCircle} colorIndex={1} />
         <KpiCard title="Transferts" value={filteredMovements?.filter(m => m.type === 'TRANSFER').length || 0} icon={ArrowLeftRight} colorIndex={5} />
         <KpiCard title="Total" value={pagination?.total || 0} icon={Package} colorIndex={0} />
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+      {/* Desktop filters (unchanged). */}
+      <div className="hidden sm:flex sm:flex-row sm:flex-wrap sm:items-end gap-3">
           {/* Search */}
           <div className="relative min-w-[140px] sm:w-[352px]">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[--k-muted]" />
@@ -382,9 +380,13 @@ export default function Movements() {
             Aucun mouvement trouvé
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {filteredMovements?.map((movement) => (
-              <MovementCard key={movement.id} movement={movement} />
+              <MobileMovementCard
+                key={movement.id}
+                movement={movement}
+                onOpenDetail={setSelectedMovement}
+              />
             ))}
           </div>
         )}
@@ -597,6 +599,89 @@ export default function Movements() {
         )}
       </Modal>
 
+      {/* Mobile filter drawer */}
+      <MobileFilterDrawer
+        open={filterDrawerOpen}
+        onClose={() => setFilterDrawerOpen(false)}
+        initial={{
+          type: typeFilter,
+          site: siteFilter,
+          condition: conditionFilter,
+          startDate,
+          endDate,
+        }}
+        sites={sites || []}
+        onApply={(f) =>
+          updateParams({
+            type: f.type,
+            site: f.site,
+            condition: f.condition,
+            startDate: f.startDate,
+            endDate: f.endDate,
+          })
+        }
+        onReset={resetFilters}
+      />
+
+      {/* Mobile FAB: floating scanner button, always reachable. */}
+      <button
+        type="button"
+        onClick={() => navigate('/scan')}
+        className="sm:hidden fixed bottom-5 right-5 z-40 h-14 w-14 rounded-full bg-[--k-primary] text-white shadow-xl flex items-center justify-center active:scale-95 transition"
+        aria-label="Scanner un QR code"
+      >
+        <Camera className="h-6 w-6" />
+      </button>
     </div>
   );
+}
+
+function KpiPill({
+  label,
+  value,
+  color,
+  Icon,
+}: {
+  label: string
+  value: number
+  color: 'emerald' | 'rose' | 'blue' | 'slate'
+  Icon: typeof ArrowDownCircle
+}) {
+  const palette = {
+    emerald: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    rose: 'bg-rose-50 text-rose-700 border-rose-200',
+    blue: 'bg-blue-50 text-blue-700 border-blue-200',
+    slate: 'bg-slate-50 text-slate-700 border-slate-200',
+  }[color]
+  return (
+    <div
+      className={`shrink-0 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 ${palette}`}
+    >
+      <Icon className="h-3.5 w-3.5" />
+      <span className="font-bold tabular-nums text-[13px]">{value}</span>
+      <span className="text-[11px] opacity-80">{label}</span>
+    </div>
+  )
+}
+
+function ActiveChip({
+  onRemove,
+  children,
+}: {
+  onRemove: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-[--k-primary]/10 text-[--k-primary] pl-2.5 pr-1 py-1 text-[12px] font-medium">
+      {children}
+      <button
+        type="button"
+        onClick={onRemove}
+        className="rounded-full p-0.5 hover:bg-[--k-primary]/20"
+        aria-label="Retirer ce filtre"
+      >
+        <XIcon className="h-3 w-3" />
+      </button>
+    </span>
+  )
 }
