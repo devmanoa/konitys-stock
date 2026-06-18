@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import {
   Plus,
   Search,
@@ -13,7 +13,6 @@ import {
   Camera,
 } from 'lucide-react';
 import Button from '../components/ui/Button';
-import QrScannerModal, { type ParsedQr } from '../components/QrScannerModal';
 import Badge from '../components/ui/Badge';
 import SearchSelect from '../components/ui/SearchSelect';
 import { KpiCard } from '../components/KpiCard';
@@ -30,6 +29,7 @@ import type { StockMovement, Site, ApiResponse, PaginatedResponse } from '../typ
 
 export default function Movements() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isPackMovementModalOpen, setIsPackMovementModalOpen] = useState(false);
   const [selectedMovement, setSelectedMovement] = useState<StockMovement | null>(null);
@@ -37,47 +37,7 @@ export default function Movements() {
     productId?: string;
     type?: 'IN' | 'OUT' | 'TRANSFER';
   } | null>(null);
-  // Inline scanner triggered from the "Scanner" button on mobile. We default
-  // the action to IN — the user can change it inside the form. (Asking the
-  // type before scanning would mean reproducing the /scan page here, which
-  // would duplicate UI for no gain.)
-  const [inlineScanOpen, setInlineScanOpen] = useState(false);
-  const [inlineScanError, setInlineScanError] = useState<string | null>(null);
   const toast = useToast();
-
-  // Inline scan: same resolution logic as /scan (product QR or serial QR),
-  // but opens the local create-movement modal directly instead of redirecting.
-  const handleInlineScan = async (parsed: ParsedQr) => {
-    setInlineScanOpen(false);
-    setInlineScanError(null);
-    if (parsed.kind === 'unknown') {
-      setInlineScanError(`QR non reconnu : ${parsed.raw.slice(0, 60)}`);
-      return;
-    }
-    let productId = parsed.kind === 'product' ? parsed.id : null;
-    if (parsed.kind === 'serial') {
-      try {
-        const res = await api.get<ApiResponse<{ productId: string }>>(
-          `/serial-items/${parsed.id}`,
-        );
-        productId = res.data?.data?.productId ?? null;
-        if (!productId) {
-          setInlineScanError('Numéro de série introuvable.');
-          return;
-        }
-      } catch {
-        setInlineScanError('Erreur lors de la résolution du numéro de série.');
-        return;
-      }
-    }
-    if (!productId) {
-      setInlineScanError(`QR non reconnu : ${parsed.raw.slice(0, 60)}`);
-      return;
-    }
-    // Default to IN; the user picks the actual type inside the form.
-    setScanPrefill({ productId, type: 'IN' });
-    setIsModalOpen(true);
-  };
 
   // Auto-open the create modal when arriving from /scan with prefill params.
   useEffect(() => {
@@ -311,13 +271,10 @@ export default function Movements() {
         title="Mouvements de Stock"
         subtitle="Historique des entrées, sorties et transferts"
       >
-        {/* Scanner: mobile only — desktop doesn't have a useful camera. */}
+        {/* Scanner: mobile only — redirige vers /scan (3 boutons IN/OUT/TRANSFER). */}
         <Button
           variant="secondary"
-          onClick={() => {
-            setInlineScanError(null);
-            setInlineScanOpen(true);
-          }}
+          onClick={() => navigate('/scan')}
           className="flex-1 sm:hidden"
         >
           <Camera className="mr-1 h-4 w-4" />
@@ -335,11 +292,6 @@ export default function Movements() {
         </Button>
       </PageHeader>
 
-      {inlineScanError && (
-        <div className="rounded-xl bg-rose-50 border border-rose-200 px-3 py-2 text-[13px] text-rose-700 sm:hidden">
-          {inlineScanError}
-        </div>
-      )}
 
       {/* Summary stats */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -645,14 +597,6 @@ export default function Movements() {
         )}
       </Modal>
 
-      {/* Inline scanner (mobile button on PageHeader). */}
-      <QrScannerModal
-        isOpen={inlineScanOpen}
-        onClose={() => setInlineScanOpen(false)}
-        onScan={handleInlineScan}
-        title="Scanner pour mouvement"
-        hint="Pointez la caméra vers le QR du produit ou du numéro de série"
-      />
     </div>
   );
 }
