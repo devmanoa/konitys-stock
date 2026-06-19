@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowDownCircle, ArrowUpCircle, ArrowLeftRight, X, Loader2 } from 'lucide-react'
 import api from '../services/api'
 import QrScannerModal, { type ParsedQr } from '../components/QrScannerModal'
+import OperatorAvatar from '../components/OperatorAvatar'
+import { useAuth } from '../contexts/AuthContext'
 import type { ApiResponse } from '../types'
 
 /**
@@ -43,6 +45,7 @@ const ACTIONS: { key: Action; label: string; description: string; color: string;
 
 export default function Scan() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [action, setAction] = useState<Action | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [resolving, setResolving] = useState(false)
@@ -95,19 +98,27 @@ export default function Scan() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       <div className="mx-auto flex max-w-md flex-col gap-4 px-4 py-6">
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex items-center justify-between gap-2">
+          <div className="min-w-0">
             <h1 className="text-lg font-semibold text-slate-900">Scan</h1>
             <p className="text-xs text-slate-500">Mouvements de stock par QR code</p>
           </div>
-          <button
-            type="button"
-            onClick={() => navigate('/movements')}
-            className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
-            aria-label="Quitter"
-          >
-            <X className="h-5 w-5" />
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            {user && (
+              <OperatorAvatar
+                name={user.fullName || user.username || ''}
+                size="md"
+              />
+            )}
+            <button
+              type="button"
+              onClick={() => navigate('/movements')}
+              className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
+              aria-label="Quitter"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
         </div>
 
         {error && (

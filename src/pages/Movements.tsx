@@ -29,6 +29,7 @@ import Pagination from '../components/ui/Pagination';
 import { PageHeader } from '../components/PageHeader';
 import MovementDetail from '../components/MovementDetail';
 import OperatorAvatar from '../components/OperatorAvatar';
+import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
 import type { StockMovement, Site, ApiResponse, PaginatedResponse } from '../types';
 
@@ -44,6 +45,7 @@ export default function Movements() {
   } | null>(null);
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const toast = useToast();
+  const { user } = useAuth();
 
   // Auto-open the create modal when arriving from /scan with prefill params.
   useEffect(() => {
@@ -188,6 +190,18 @@ export default function Movements() {
 
   return (
     <div className="space-y-4 md:space-y-6 p-3 md:p-0">
+      {/* Mobile-only user badge: since the topbar is hidden in fullscreen
+          mobile mode, we surface the connected operator here so they can
+          see "as who" they're recording movements. */}
+      {user && (
+        <div className="sm:hidden flex items-center gap-2 -mt-1">
+          <OperatorAvatar
+            name={user.fullName || user.username || ''}
+            size="md"
+          />
+        </div>
+      )}
+
       {/* Header */}
       <PageHeader
         title="Mouvements de Stock"
