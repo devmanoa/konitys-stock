@@ -123,19 +123,21 @@ select.input-field {
 }
 
 /* Zebra rows — apply `.table-zebra` once on a <table> (or <tbody>) to get
-   alternating row backgrounds. Uses the same surface-2 tint as the hover
-   but weaker so hover still reads on top. Even rows stay transparent so
-   they inherit whatever the table's parent background provides. */
+   alternating row backgrounds. We use fully opaque colors so that sticky
+   columns using `bg-inherit` render solidly (a semi-transparent tint on a
+   sticky <td> lets the underlying scroll content bleed through).
+   Even rows = pure surface (white). Odd rows = a low-chroma surface-2 tint
+   pre-mixed to look like surface-2 @ 50% over surface. */
 .table-zebra tbody tr:nth-child(odd) {
-  background-color: var(--k-surface-2-50);
+  background-color: #F1F4FA;
 }
 .table-zebra tbody tr:nth-child(even) {
-  background-color: transparent;
+  background-color: var(--k-surface);
 }
 /* Hover always wins over the zebra tint. */
 .table-zebra.table-hover tbody tr:hover,
 .table-zebra tbody tr.row-hover:hover {
-  background-color: var(--k-surface-2-30);
+  background-color: #E3EAF5;
 }
 
 .tiptap {
