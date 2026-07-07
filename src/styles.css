@@ -128,15 +128,21 @@ select.input-field {
    sticky <td> lets the underlying scroll content bleed through).
    Even rows = pure surface (white). Odd rows = a low-chroma surface-2 tint
    pre-mixed to look like surface-2 @ 50% over surface. */
-.table-zebra tbody tr:nth-child(odd) {
+.table-zebra tbody tr:nth-child(odd),
+.table-zebra tbody tr:nth-child(odd) > td {
   background-color: #F1F4FA;
 }
-.table-zebra tbody tr:nth-child(even) {
+.table-zebra tbody tr:nth-child(even),
+.table-zebra tbody tr:nth-child(even) > td {
   background-color: var(--k-surface);
 }
-/* Hover always wins over the zebra tint. */
+/* Hover always wins over the zebra tint — apply to <td> too so sticky
+   columns (which get their own background layer via position:sticky)
+   follow the row color instead of showing whatever's underneath. */
 .table-zebra.table-hover tbody tr:hover,
-.table-zebra tbody tr.row-hover:hover {
+.table-zebra.table-hover tbody tr:hover > td,
+.table-zebra tbody tr.row-hover:hover,
+.table-zebra tbody tr.row-hover:hover > td {
   background-color: #E3EAF5;
 }
 
