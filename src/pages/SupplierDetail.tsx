@@ -421,7 +421,7 @@ export default function SupplierDetail() {
             <p className="text-[--k-muted]">Aucun contact enregistré pour ce fournisseur</p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-[13px]">
+              <table className="w-full text-[13px] table-zebra">
                 <thead>
                   <tr className="border-b border-[--k-border] text-left text-xs font-medium uppercase text-[--k-muted]">
                     <th className="pb-2">Nom</th>
@@ -525,7 +525,7 @@ export default function SupplierDetail() {
             <p className="text-[--k-muted]">Aucun produit associé à ce fournisseur</p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-[13px]">
+              <table className="w-full text-[13px] table-zebra">
                 <thead>
                   <tr className="border-b border-[--k-border] text-left text-xs font-medium uppercase text-[--k-muted]">
                     <th className="pb-2 pr-4">Description</th>
@@ -656,7 +656,7 @@ export default function SupplierDetail() {
             }
             return (
             <div className="overflow-x-auto">
-              <table className="w-full text-[13px]">
+              <table className="w-full text-[13px] table-zebra">
                 <thead>
                   <tr className="border-b border-[--k-border] text-left text-xs font-medium uppercase text-[--k-muted]">
                     <th className="pb-2 pr-4">N° Commande</th>

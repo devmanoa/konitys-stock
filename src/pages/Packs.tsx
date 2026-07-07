@@ -254,7 +254,7 @@ export default function Packs() {
 
               {/* Desktop Table */}
               <div className="hidden lg:block overflow-x-auto">
-                <table className="w-full text-[13px]">
+                <table className="w-full text-[13px] table-zebra">
                   <thead>
                     <tr className="bg-[--k-surface-2]/50 text-[--k-muted]">
                       <th className="px-4 py-1.5 text-left text-xs font-medium">Nom</th>

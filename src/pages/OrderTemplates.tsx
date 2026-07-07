@@ -207,7 +207,7 @@ export default function OrderTemplates() {
               <div className="text-lg font-semibold text-[--k-text]">Liste des modèles</div>
               <div className="text-xs text-[--k-muted]">{filtered.length} élément{filtered.length > 1 ? 's' : ''}</div>
             </div>
-            <table className="w-full text-[13px]">
+            <table className="w-full text-[13px] table-zebra">
               <thead className="sticky -top-5 z-10">
                 <tr className="border-b border-[--k-border] bg-white">
                   <th className="px-4 py-1.5 text-left text-xs font-medium bg-white">Nom</th>

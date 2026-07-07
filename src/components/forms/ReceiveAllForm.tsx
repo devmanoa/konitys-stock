@@ -109,7 +109,7 @@ export default function ReceiveAllForm({ order, onSuccess, onCancel }: ReceiveAl
           Articles à réceptionner ({lines.length})
         </h4>
         <div className="overflow-x-auto border border-[--k-border] rounded-xl">
-          <table className="w-full text-[13px]">
+          <table className="w-full text-[13px] table-zebra">
             <thead className="bg-blue-50/80">
               <tr className="text-left text-xs font-medium text-blue-900">
                 <th className="px-3 py-2">Produit</th>

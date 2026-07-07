@@ -60,7 +60,7 @@ export default function SupplierAnomaliesSection({ supplierId }: Props) {
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
-          <table className="w-full text-[13px]">
+          <table className="w-full text-[13px] table-zebra">
             <thead>
               <tr className="border-b border-[--k-border] text-left text-xs font-medium uppercase text-[--k-muted]">
                 <th className="px-2 py-2">Date</th>

@@ -323,7 +323,7 @@ export default function Settings() {
 
               {/* Desktop Table */}
               <div className="hidden lg:block overflow-x-auto">
-                <table className="w-full text-[13px]">
+                <table className="w-full text-[13px] table-zebra">
                   <thead>
                     <tr className="border-b border-[--k-border] bg-[--k-surface-2]/50">
                       <th className="px-4 py-1.5 text-left text-xs font-medium text-[--k-muted]">Nom</th>
@@ -588,7 +588,7 @@ export default function Settings() {
 
               {/* Desktop Table */}
               <div className="hidden lg:block overflow-x-auto">
-                <table className="w-full text-[13px]">
+                <table className="w-full text-[13px] table-zebra">
                   <thead>
                     <tr className="border-b border-[--k-border] bg-[--k-surface-2]/50">
                       <th className="px-4 py-1.5 text-left text-xs font-medium text-[--k-muted]">Nom</th>

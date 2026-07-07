@@ -9,11 +9,12 @@
   --k-bg: #EBF0FA;
   --k-surface: #FFFFFF;
   --k-surface-2: #E3EAF5;
-  /* Pre-computed surface-2 @ 30% alpha for table row hovers.
+  /* Pre-computed surface-2 alphas for row hovers / zebra stripes.
      Tailwind can't combine [--k-surface-2] with /30 (alpha needs RGB, var()
-     doesn't expose channels), so we expose a ready-made rgba token used by
-     the `.row-hover` utility below. */
+     doesn't expose channels), so we expose ready-made rgba tokens used by
+     the `.row-hover` / `.table-zebra` utilities below. */
   --k-surface-2-30: rgba(227, 234, 245, 0.3);
+  --k-surface-2-50: rgba(227, 234, 245, 0.5);
   --k-border: #D6DFED;
 
   --k-text: #1A1D2B;
@@ -119,6 +120,22 @@ select.input-field {
 .table-hover tbody tr:hover {
   background-color: var(--k-surface-2-30);
   cursor: pointer;
+}
+
+/* Zebra rows — apply `.table-zebra` once on a <table> (or <tbody>) to get
+   alternating row backgrounds. Uses the same surface-2 tint as the hover
+   but weaker so hover still reads on top. Even rows stay transparent so
+   they inherit whatever the table's parent background provides. */
+.table-zebra tbody tr:nth-child(odd) {
+  background-color: var(--k-surface-2-50);
+}
+.table-zebra tbody tr:nth-child(even) {
+  background-color: transparent;
+}
+/* Hover always wins over the zebra tint. */
+.table-zebra.table-hover tbody tr:hover,
+.table-zebra tbody tr.row-hover:hover {
+  background-color: var(--k-surface-2-30);
 }
 
 .tiptap {

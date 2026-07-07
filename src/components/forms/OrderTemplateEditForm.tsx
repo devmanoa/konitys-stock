@@ -247,7 +247,7 @@ export default function OrderTemplateEditForm({ template, onSuccess, onCancel }:
           </div>
         ) : (
           <div className="overflow-x-auto border border-[--k-border] rounded-xl">
-            <table className="w-full text-[13px]">
+            <table className="w-full text-[13px] table-zebra">
               <thead className="bg-[--k-surface-2]">
                 <tr className="text-left text-xs font-medium uppercase text-[--k-muted]">
                   <th className="px-3 py-2"></th>

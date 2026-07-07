@@ -309,7 +309,7 @@ export default function OrderTemplateDetail() {
 
           {/* Desktop view */}
           <div className="hidden lg:block overflow-x-auto">
-            <table className="min-w-full divide-y divide-[--k-border]">
+            <table className="min-w-full divide-y divide-[--k-border] table-zebra">
               <thead className="bg-gradient-to-r from-blue-50/60 to-indigo-50/30">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-medium text-[--k-muted] uppercase">

@@ -644,7 +644,7 @@ export default function Stocks() {
               <div className="text-xs text-[--k-muted]">{filteredData.length} types de produits</div>
             </div>
             <div>
-              <table className="w-full text-[13px]">
+              <table className="w-full text-[13px] table-zebra">
                 <thead className="sticky -top-5 z-20">
                   <tr className="border-b border-[--k-border] bg-white">
                     <th className="sticky left-0 z-30 bg-white px-4 py-1.5 text-left">

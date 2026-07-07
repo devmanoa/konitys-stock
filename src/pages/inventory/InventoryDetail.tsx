@@ -349,7 +349,7 @@ export default function InventoryDetail() {
               />
             ) : (
               <div className="overflow-x-auto -mx-4 sm:-mx-6">
-                <table className="w-full text-[13px]">
+                <table className="w-full text-[13px] table-zebra">
                   <thead>
                     <tr className="border-b border-[--k-border] text-left text-xs font-medium uppercase text-[--k-muted]">
                       <th className="px-4 py-2 sm:px-6">Heure</th>
@@ -441,7 +441,7 @@ export default function InventoryDetail() {
             />
           ) : (
             <div className="overflow-x-auto -mx-4 sm:-mx-6">
-              <table className="w-full text-[13px]">
+              <table className="w-full text-[13px] table-zebra">
                 <thead>
                   <tr className="border-b border-[--k-border] text-left text-xs font-medium uppercase text-[--k-muted]">
                     <th className="px-4 py-2 sm:px-6">Heure</th>

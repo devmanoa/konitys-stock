@@ -242,7 +242,7 @@ export default function Dashboard() {
             </button>
           </div>
           {pendingOrders && pendingOrders.length > 0 ? (
-            <table className="w-full text-[13px]">
+            <table className="w-full text-[13px] table-zebra">
               <thead>
                 <tr className="border-b border-[--k-border] bg-blue-50/30 text-[--k-muted]">
                   <th className="px-4 py-2 text-left text-xs font-medium">Réf.</th>

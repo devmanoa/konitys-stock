@@ -263,7 +263,7 @@ export default function Suppliers() {
           </div>
         ) : (
           <div>
-            <table className="w-full text-[13px]">
+            <table className="w-full text-[13px] table-zebra">
               <thead className="sticky -top-5 z-10">
                 <tr className="border-b border-[--k-border] bg-white">
                   <th className="px-4 py-1.5 text-left text-xs font-medium bg-white">

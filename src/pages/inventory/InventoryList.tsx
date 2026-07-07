@@ -51,7 +51,7 @@ export default function InventoryList() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-[13px]">
+              <table className="w-full text-[13px] table-zebra">
                 <thead>
                   <tr className="border-b border-[--k-border] text-left text-xs font-medium uppercase text-[--k-muted]">
                     <th className="px-4 py-3">Nom</th>

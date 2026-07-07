@@ -130,7 +130,7 @@ function BorneDetail({
 
       <div className="rounded-2xl border border-[--k-border] bg-white shadow-sm shadow-black/[0.03] overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-[13px]">
+          <table className="w-full text-[13px] table-zebra">
             <thead>
               <tr className="bg-[--k-surface-2]/50 text-[--k-muted]">
                 <th className="px-4 py-2 text-left text-xs font-medium">Composant</th>

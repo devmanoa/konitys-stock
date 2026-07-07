@@ -502,7 +502,7 @@ export default function ProductDetail() {
             <p className="text-[--k-muted]">Aucun fournisseur lié</p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full table-zebra">
                 <thead>
                   <tr className="border-b border-[--k-border] text-left text-xs font-medium uppercase text-[--k-muted]">
                     <th className="pb-2">Fournisseur</th>
@@ -565,7 +565,7 @@ export default function ProductDetail() {
           <CardContent>
             <PriceHistoryChart entries={priceHistory} />
             <div className="mt-4 overflow-x-auto">
-              <table className="w-full text-[13px]">
+              <table className="w-full text-[13px] table-zebra">
                 <thead>
                   <tr className="border-b border-[--k-border] bg-[--k-surface-2]/50 text-[--k-muted]">
                     <th className="px-4 py-1.5 text-left text-xs font-medium">Date</th>
@@ -653,7 +653,7 @@ export default function ProductDetail() {
             <p className="text-[--k-muted]">Aucun stock enregistré</p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full table-zebra">
                 <thead>
                   <tr className="border-b border-[--k-border] text-left text-xs font-medium uppercase text-[--k-muted]">
                     <th className="pb-2">Site</th>
@@ -727,7 +727,7 @@ export default function ProductDetail() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full table-zebra">
                 <thead>
                   <tr className="border-b border-[--k-border] text-left text-xs font-medium uppercase text-[--k-muted]">
                     <th className="pb-2">Date</th>
