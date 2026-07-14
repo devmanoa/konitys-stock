@@ -10,14 +10,26 @@ import RichTextEditor from '../components/ui/RichTextEditor'
 import PrintLabels, { type LabelPayload } from '../components/PrintLabels'
 import { useToast } from '../components/ui/Toast'
 import api from '../services/api'
-import type { ApiResponse, AssemblyType, PartCategory, Product } from '../types'
+import type { ApiResponse, AssemblyType, PartCategory, PartType, Product } from '../types'
+import { PART_TYPE_LABEL } from '../types'
 
 const UNCATEGORIZED_KEY = '__uncat__'
+// Tab special : montrer TOUS les composants (pas de filtre par partType).
+// Utile pour l'admin qui veut voir l'ensemble sans switcher.
+const TAB_ALL = 'ALL'
+type TypeTab = typeof TAB_ALL | PartType
+const TYPE_TABS: TypeTab[] = [TAB_ALL, 'EQUIPMENT', 'PROTECTION', 'HARDWARE']
 
 type AssemblyTypeItemDraft = {
   key: string
   productId: string
-  product: { id: string; reference: string; description?: string; imageUrl?: string } | null
+  product: {
+    id: string
+    reference: string
+    description?: string
+    imageUrl?: string
+    partType?: PartType | null
+  } | null
   quantity: number
   partCategoryId: string
 }
@@ -40,6 +52,39 @@ export default function AssemblyTypeEdit() {
   const [items, setItems] = useState<AssemblyTypeItemDraft[]>([])
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
   const [printLabels, setPrintLabels] = useState<LabelPayload[] | null>(null)
+  // Tab actif pour filtrer les composants par type de piece
+  // (Equipement / Protection / Visserie / Tous). Persistant en localStorage.
+  const [activeTypeTab, setActiveTypeTab] = useState<TypeTab>(() => {
+    try {
+      const v = localStorage.getItem('assemblytype_edit_tab')
+      if (v && (TYPE_TABS as string[]).includes(v)) return v as TypeTab
+    } catch {
+      /* ignore */
+    }
+    return TAB_ALL
+  })
+  useEffect(() => {
+    try {
+      localStorage.setItem('assemblytype_edit_tab', activeTypeTab)
+    } catch {
+      /* ignore */
+    }
+  }, [activeTypeTab])
+
+  // Compteurs par tab (calcules sur TOUS les items, pas seulement le tab actif).
+  const countsByType = useMemo(() => {
+    const counts: Record<TypeTab, number> = {
+      ALL: items.length,
+      EQUIPMENT: 0,
+      PROTECTION: 0,
+      HARDWARE: 0,
+    }
+    for (const it of items) {
+      const t = it.product?.partType
+      if (t) counts[t] += 1
+    }
+    return counts
+  }, [items])
 
   const { data: assemblyType, isLoading: isLoadingType } = useQuery({
     queryKey: ['assembly-type', id],
@@ -66,6 +111,7 @@ export default function AssemblyTypeEdit() {
         (assemblyType.items || []).map((it, idx) => ({
           key: `existing-${it.id}-${idx}`,
           productId: it.productId,
+          // Backend expose partType dans product (voir assemblyTypeController.ts).
           product: it.product,
           quantity: it.quantity,
           partCategoryId: it.partCategoryId || '',
@@ -111,22 +157,32 @@ export default function AssemblyTypeEdit() {
     },
   })
 
-  // Group items by categoryId. Existing items keep their category, new ones go in a dedicated bucket per category.
+  // Filtre les items selon le tab actif (par partType). ALL laisse tout passer.
+  // Les items dont product n'est pas encore charge (nouvelles lignes vides)
+  // restent visibles dans tous les tabs pour ne pas geler la saisie.
+  const filteredItems = useMemo(() => {
+    if (activeTypeTab === TAB_ALL) return items
+    return items.filter((it) => {
+      if (!it.productId) return true // ligne vide en cours d'ajout : garder
+      return it.product?.partType === activeTypeTab
+    })
+  }, [items, activeTypeTab])
+
+  // Group items by categoryId (localisation : Tete/Pied/Socle). Applique
+  // sur les items DEJA filtres par partType.
   const groups = useMemo(() => {
     const map = new Map<string, AssemblyTypeItemDraft[]>()
-    // Seed with every known category to keep stable ordering and let users add anywhere
     for (const cat of partCategories || []) {
       map.set(cat.id, [])
     }
     map.set(UNCATEGORIZED_KEY, [])
-    // Sort items into their bucket
-    for (const it of items) {
+    for (const it of filteredItems) {
       const key = it.partCategoryId || UNCATEGORIZED_KEY
       if (!map.has(key)) map.set(key, [])
       map.get(key)!.push(it)
     }
     return map
-  }, [items, partCategories])
+  }, [filteredItems, partCategories])
 
   const categoryLabel = (key: string) => {
     if (key === UNCATEGORIZED_KEY) return 'Sans catégorie'
@@ -175,9 +231,26 @@ export default function AssemblyTypeEdit() {
     updateItem(key, {
       productId,
       product: product
-        ? { id: product.id, reference: product.reference, description: product.description, imageUrl: product.imageUrl }
+        ? {
+            id: product.id,
+            reference: product.reference,
+            description: product.description,
+            imageUrl: product.imageUrl,
+            partType: product.partType ?? null,
+          }
         : null,
     })
+    // Si le produit choisi a un partType different du tab actif, on switch
+    // automatiquement pour ne pas perdre visuellement la ligne qu'on vient
+    // de saisir.
+    if (
+      product &&
+      product.partType &&
+      activeTypeTab !== TAB_ALL &&
+      product.partType !== activeTypeTab
+    ) {
+      setActiveTypeTab(product.partType)
+    }
   }
 
   const toggleCollapsed = (key: string) => {
@@ -294,6 +367,46 @@ export default function AssemblyTypeEdit() {
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
+          {/* Tabs filtre par type de piece (Equipement / Protection / Visserie).
+              Independant du groupement par PartCategory ci-dessous. */}
+          <div className="flex items-center gap-1 border-b border-[--k-border] -mx-6 px-6">
+            {TYPE_TABS.map((t) => {
+              const label = t === TAB_ALL ? 'Tous' : PART_TYPE_LABEL[t]
+              const count = countsByType[t]
+              const active = activeTypeTab === t
+              return (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setActiveTypeTab(t)}
+                  className={`relative px-3 py-2 text-[13px] font-medium transition ${
+                    active
+                      ? 'text-[--k-primary] border-b-2 border-[--k-primary] -mb-[1px]'
+                      : 'text-[--k-muted] hover:text-[--k-text]'
+                  }`}
+                >
+                  {label}
+                  <span
+                    className={`ml-1.5 inline-flex min-w-[18px] justify-center rounded-full px-1.5 text-[11px] tabular-nums ${
+                      active
+                        ? 'bg-[--k-primary]/10 text-[--k-primary]'
+                        : 'bg-[--k-surface-2] text-[--k-muted]'
+                    }`}
+                  >
+                    {count}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+
+          {activeTypeTab !== TAB_ALL &&
+            items.filter((it) => it.productId && !it.product?.partType).length > 0 && (
+              <div className="rounded-lg bg-amber-50/60 border border-amber-200 px-3 py-2 text-[12px] text-amber-800">
+                {items.filter((it) => it.productId && !it.product?.partType).length} composant(s) sans type de pièce ne s'affiche(nt) pas dans cet onglet — assigne un « Type de pièce » sur ces produits pour qu'ils apparaissent.
+              </div>
+            )}
+
           {orderedKeys.map((key) => {
             const rows = groups.get(key) || []
             // Hide a category section if it has no rows AND it's uncategorized — keep

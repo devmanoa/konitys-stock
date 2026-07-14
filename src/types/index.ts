@@ -66,6 +66,7 @@ export interface AssemblyTypeItem {
     reference: string;
     description?: string;
     imageUrl?: string;
+    partType?: PartType | null;
   };
   quantity: number;
   partCategoryId?: string | null;
