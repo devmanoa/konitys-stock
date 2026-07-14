@@ -3,6 +3,18 @@ export type SupplyRisk = 'HIGH' | 'MEDIUM' | 'LOW';
 export type MovementType = 'IN' | 'OUT' | 'TRANSFER';
 export type ProductCondition = 'NEW' | 'USED';
 export type OrderStatus = 'PENDING' | 'PARTIAL' | 'COMPLETED' | 'CANCELLED';
+/**
+ * Type/nature d'une pièce. Orthogonal à PartCategory qui décrit la
+ * localisation physique (Tête / Pied / Socle). Utilisé côté Factory
+ * pour grouper la checklist d'assemblage.
+ */
+export type PartType = 'EQUIPMENT' | 'PROTECTION' | 'HARDWARE';
+
+export const PART_TYPE_LABEL: Record<PartType, string> = {
+  EQUIPMENT: 'Équipement',
+  PROTECTION: 'Protection',
+  HARDWARE: 'Visserie',
+};
 
 export type AnomalyDecision = 'ACCEPTED' | 'REFUSED';
 
@@ -198,6 +210,7 @@ export interface Product {
   reference: string;
   description?: string;
   supplyRisk?: SupplyRisk;
+  partType?: PartType | null;
   minStock?: number | null;
   location?: string;
   locationId?: string | null;
@@ -430,6 +443,7 @@ export interface CreateProductInput {
   reference: string;
   description?: string;
   supplyRisk?: SupplyRisk;
+  partType?: PartType | null;
   minStock?: number | null;
   location?: string;
   locationId?: string | null;
