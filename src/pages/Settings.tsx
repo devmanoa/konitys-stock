@@ -14,15 +14,8 @@ import api from '../services/api';
 import type { AssemblyType, Assembly, PartCategory, PaginatedResponse, PartType } from '../types';
 import { PART_TYPE_LABEL } from '../types';
 
-const TAB_ALL = 'ALL' as const;
-type TypeTab = typeof TAB_ALL | PartType;
-const TYPE_TABS: TypeTab[] = [TAB_ALL, 'EQUIPMENT', 'PROTECTION', 'HARDWARE'];
-const TYPE_TAB_LABEL: Record<TypeTab, string> = {
-  ALL: 'Tous',
-  EQUIPMENT: PART_TYPE_LABEL.EQUIPMENT,
-  PROTECTION: PART_TYPE_LABEL.PROTECTION,
-  HARDWARE: PART_TYPE_LABEL.HARDWARE,
-};
+type TypeTab = PartType;
+const TYPE_TABS: TypeTab[] = ['EQUIPMENT', 'PROTECTION', 'HARDWARE'];
 
 const PART_TYPE_BADGE_CLASS: Record<PartType, string> = {
   EQUIPMENT: 'bg-blue-50 text-blue-700',
@@ -75,7 +68,7 @@ export default function Settings() {
       const v = localStorage.getItem('settings_assembly_types_tab');
       if (v && (TYPE_TABS as string[]).includes(v)) return v as TypeTab;
     } catch { /* ignore */ }
-    return TAB_ALL;
+    return 'EQUIPMENT';
   });
 
 
@@ -115,7 +108,7 @@ export default function Settings() {
 
   const countsByTypeTab = useMemo(() => {
     const list = assemblyTypesData || [];
-    const out: Record<TypeTab, number> = { ALL: list.length, EQUIPMENT: 0, PROTECTION: 0, HARDWARE: 0 };
+    const out: Record<TypeTab, number> = { EQUIPMENT: 0, PROTECTION: 0, HARDWARE: 0 };
     for (const at of list) {
       if (hasPartType(at, 'EQUIPMENT')) out.EQUIPMENT += 1;
       if (hasPartType(at, 'PROTECTION')) out.PROTECTION += 1;
@@ -126,7 +119,6 @@ export default function Settings() {
 
   const filteredAssemblyTypes = useMemo(() => {
     const list = assemblyTypesData || [];
-    if (activeTypeTab === TAB_ALL) return list;
     return list.filter((at) => hasPartType(at, activeTypeTab));
   }, [assemblyTypesData, activeTypeTab]);
 
@@ -330,7 +322,7 @@ export default function Settings() {
                       : 'text-[--k-muted] hover:text-[--k-text]'
                   }`}
                 >
-                  {TYPE_TAB_LABEL[t]}
+                  {PART_TYPE_LABEL[t]}
                   <span
                     className={`ml-1.5 inline-flex min-w-[24px] justify-center rounded-full px-1.5 text-[11px] tabular-nums ${
                       active
@@ -359,7 +351,7 @@ export default function Settings() {
             </p>
           ) : filteredAssemblyTypes.length === 0 ? (
             <p className="text-[--k-muted] italic py-4">
-              Aucun type borne ne contient de composant « {TYPE_TAB_LABEL[activeTypeTab]} ».
+              Aucun type borne ne contient de composant « {PART_TYPE_LABEL[activeTypeTab]} ».
             </p>
           ) : (
             <>

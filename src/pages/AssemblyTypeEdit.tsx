@@ -14,11 +14,9 @@ import type { ApiResponse, AssemblyType, PartCategory, PartType, Product } from 
 import { PART_TYPE_LABEL } from '../types'
 
 const UNCATEGORIZED_KEY = '__uncat__'
-// Tab special : montrer TOUS les composants (pas de filtre par partType).
-// Utile pour l'admin qui veut voir l'ensemble sans switcher.
-const TAB_ALL = 'ALL'
-type TypeTab = typeof TAB_ALL | PartType
-const TYPE_TABS: TypeTab[] = [TAB_ALL, 'EQUIPMENT', 'PROTECTION', 'HARDWARE']
+// Tabs par type de piece — pas de tab "Tous" (on force le filtre).
+type TypeTab = PartType
+const TYPE_TABS: TypeTab[] = ['EQUIPMENT', 'PROTECTION', 'HARDWARE']
 
 type AssemblyTypeItemDraft = {
   key: string
@@ -53,7 +51,7 @@ export default function AssemblyTypeEdit() {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
   const [printLabels, setPrintLabels] = useState<LabelPayload[] | null>(null)
   // Tab actif pour filtrer les composants par type de piece
-  // (Equipement / Protection / Visserie / Tous). Persistant en localStorage.
+  // (Equipement / Protection / Visserie). Persistant en localStorage.
   const [activeTypeTab, setActiveTypeTab] = useState<TypeTab>(() => {
     try {
       const v = localStorage.getItem('assemblytype_edit_tab')
@@ -61,7 +59,7 @@ export default function AssemblyTypeEdit() {
     } catch {
       /* ignore */
     }
-    return TAB_ALL
+    return 'EQUIPMENT'
   })
   useEffect(() => {
     try {
@@ -74,7 +72,6 @@ export default function AssemblyTypeEdit() {
   // Compteurs par tab (calcules sur TOUS les items, pas seulement le tab actif).
   const countsByType = useMemo(() => {
     const counts: Record<TypeTab, number> = {
-      ALL: items.length,
       EQUIPMENT: 0,
       PROTECTION: 0,
       HARDWARE: 0,
@@ -157,11 +154,10 @@ export default function AssemblyTypeEdit() {
     },
   })
 
-  // Filtre les items selon le tab actif (par partType). ALL laisse tout passer.
+  // Filtre les items selon le tab actif (par partType).
   // Les items dont product n'est pas encore charge (nouvelles lignes vides)
   // restent visibles dans tous les tabs pour ne pas geler la saisie.
   const filteredItems = useMemo(() => {
-    if (activeTypeTab === TAB_ALL) return items
     return items.filter((it) => {
       if (!it.productId) return true // ligne vide en cours d'ajout : garder
       return it.product?.partType === activeTypeTab
@@ -243,12 +239,7 @@ export default function AssemblyTypeEdit() {
     // Si le produit choisi a un partType different du tab actif, on switch
     // automatiquement pour ne pas perdre visuellement la ligne qu'on vient
     // de saisir.
-    if (
-      product &&
-      product.partType &&
-      activeTypeTab !== TAB_ALL &&
-      product.partType !== activeTypeTab
-    ) {
+    if (product && product.partType && product.partType !== activeTypeTab) {
       setActiveTypeTab(product.partType)
     }
   }
@@ -371,7 +362,7 @@ export default function AssemblyTypeEdit() {
               Independant du groupement par PartCategory ci-dessous. */}
           <div className="flex items-center gap-1 border-b border-[--k-border] -mx-6 px-6">
             {TYPE_TABS.map((t) => {
-              const label = t === TAB_ALL ? 'Tous' : PART_TYPE_LABEL[t]
+              const label = PART_TYPE_LABEL[t]
               const count = countsByType[t]
               const active = activeTypeTab === t
               return (
@@ -400,12 +391,11 @@ export default function AssemblyTypeEdit() {
             })}
           </div>
 
-          {activeTypeTab !== TAB_ALL &&
-            items.filter((it) => it.productId && !it.product?.partType).length > 0 && (
-              <div className="rounded-lg bg-amber-50/60 border border-amber-200 px-3 py-2 text-[12px] text-amber-800">
-                {items.filter((it) => it.productId && !it.product?.partType).length} composant(s) sans type de pièce ne s'affiche(nt) pas dans cet onglet — assigne un « Type de pièce » sur ces produits pour qu'ils apparaissent.
-              </div>
-            )}
+          {items.filter((it) => it.productId && !it.product?.partType).length > 0 && (
+            <div className="rounded-lg bg-amber-50/60 border border-amber-200 px-3 py-2 text-[12px] text-amber-800">
+              {items.filter((it) => it.productId && !it.product?.partType).length} composant(s) sans type de pièce ne s'affiche(nt) pas dans cet onglet — assigne un « Type de pièce » sur ces produits pour qu'ils apparaissent.
+            </div>
+          )}
 
           {orderedKeys.map((key) => {
             const rows = groups.get(key) || []
