@@ -14,8 +14,8 @@ import api from '../services/api';
 import type { AssemblyType, Assembly, PartCategory, PaginatedResponse, PartType } from '../types';
 import { PART_TYPE_LABEL } from '../types';
 
-type TypeTab = 'ALL' | PartType;
-const TAB_ALL: TypeTab = 'ALL';
+const TAB_ALL = 'ALL' as const;
+type TypeTab = typeof TAB_ALL | PartType;
 const TYPE_TABS: TypeTab[] = [TAB_ALL, 'EQUIPMENT', 'PROTECTION', 'HARDWARE'];
 const TYPE_TAB_LABEL: Record<TypeTab, string> = {
   ALL: 'Tous',
