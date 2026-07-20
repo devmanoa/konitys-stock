@@ -50,6 +50,22 @@ export interface PartCategory {
   };
 }
 
+/**
+ * Catégorie principale d'un produit (Imprimante, PC, Écran, Câble, …).
+ * Le `codeReference` sert de préfixe pour générer les références internes
+ * (Lot 2). Distincte de PartCategory (localisation) et PartType (nature).
+ */
+export interface ProductCategory {
+  id: string;
+  name: string;
+  codeReference: string;
+  description?: string | null;
+  isActive: boolean;
+  displayOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ProductPartCategory {
   id: string;
   productId: string;
