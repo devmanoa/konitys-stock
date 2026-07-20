@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Edit2, Trash2, Boxes, Tag, X, Layers } from 'lucide-react';
+import { Plus, Edit2, Trash2, Boxes, Tag, X, Layers, Wand2, Loader2 } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import { PageHeader } from '../components/PageHeader';
@@ -86,6 +86,19 @@ export default function Settings() {
   const [assemblyDescription, setAssemblyDescription] = useState('');
   const [assemblyTypeIds, setAssemblyTypeIds] = useState<string[]>([]);
   const [deleteAssemblyConfirm, setDeleteAssemblyConfirm] = useState<Assembly | null>(null);
+
+  // Backfill PartType (auto-taggage)
+  type BackfillResult = {
+    dryRun: boolean;
+    totalUntagged: number;
+    applied: number;
+    wouldApply?: number;
+    perType: Record<PartType, number>;
+    skippedCount: number;
+    skipped: { id: string; reference: string; description: string | null }[];
+  };
+  const [backfillResult, setBackfillResult] = useState<BackfillResult | null>(null);
+  const [backfillConfirmOpen, setBackfillConfirmOpen] = useState(false);
 
 
   // Fetch assembly types
@@ -197,6 +210,36 @@ export default function Settings() {
     },
   });
 
+
+  // Backfill PartType : POST /admin/backfill-part-types (admin role required)
+  const backfillMutation = useMutation({
+    mutationFn: async (dryRun: boolean) => {
+      const res = await api.post<{ success: boolean; data: BackfillResult }>(
+        '/admin/backfill-part-types',
+        { dryRun },
+      );
+      return res.data.data;
+    },
+    onSuccess: (data) => {
+      setBackfillResult(data);
+      if (!data.dryRun) {
+        queryClient.invalidateQueries({ queryKey: ['assembly-types'], refetchType: 'all' });
+        queryClient.invalidateQueries({ queryKey: ['products'], refetchType: 'all' });
+        toast.success(
+          'Auto-taggage terminé',
+          `${data.applied} produit(s) tagués automatiquement`,
+        );
+      }
+    },
+    onError: (err: { response?: { status?: number; data?: { error?: string } } }) => {
+      const status = err.response?.status;
+      const msg = err.response?.data?.error || 'Erreur inconnue';
+      toast.error(
+        status === 403 ? 'Réservé aux admins' : 'Erreur',
+        status === 403 ? 'Cette action nécessite le rôle admin Keycloak.' : msg,
+      );
+    },
+  });
 
   // Part Category mutations (global, no longer scoped per assembly type)
   const invalidatePartCategories = () => {
@@ -517,6 +560,58 @@ export default function Settings() {
               </div>
             </>
           )}
+        </div>
+      </div>
+
+      {/* Auto-taggage type de pièce (backfill one-shot) */}
+      <div className="rounded-2xl border border-[--k-border] bg-white shadow-sm shadow-black/[0.03] overflow-hidden">
+        <div className="flex items-center justify-between border-b border-[--k-border] px-4 py-2.5">
+          <div className="flex items-center gap-2">
+            <Wand2 className="h-4 w-4 text-[--k-primary]" />
+            <span className="text-lg font-semibold text-[--k-text]">
+              Auto-taggage type de pièce
+            </span>
+          </div>
+        </div>
+        <div className="p-4 space-y-3">
+          <p className="text-sm text-[--k-muted]">
+            Pour les produits sans « Type de pièce », l'algorithme cherche des
+            mots-clés dans la référence et la description
+            (vis / boulon → Visserie, écran / carte / alim → Équipement,
+            capot / joint / vitre → Protection). Seuls les produits avec un
+            match sans ambiguïté sont tagués — les autres restent à taguer à
+            la main.
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => backfillMutation.mutate(true)}
+              disabled={backfillMutation.isPending}
+            >
+              {backfillMutation.isPending && backfillMutation.variables === true ? (
+                <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+              ) : (
+                <Wand2 className="h-4 w-4 mr-1.5" />
+              )}
+              Prévisualiser
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => setBackfillConfirmOpen(true)}
+              disabled={backfillMutation.isPending}
+            >
+              {backfillMutation.isPending && backfillMutation.variables === false ? (
+                <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+              ) : (
+                <Wand2 className="h-4 w-4 mr-1.5" />
+              )}
+              Lancer l'auto-taggage
+            </Button>
+            <span className="text-xs text-[--k-muted]">
+              Réservé aux administrateurs.
+            </span>
+          </div>
         </div>
       </div>
 
@@ -973,6 +1068,131 @@ export default function Settings() {
             </Button>
           </div>
         </div>
+      </Modal>
+
+      {/* Confirmation avant apply du backfill */}
+      <Modal
+        isOpen={backfillConfirmOpen}
+        onClose={() => setBackfillConfirmOpen(false)}
+        title="Lancer l'auto-taggage ?"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <p className="text-[--k-muted]">
+            L'action va parcourir tous les produits sans « Type de pièce » et
+            leur assigner un type quand l'heuristique est sans ambiguïté. Les
+            autres produits resteront non tagués.
+          </p>
+          <p className="text-sm text-[--k-muted]">
+            Astuce : utilise « Prévisualiser » d'abord pour voir le nombre de
+            produits qui seront touchés.
+          </p>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="secondary" onClick={() => setBackfillConfirmOpen(false)}>
+              Annuler
+            </Button>
+            <Button
+              onClick={() => {
+                setBackfillConfirmOpen(false);
+                backfillMutation.mutate(false);
+              }}
+              disabled={backfillMutation.isPending}
+            >
+              {backfillMutation.isPending ? 'En cours...' : 'Confirmer'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Résultat du backfill (dry-run ou apply) */}
+      <Modal
+        isOpen={!!backfillResult}
+        onClose={() => setBackfillResult(null)}
+        title={backfillResult?.dryRun ? 'Prévisualisation' : 'Auto-taggage terminé'}
+        size="md"
+      >
+        {backfillResult && (
+          <div className="space-y-4">
+            <div className="rounded-lg bg-[--k-surface-2]/60 p-3 text-sm space-y-1">
+              <div>
+                Produits sans type au départ :{' '}
+                <span className="font-semibold">{backfillResult.totalUntagged}</span>
+              </div>
+              <div>
+                {backfillResult.dryRun ? 'Seraient tagués' : 'Tagués'} :{' '}
+                <span className="font-semibold">
+                  {backfillResult.dryRun
+                    ? backfillResult.wouldApply ?? 0
+                    : backfillResult.applied}
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {(Object.keys(backfillResult.perType) as PartType[]).map((t) => (
+                  <span
+                    key={t}
+                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${PART_TYPE_BADGE_CLASS[t]}`}
+                  >
+                    {PART_TYPE_LABEL[t]} : {backfillResult.perType[t]}
+                  </span>
+                ))}
+              </div>
+              <div className="pt-1 text-[--k-muted]">
+                Restent à taguer à la main :{' '}
+                <span className="font-semibold text-[--k-text]">
+                  {backfillResult.skippedCount}
+                </span>
+              </div>
+            </div>
+
+            {backfillResult.skipped.length > 0 && (
+              <div>
+                <div className="text-xs font-medium text-[--k-muted] mb-1.5">
+                  Aperçu des produits non tagués (200 max)
+                </div>
+                <div className="max-h-64 overflow-y-auto rounded-lg border border-[--k-border]">
+                  <table className="w-full text-[12px]">
+                    <thead className="bg-[--k-surface-2]/50 sticky top-0">
+                      <tr>
+                        <th className="px-2 py-1 text-left font-medium text-[--k-muted]">
+                          Référence
+                        </th>
+                        <th className="px-2 py-1 text-left font-medium text-[--k-muted]">
+                          Description
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {backfillResult.skipped.map((p) => (
+                        <tr key={p.id} className="border-t border-[--k-border]">
+                          <td className="px-2 py-1 font-mono">{p.reference}</td>
+                          <td className="px-2 py-1 text-[--k-muted]">
+                            {p.description || '—'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2 pt-2">
+              {backfillResult.dryRun && (
+                <Button
+                  onClick={() => {
+                    setBackfillResult(null);
+                    setBackfillConfirmOpen(true);
+                  }}
+                >
+                  Lancer pour de vrai
+                </Button>
+              )}
+              <Button variant="secondary" onClick={() => setBackfillResult(null)}>
+                Fermer
+              </Button>
+            </div>
+          </div>
+        )}
       </Modal>
 
     </div>
