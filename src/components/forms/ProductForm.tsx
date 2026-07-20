@@ -6,7 +6,7 @@ import Input from '../ui/Input';
 import Select from '../ui/Select';
 import api from '../../services/api';
 import RichTextEditor from '../ui/RichTextEditor';
-import type { Product, CreateProductInput, SupplyRisk, PartType, ApiResponse, Assembly, AssemblyType, PartCategory, PaginatedResponse, Site, Location as LocationType } from '../../types';
+import type { Product, CreateProductInput, SupplyRisk, PartType, ApiResponse, Assembly, AssemblyType, PartCategory, PaginatedResponse, Site, Location as LocationType, ProductCategory } from '../../types';
 import { PART_TYPE_LABEL } from '../../types';
 
 // Remove /api suffix for static files URL
@@ -24,9 +24,14 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
 
   const [formData, setFormData] = useState<CreateProductInput>({
     reference: '',
+    name: '',
     description: '',
     supplyRisk: undefined,
     partType: null,
+    productCategoryId: null,
+    brand: '',
+    model: '',
+    variant: '',
     minStock: null,
     location: '',
     assemblyId: '',
@@ -35,6 +40,10 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
     partCategoryIds: [],
     hasSerialNumber: false,
   });
+
+  // Preview de la référence auto-générée (mode création uniquement).
+  const [refPreview, setRefPreview] = useState<string | null>(null);
+  const [refPreviewLoading, setRefPreviewLoading] = useState(false);
 
   // Selected assembly types with per-type qtyPerUnit
   const [selectedTypes, setSelectedTypes] = useState<{ assemblyTypeId: string; qtyPerUnit: number }[]>([]);
@@ -75,6 +84,15 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
     },
   });
 
+  // Fetch product categories (categorie principale)
+  const { data: productCategoriesData } = useQuery({
+    queryKey: ['product-categories'],
+    queryFn: async () => {
+      const res = await api.get<ApiResponse<ProductCategory[]>>('/product-categories');
+      return res.data?.data || [];
+    },
+  });
+
   const { data: sitesData } = useQuery({
     queryKey: ['sites'],
     queryFn: async () => {
@@ -108,9 +126,14 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
     if (product) {
       setFormData({
         reference: product.reference,
+        name: product.name || '',
         description: product.description || '',
         supplyRisk: product.supplyRisk,
         partType: product.partType ?? null,
+        productCategoryId: product.productCategoryId ?? null,
+        brand: product.brand ?? '',
+        model: product.model ?? '',
+        variant: product.variant ?? '',
         minStock: product.minStock ?? null,
         location: product.location || '',
         assemblyId: product.assemblyId || '',
@@ -140,6 +163,46 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
       );
     }
   }, [product]);
+
+  // Preview de la reference generee (mode creation uniquement).
+  // Debounce 300ms sur les 3 champs qui composent la ref.
+  useEffect(() => {
+    if (isEditing) {
+      setRefPreview(null);
+      return;
+    }
+    const { productCategoryId, brand, model, variant } = formData;
+    if (!productCategoryId || !brand?.trim() || !model?.trim()) {
+      setRefPreview(null);
+      return;
+    }
+    setRefPreviewLoading(true);
+    const t = setTimeout(async () => {
+      try {
+        const res = await api.post<ApiResponse<{ reference: string | null }>>(
+          '/products/preview-reference',
+          { productCategoryId, brand, model, variant },
+        );
+        setRefPreview(res.data.data?.reference || null);
+      } catch {
+        setRefPreview(null);
+      } finally {
+        setRefPreviewLoading(false);
+      }
+    }, 300);
+    return () => clearTimeout(t);
+  }, [isEditing, formData.productCategoryId, formData.brand, formData.model, formData.variant]);
+
+  // En creation, si la preview est valide, elle prend le pas sur reference.
+  // Sync automatiquement pour que le submit envoie la bonne ref (le serveur
+  // regenere de son cote via generateUniqueReference — le suffixe peut
+  // differer si un autre client cree entre temps, on l'accepte).
+  useEffect(() => {
+    if (isEditing) return;
+    if (refPreview) {
+      setFormData((prev) => ({ ...prev, reference: refPreview }));
+    }
+  }, [refPreview, isEditing]);
 
   const createMutation = useMutation({
     mutationFn: async (data: CreateProductInput) => {
@@ -187,8 +250,11 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
     },
   });
 
-  const handleChange = (field: keyof CreateProductInput, value: string | number | boolean | undefined) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const handleChange = (
+    field: keyof CreateProductInput,
+    value: string | number | boolean | null | undefined,
+  ) => {
+    setFormData(prev => ({ ...prev, [field]: value } as CreateProductInput));
     if (errors[field]) {
       setErrors(prev => {
         const newErrors = { ...prev };
@@ -201,9 +267,14 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.reference.trim()) {
-      newErrors.reference = 'La référence est requise';
-    } else if (formData.reference.length > 50) {
+    const hasStructuredRef =
+      !!formData.productCategoryId && !!formData.brand?.trim() && !!formData.model?.trim();
+    const hasManualRef = !!formData.reference?.trim();
+
+    if (!hasStructuredRef && !hasManualRef) {
+      newErrors.reference =
+        'Renseignez Catégorie + Marque + Modèle (référence générée), ou saisissez une référence manuellement';
+    } else if (hasManualRef && formData.reference!.length > 50) {
       newErrors.reference = 'La référence ne doit pas dépasser 50 caractères';
     }
 
@@ -304,23 +375,113 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div className="col-span-2 sm:col-span-1">
+      {/* Identification produit */}
+      <div className="rounded-lg border border-[--k-border] p-3 space-y-3">
+        <div className="text-[12px] font-semibold uppercase tracking-wide text-[--k-muted]">
+          Identification
+        </div>
+
+        <div>
           <label className="mb-1 block text-[13px] font-medium text-[--k-text]">
-            Référence <span className="text-[--k-danger]">*</span>
+            Nom du produit
           </label>
           <Input
-            value={formData.reference}
-            onChange={(e) => handleChange('reference', e.target.value)}
-            placeholder="Ex: ABC123"
-            disabled={isEditing}
-            className={errors.reference ? 'border-[--k-danger]' : ''}
+            value={formData.name || ''}
+            onChange={(e) => handleChange('name', e.target.value)}
+            placeholder="ex : Imprimante DNP DS620"
           />
+          <p className="mt-1 text-[11px] text-[--k-muted]">
+            Nom lisible affiché aux utilisateurs. La référence interne est générée séparément.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className="mb-1 block text-[13px] font-medium text-[--k-text]">
+              Catégorie principale{isEditing ? '' : ' *'}
+            </label>
+            <Select
+              value={formData.productCategoryId || ''}
+              onChange={(e) => handleChange('productCategoryId', e.target.value || null)}
+              disabled={isEditing}
+            >
+              <option value="">— Non défini —</option>
+              {productCategoriesData
+                ?.filter((c) => c.isActive || c.id === formData.productCategoryId)
+                .map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name} ({c.codeReference})
+                  </option>
+                ))}
+            </Select>
+          </div>
+          <div>
+            <label className="mb-1 block text-[13px] font-medium text-[--k-text]">
+              Marque{isEditing ? '' : ' *'}
+            </label>
+            <Input
+              value={formData.brand || ''}
+              onChange={(e) => handleChange('brand', e.target.value)}
+              placeholder="ex : DNP"
+              disabled={isEditing}
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-[13px] font-medium text-[--k-text]">
+              Modèle{isEditing ? '' : ' *'}
+            </label>
+            <Input
+              value={formData.model || ''}
+              onChange={(e) => handleChange('model', e.target.value)}
+              placeholder="ex : DS620"
+              disabled={isEditing}
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-[13px] font-medium text-[--k-text]">
+              Variante
+            </label>
+            <Input
+              value={formData.variant || ''}
+              onChange={(e) => handleChange('variant', e.target.value)}
+              placeholder="ex : 2M, USBC-HDMI (optionnel)"
+              disabled={isEditing}
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="mb-1 block text-[13px] font-medium text-[--k-text]">
+            Référence interne
+          </label>
+          {isEditing ? (
+            <Input value={formData.reference || ''} disabled />
+          ) : refPreview ? (
+            <div className="flex items-center gap-2 rounded-md bg-emerald-50 border border-emerald-200 px-3 py-2">
+              <span className="font-mono font-semibold text-emerald-800">{refPreview}</span>
+              {refPreviewLoading && (
+                <Loader2 className="h-3 w-3 animate-spin text-emerald-700" />
+              )}
+              <span className="text-[11px] text-emerald-700 ml-auto">Générée automatiquement</span>
+            </div>
+          ) : (
+            <>
+              <Input
+                value={formData.reference || ''}
+                onChange={(e) => handleChange('reference', e.target.value)}
+                placeholder="Sera générée depuis Catégorie + Marque + Modèle, ou saisir à la main"
+                className={errors.reference ? 'border-[--k-danger]' : ''}
+              />
+              <p className="mt-1 text-[11px] text-[--k-muted]">
+                Renseigne <b>Catégorie principale + Marque + Modèle</b> pour la générer
+                automatiquement, ou saisis-la à la main.
+              </p>
+            </>
+          )}
           {errors.reference && (
             <p className="mt-1 text-[13px] text-[--k-danger]">{errors.reference}</p>
           )}
         </div>
-
       </div>
 
       <div>

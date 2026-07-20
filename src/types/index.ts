@@ -225,9 +225,17 @@ export interface ProductAssemblyTypeLink {
 export interface Product {
   id: string;
   reference: string;
+  /** Nom lisible (peut différer de la référence interne). */
+  name?: string | null;
   description?: string;
   supplyRisk?: SupplyRisk;
   partType?: PartType | null;
+  /** Catégorie principale (préfixe de la référence). */
+  productCategoryId?: string | null;
+  productCategory?: ProductCategory | null;
+  brand?: string | null;
+  model?: string | null;
+  variant?: string | null;
   minStock?: number | null;
   location?: string;
   locationId?: string | null;
@@ -457,10 +465,16 @@ export interface OrdersByMonth {
 
 // Form types
 export interface CreateProductInput {
-  reference: string;
+  /** Optionnelle : si absente et productCategoryId+brand+model présents, générée côté serveur. */
+  reference?: string;
+  name?: string | null;
   description?: string;
   supplyRisk?: SupplyRisk;
   partType?: PartType | null;
+  productCategoryId?: string | null;
+  brand?: string | null;
+  model?: string | null;
+  variant?: string | null;
   minStock?: number | null;
   location?: string;
   locationId?: string | null;
