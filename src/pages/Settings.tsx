@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -13,9 +13,6 @@ import { useToast } from '../components/ui/Toast';
 import api from '../services/api';
 import type { AssemblyType, Assembly, PartCategory, PaginatedResponse, PartType } from '../types';
 import { PART_TYPE_LABEL } from '../types';
-
-type TypeTab = PartType;
-const TYPE_TABS: TypeTab[] = ['EQUIPMENT', 'PROTECTION', 'HARDWARE'];
 
 const PART_TYPE_BADGE_CLASS: Record<PartType, string> = {
   EQUIPMENT: 'bg-blue-50 text-blue-700',
@@ -50,10 +47,6 @@ function summarizeAssemblyTypeItems(items: AssemblyType['items']) {
   return { total, byCategory, byType };
 }
 
-function hasPartType(at: AssemblyType, target: PartType): boolean {
-  return (at.items || []).some((it) => it.product?.partType === target);
-}
-
 export default function Settings() {
   const queryClient = useQueryClient();
   const toast = useToast();
@@ -62,16 +55,6 @@ export default function Settings() {
   // Assembly Types state (only used for delete confirmation now —
   // edit/create has its own page at /settings/assembly-types/:id/edit)
   const [deleteAssemblyTypeConfirm, setDeleteAssemblyTypeConfirm] = useState<AssemblyType | null>(null);
-
-  const [activeTypeTab, setActiveTypeTab] = useState<TypeTab>(() => {
-    try {
-      const v = localStorage.getItem('settings_assembly_types_tab');
-      if (v && (TYPE_TABS as string[]).includes(v)) return v as TypeTab;
-    } catch { /* ignore */ }
-    return 'EQUIPMENT';
-  });
-
-
 
   // Part Categories state
   const [newCategoryName, setNewCategoryName] = useState('');
@@ -120,27 +103,6 @@ export default function Settings() {
       return res.data?.data || [];
     },
   });
-
-  const countsByTypeTab = useMemo(() => {
-    const list = assemblyTypesData || [];
-    const out: Record<TypeTab, number> = { EQUIPMENT: 0, PROTECTION: 0, HARDWARE: 0 };
-    for (const at of list) {
-      if (hasPartType(at, 'EQUIPMENT')) out.EQUIPMENT += 1;
-      if (hasPartType(at, 'PROTECTION')) out.PROTECTION += 1;
-      if (hasPartType(at, 'HARDWARE')) out.HARDWARE += 1;
-    }
-    return out;
-  }, [assemblyTypesData]);
-
-  const filteredAssemblyTypes = useMemo(() => {
-    const list = assemblyTypesData || [];
-    return list.filter((at) => hasPartType(at, activeTypeTab));
-  }, [assemblyTypesData, activeTypeTab]);
-
-  const persistTypeTab = (t: TypeTab) => {
-    setActiveTypeTab(t);
-    try { localStorage.setItem('settings_assembly_types_tab', t); } catch { /* ignore */ }
-  };
 
   // Fetch part categories (global)
   const { data: partCategoriesData } = useQuery({
@@ -388,38 +350,6 @@ export default function Settings() {
             Ajouter
           </Button>
         </div>
-        {/* Tabs par type de pièce — filtre les Types de bornes selon la nature des composants qu'ils embarquent */}
-        {assemblyTypesData && assemblyTypesData.length > 0 && (
-          <div className="flex items-center gap-1 border-b border-[--k-border] px-4">
-            {TYPE_TABS.map((t) => {
-              const active = activeTypeTab === t;
-              const count = countsByTypeTab[t] || 0;
-              return (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => persistTypeTab(t)}
-                  className={`relative px-3 py-2 text-[13px] font-medium transition ${
-                    active
-                      ? 'text-[--k-primary] border-b-2 border-[--k-primary] -mb-[1px]'
-                      : 'text-[--k-muted] hover:text-[--k-text]'
-                  }`}
-                >
-                  {PART_TYPE_LABEL[t]}
-                  <span
-                    className={`ml-1.5 inline-flex min-w-[24px] justify-center rounded-full px-1.5 text-[11px] tabular-nums ${
-                      active
-                        ? 'bg-[--k-primary]/10 text-[--k-primary]'
-                        : 'bg-[--k-surface-2] text-[--k-muted]'
-                    }`}
-                  >
-                    {count}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        )}
         <div className="p-4">
           <p className="text-sm text-[--k-muted] mb-4">
             Les types de bornes représentent les familles de bornes (ex: Borne Classik, Borne Spherik). Une borne peut appartenir à plusieurs types.
@@ -432,15 +362,11 @@ export default function Settings() {
             <p className="text-[--k-muted] italic py-4">
               Aucun type borne créé
             </p>
-          ) : filteredAssemblyTypes.length === 0 ? (
-            <p className="text-[--k-muted] italic py-4">
-              Aucun type borne ne contient de composant « {PART_TYPE_LABEL[activeTypeTab]} ».
-            </p>
           ) : (
             <>
               {/* Mobile Cards */}
               <div className="space-y-3 lg:hidden">
-                {filteredAssemblyTypes.map((assemblyType) => {
+                {assemblyTypesData.map((assemblyType) => {
                   const totals = summarizeAssemblyTypeItems(assemblyType.items)
                   return (
                   <div
@@ -522,7 +448,7 @@ export default function Settings() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredAssemblyTypes.map((assemblyType) => {
+                    {assemblyTypesData.map((assemblyType) => {
                       const totals = summarizeAssemblyTypeItems(assemblyType.items)
                       return (
                       <tr key={assemblyType.id} className="border-t border-[--k-border] row-hover transition-colors">
