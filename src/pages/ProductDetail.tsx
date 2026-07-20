@@ -48,6 +48,7 @@ import Comments from '../components/ProductComments';
 import RichTextDisplay, { stripHtml } from '../components/ui/RichTextDisplay';
 import SerialItemsPanel from '../components/SerialItemsPanel';
 import PrintLabels, { type LabelPayload } from '../components/PrintLabels';
+import { qrForProduct, qrForProductWithSerial, qrForInternalItem } from '../utils/qr';
 import api from '../services/api';
 import type { Product, ApiResponse, ProductPriceHistoryEntry, StockMovement } from '../types';
 
@@ -233,7 +234,7 @@ export default function ProductDetail() {
                   } else {
                     setPrintLabels([
                       {
-                        qrValue: `${API_BASE_URL.replace(/\/api$/, '')}/products/${data.id}`,
+                        qrValue: qrForProduct(data.reference),
                         title: data.description || data.reference,
                         reference: data.reference,
                       },
@@ -254,7 +255,7 @@ export default function ProductDetail() {
                         setShowPrintMenu(false);
                         setPrintLabels([
                           {
-                            qrValue: `${API_BASE_URL.replace(/\/api$/, '')}/products/${data.id}`,
+                            qrValue: qrForProduct(data.reference),
                             title: data.description || data.reference,
                             reference: data.reference,
                           },
@@ -276,7 +277,9 @@ export default function ProductDetail() {
                         }
                         setPrintLabels(
                           serials.map((s: any) => ({
-                            qrValue: `${API_BASE_URL.replace(/\/api$/, '')}/serial/${s.id}`,
+                            qrValue: s.serialNumber
+                              ? qrForProductWithSerial(data.reference, s.serialNumber)
+                              : qrForInternalItem(s.id),
                             title: data.description || data.reference,
                             reference: s.serialNumber,
                           })),

@@ -1,40 +1,55 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { X, Loader2, Camera } from 'lucide-react'
+import { parseQrPayload } from '../utils/qr'
 
 /**
  * Reusable QR scanner. Lazy-imports html5-qrcode so the lib (~370 KB) is
  * only fetched when the modal actually opens.
  *
- * Caller passes an onScan(parsed) callback. We support the two URL shapes
- * the app generates:
- *   - /products/<uuid>   (product type)
- *   - /serial/<uuid>     (single serial-tracked item)
- * Plus a bare UUID fallback. Anything else is reported as 'unknown'.
+ * Formats supportés (voir src/utils/qr.ts) :
+ *   - SZ:v1:PRODUCT:<REF>                  (produit géré en quantité)
+ *   - SZ:v1:PRODUCT:<REF>:SN:<serial>      (produit avec N° série constructeur)
+ *   - SZ:v1:ITEM:<internalId>              (article interne unique)
+ *   - Legacy URL /products/<uuid>          (compat avec anciens QR imprimés)
+ *   - Legacy URL /serial/<uuid>            (compat)
+ *   - Bare UUID                            (compat)
+ *
+ * `id` peut être un UUID OU une référence (ex : IMPR-DNP-DS620) : le
+ * backend `GET /products/:key` accepte les deux.
  */
 
 export interface ParsedQr {
-  kind: 'product' | 'serial' | 'unknown'
+  kind: 'product' | 'serial' | 'item' | 'unknown'
+  /**
+   * Pour 'product' : UUID (legacy) ou référence (nouveau format SZ:v1).
+   * Pour 'serial'  : UUID d'un ProductSerialItem.
+   * Pour 'item'    : identifiant interne (ex : IMP-0001).
+   * Pour 'unknown' : chaîne vide.
+   */
   id: string
+  /** Numéro de série constructeur si présent dans le QR (SZ:v1:PRODUCT:<REF>:SN:...). */
+  serialNumber?: string
   raw: string
 }
 
-// Strict UUID v4-ish: 8-4-4-4-12 hex chars. The previous `[0-9a-f-]{8,}`
-// was too lax — it matched query params or random ids accidentally
-// shaped like an UUID and gave us bogus productIds.
-const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i
-const STRICT_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-
 export function parseQr(payload: string): ParsedQr {
-  // Strip any query string or fragment before matching paths.
-  const raw = payload.trim()
-  const path = raw.split(/[?#]/, 1)[0] ?? raw
-  const productMatch = path.match(new RegExp(`/products/(${UUID_RE.source})`, 'i'))
-  if (productMatch) return { kind: 'product', id: productMatch[1].toLowerCase(), raw }
-  const serialMatch = path.match(new RegExp(`/serial(?:-items)?/(${UUID_RE.source})`, 'i'))
-  if (serialMatch) return { kind: 'serial', id: serialMatch[1].toLowerCase(), raw }
-  if (STRICT_UUID_RE.test(raw)) return { kind: 'product', id: raw.toLowerCase(), raw }
-  return { kind: 'unknown', id: '', raw }
+  const p = parseQrPayload(payload)
+  switch (p.kind) {
+    case 'product':
+      return {
+        kind: 'product',
+        id: p.idOrRef,
+        serialNumber: p.serialNumber,
+        raw: p.raw,
+      }
+    case 'serial':
+      return { kind: 'serial', id: p.id, raw: p.raw }
+    case 'item':
+      return { kind: 'item', id: p.itemId, raw: p.raw }
+    default:
+      return { kind: 'unknown', id: '', raw: p.raw }
+  }
 }
 
 interface Props {
