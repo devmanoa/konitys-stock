@@ -99,6 +99,8 @@ export default function Settings() {
   };
   const [backfillResult, setBackfillResult] = useState<BackfillResult | null>(null);
   const [backfillConfirmOpen, setBackfillConfirmOpen] = useState(false);
+  const [selectedSkippedIds, setSelectedSkippedIds] = useState<Set<string>>(new Set());
+  const [bulkPartType, setBulkPartType] = useState<PartType>('EQUIPMENT');
 
 
   // Fetch assembly types
@@ -222,6 +224,7 @@ export default function Settings() {
     },
     onSuccess: (data) => {
       setBackfillResult(data);
+      setSelectedSkippedIds(new Set());
       if (!data.dryRun) {
         queryClient.invalidateQueries({ queryKey: ['assembly-types'], refetchType: 'all' });
         queryClient.invalidateQueries({ queryKey: ['products'], refetchType: 'all' });
@@ -230,6 +233,43 @@ export default function Settings() {
           `${data.applied} produit(s) tagués automatiquement`,
         );
       }
+    },
+    onError: (err: { response?: { status?: number; data?: { error?: string } } }) => {
+      const status = err.response?.status;
+      const msg = err.response?.data?.error || 'Erreur inconnue';
+      toast.error(
+        status === 403 ? 'Réservé aux admins' : 'Erreur',
+        status === 403 ? 'Cette action nécessite le rôle admin Keycloak.' : msg,
+      );
+    },
+  });
+
+  const bulkTagMutation = useMutation({
+    mutationFn: async (payload: { productIds: string[]; partType: PartType }) => {
+      const res = await api.post<{ success: boolean; data: { updated: number } }>(
+        '/admin/bulk-set-part-type',
+        payload,
+      );
+      return res.data.data;
+    },
+    onSuccess: (data, variables) => {
+      // Retire les produits tagués de la liste skipped affichée
+      setBackfillResult((prev) =>
+        prev
+          ? {
+              ...prev,
+              skipped: prev.skipped.filter((p) => !variables.productIds.includes(p.id)),
+              skippedCount: Math.max(0, prev.skippedCount - variables.productIds.length),
+            }
+          : prev,
+      );
+      setSelectedSkippedIds(new Set());
+      queryClient.invalidateQueries({ queryKey: ['assembly-types'], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ['products'], refetchType: 'all' });
+      toast.success(
+        'Taggage manuel',
+        `${data.updated} produit(s) tagués en « ${PART_TYPE_LABEL[variables.partType]} »`,
+      );
     },
     onError: (err: { response?: { status?: number; data?: { error?: string } } }) => {
       const status = err.response?.status;
@@ -1146,13 +1186,78 @@ export default function Settings() {
 
             {backfillResult.skipped.length > 0 && (
               <div>
-                <div className="text-xs font-medium text-[--k-muted] mb-1.5">
-                  Aperçu des produits non tagués (200 max)
+                <div className="flex items-center justify-between mb-1.5 gap-2 flex-wrap">
+                  <div className="text-xs font-medium text-[--k-muted]">
+                    Aperçu des produits non tagués (200 max) — coche pour tagger en lot
+                  </div>
+                  <button
+                    type="button"
+                    className="text-[11px] text-[--k-primary] hover:underline"
+                    onClick={() => {
+                      const all = backfillResult.skipped.map((p) => p.id);
+                      const allSelected = all.every((id) => selectedSkippedIds.has(id));
+                      setSelectedSkippedIds(allSelected ? new Set() : new Set(all));
+                    }}
+                  >
+                    {backfillResult.skipped.every((p) => selectedSkippedIds.has(p.id))
+                      ? 'Tout désélectionner'
+                      : 'Tout sélectionner'}
+                  </button>
                 </div>
+
+                {selectedSkippedIds.size > 0 && (
+                  <div className="mb-2 flex items-center gap-2 rounded-lg border border-[--k-primary]/30 bg-[--k-primary]/5 px-3 py-2">
+                    <span className="text-[12px] font-medium text-[--k-text]">
+                      {selectedSkippedIds.size} sélectionné(s) — tagger en :
+                    </span>
+                    <select
+                      value={bulkPartType}
+                      onChange={(e) => setBulkPartType(e.target.value as PartType)}
+                      className="input-field text-[12px]"
+                      style={{ height: '28px', padding: '0 0.5rem', width: 'auto' }}
+                    >
+                      {(['EQUIPMENT', 'PROTECTION', 'HARDWARE'] as PartType[]).map((t) => (
+                        <option key={t} value={t}>
+                          {PART_TYPE_LABEL[t]}
+                        </option>
+                      ))}
+                    </select>
+                    <Button
+                      size="sm"
+                      onClick={() =>
+                        bulkTagMutation.mutate({
+                          productIds: Array.from(selectedSkippedIds),
+                          partType: bulkPartType,
+                        })
+                      }
+                      disabled={bulkTagMutation.isPending}
+                    >
+                      {bulkTagMutation.isPending ? 'En cours...' : 'Appliquer'}
+                    </Button>
+                  </div>
+                )}
+
                 <div className="max-h-64 overflow-y-auto rounded-lg border border-[--k-border]">
                   <table className="w-full text-[12px]">
                     <thead className="bg-[--k-surface-2]/50 sticky top-0">
                       <tr>
+                        <th className="px-2 py-1 text-left font-medium text-[--k-muted] w-8">
+                          <input
+                            type="checkbox"
+                            checked={
+                              backfillResult.skipped.length > 0 &&
+                              backfillResult.skipped.every((p) =>
+                                selectedSkippedIds.has(p.id),
+                              )
+                            }
+                            onChange={(e) => {
+                              const all = backfillResult.skipped.map((p) => p.id);
+                              setSelectedSkippedIds(
+                                e.target.checked ? new Set(all) : new Set(),
+                              );
+                            }}
+                          />
+                        </th>
                         <th className="px-2 py-1 text-left font-medium text-[--k-muted]">
                           Référence
                         </th>
@@ -1162,14 +1267,40 @@ export default function Settings() {
                       </tr>
                     </thead>
                     <tbody>
-                      {backfillResult.skipped.map((p) => (
-                        <tr key={p.id} className="border-t border-[--k-border]">
-                          <td className="px-2 py-1 font-mono">{p.reference}</td>
-                          <td className="px-2 py-1 text-[--k-muted]">
-                            {p.description || '—'}
-                          </td>
-                        </tr>
-                      ))}
+                      {backfillResult.skipped.map((p) => {
+                        const checked = selectedSkippedIds.has(p.id);
+                        return (
+                          <tr
+                            key={p.id}
+                            className={`border-t border-[--k-border] cursor-pointer ${
+                              checked ? 'bg-[--k-primary]/5' : 'hover:bg-[--k-surface-2]/40'
+                            }`}
+                            onClick={() => {
+                              setSelectedSkippedIds((prev) => {
+                                const next = new Set(prev);
+                                if (next.has(p.id)) next.delete(p.id);
+                                else next.add(p.id);
+                                return next;
+                              });
+                            }}
+                          >
+                            <td className="px-2 py-1">
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                onChange={() => {
+                                  /* handled by row onClick */
+                                }}
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                            </td>
+                            <td className="px-2 py-1 font-mono">{p.reference}</td>
+                            <td className="px-2 py-1 text-[--k-muted]">
+                              {p.description || '—'}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
