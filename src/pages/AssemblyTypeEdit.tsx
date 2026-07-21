@@ -16,7 +16,7 @@ import { PART_TYPE_LABEL } from '../types'
 const UNCATEGORIZED_KEY = '__uncat__'
 // Tabs par type de piece — pas de tab "Tous" (on force le filtre).
 type TypeTab = PartType
-const TYPE_TABS: TypeTab[] = ['EQUIPMENT', 'PROTECTION', 'HARDWARE']
+const TYPE_TABS: TypeTab[] = ['EQUIPMENT', 'PROTECTION', 'ACCESSORY']
 
 type AssemblyTypeItemDraft = {
   key: string
@@ -74,7 +74,7 @@ export default function AssemblyTypeEdit() {
     const counts: Record<TypeTab, number> = {
       EQUIPMENT: 0,
       PROTECTION: 0,
-      HARDWARE: 0,
+      ACCESSORY: 0,
     }
     for (const it of items) {
       const t = it.product?.partType

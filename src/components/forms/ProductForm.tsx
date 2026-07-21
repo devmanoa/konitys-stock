@@ -6,8 +6,7 @@ import Input from '../ui/Input';
 import Select from '../ui/Select';
 import api from '../../services/api';
 import RichTextEditor from '../ui/RichTextEditor';
-import type { Product, CreateProductInput, SupplyRisk, PartType, ApiResponse, Assembly, AssemblyType, PartCategory, PaginatedResponse, Site, Location as LocationType, ProductCategory } from '../../types';
-import { PART_TYPE_LABEL } from '../../types';
+import type { Product, CreateProductInput, SupplyRisk, ApiResponse, Assembly, AssemblyType, PartCategory, PaginatedResponse, Site, Location as LocationType, ProductCategory } from '../../types';
 
 // Remove /api suffix for static files URL
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/api$/, '');
@@ -27,7 +26,6 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
     name: '',
     description: '',
     supplyRisk: undefined,
-    partType: null,
     productCategoryId: null,
     brand: '',
     model: '',
@@ -129,7 +127,6 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
         name: product.name || '',
         description: product.description || '',
         supplyRisk: product.supplyRisk,
-        partType: product.partType ?? null,
         productCategoryId: product.productCategoryId ?? null,
         brand: product.brand ?? '',
         model: product.model ?? '',
@@ -297,7 +294,6 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
     const data = {
       ...formData,
       supplyRisk: formData.supplyRisk || undefined,
-      partType: formData.partType || null,
       minStock: formData.minStock != null && formData.minStock >= 0 ? formData.minStock : null,
       assemblyId: formData.assemblyId || undefined,
       assemblyTypes: selectedTypes.length > 0 ? selectedTypes : undefined,
@@ -580,41 +576,19 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
         </Select>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="mb-1 block text-[13px] font-medium text-[--k-text]">
-            Risque approvisionnement
-          </label>
-          <Select
-            value={formData.supplyRisk || ''}
-            onChange={(e) => handleChange('supplyRisk', e.target.value as SupplyRisk || undefined)}
-          >
-            <option value="">Non défini</option>
-            <option value="LOW">Faible</option>
-            <option value="MEDIUM">Moyen</option>
-            <option value="HIGH">Fort</option>
-          </Select>
-        </div>
-
-        <div>
-          <label className="mb-1 block text-[13px] font-medium text-[--k-text]">
-            Type de pièce
-          </label>
-          <Select
-            value={formData.partType || ''}
-            onChange={(e) =>
-              handleChange('partType', (e.target.value as PartType) || null)
-            }
-          >
-            <option value="">Non défini</option>
-            <option value="EQUIPMENT">{PART_TYPE_LABEL.EQUIPMENT}</option>
-            <option value="PROTECTION">{PART_TYPE_LABEL.PROTECTION}</option>
-            <option value="HARDWARE">{PART_TYPE_LABEL.HARDWARE}</option>
-          </Select>
-          <p className="text-[11px] text-[--k-muted] mt-1">
-            Utilisé par Bornes Factory pour grouper la checklist d'assemblage.
-          </p>
-        </div>
+      <div>
+        <label className="mb-1 block text-[13px] font-medium text-[--k-text]">
+          Risque approvisionnement
+        </label>
+        <Select
+          value={formData.supplyRisk || ''}
+          onChange={(e) => handleChange('supplyRisk', e.target.value as SupplyRisk || undefined)}
+        >
+          <option value="">Non défini</option>
+          <option value="LOW">Faible</option>
+          <option value="MEDIUM">Moyen</option>
+          <option value="HIGH">Fort</option>
+        </Select>
       </div>
 
       <div>

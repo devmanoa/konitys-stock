@@ -4,16 +4,17 @@ export type MovementType = 'IN' | 'OUT' | 'TRANSFER';
 export type ProductCondition = 'NEW' | 'USED';
 export type OrderStatus = 'PENDING' | 'PARTIAL' | 'COMPLETED' | 'CANCELLED';
 /**
- * Type/nature d'une pièce. Orthogonal à PartCategory qui décrit la
- * localisation physique (Tête / Pied / Socle). Utilisé côté Factory
- * pour grouper la checklist d'assemblage.
+ * Type/nature d'une pièce, porté par la ProductCategory (Imprimante,
+ * PC, Vitre, ...). Utilisé côté Factory pour grouper la checklist
+ * d'assemblage. Un Product hérite du partType de sa catégorie via
+ * derivation côté serveur (voir productController).
  */
-export type PartType = 'EQUIPMENT' | 'PROTECTION' | 'HARDWARE';
+export type PartType = 'EQUIPMENT' | 'PROTECTION' | 'ACCESSORY';
 
 export const PART_TYPE_LABEL: Record<PartType, string> = {
   EQUIPMENT: 'Équipement',
   PROTECTION: 'Protection',
-  HARDWARE: 'Visserie',
+  ACCESSORY: 'Accessoire',
 };
 
 export type AnomalyDecision = 'ACCEPTED' | 'REFUSED';
@@ -60,6 +61,8 @@ export interface ProductCategory {
   name: string;
   codeReference: string;
   description?: string | null;
+  /** Nature du composant (Équipement / Protection / Accessoire) — utilisée par Factory. */
+  partType?: PartType | null;
   isActive: boolean;
   displayOrder: number;
   createdAt: string;
@@ -229,8 +232,13 @@ export interface Product {
   name?: string | null;
   description?: string;
   supplyRisk?: SupplyRisk;
+  /**
+   * Nature du composant, DÉRIVÉE de productCategory.partType côté serveur.
+   * Read-only pour le client ; ne PAS renvoyer dans CreateProductInput —
+   * on tag la catégorie, pas le produit.
+   */
   partType?: PartType | null;
-  /** Catégorie principale (préfixe de la référence). */
+  /** Catégorie principale (préfixe de la référence + porte le partType). */
   productCategoryId?: string | null;
   productCategory?: ProductCategory | null;
   brand?: string | null;
@@ -470,7 +478,6 @@ export interface CreateProductInput {
   name?: string | null;
   description?: string;
   supplyRisk?: SupplyRisk;
-  partType?: PartType | null;
   productCategoryId?: string | null;
   brand?: string | null;
   model?: string | null;

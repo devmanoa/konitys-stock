@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Edit2, Trash2, Boxes, Tag, X, Layers, Wand2, Loader2, Hash, ArrowUp, ArrowDown, EyeOff } from 'lucide-react';
+import { Plus, Edit2, Trash2, Boxes, Tag, X, Layers, Loader2, Hash, ArrowUp, ArrowDown, EyeOff } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import { PageHeader } from '../components/PageHeader';
@@ -17,7 +17,7 @@ import { PART_TYPE_LABEL } from '../types';
 const PART_TYPE_BADGE_CLASS: Record<PartType, string> = {
   EQUIPMENT: 'bg-blue-50 text-blue-700',
   PROTECTION: 'bg-emerald-50 text-emerald-700',
-  HARDWARE: 'bg-amber-50 text-amber-800',
+  ACCESSORY: 'bg-amber-50 text-amber-800',
 };
 
 function summarizeAssemblyTypeItems(items: AssemblyType['items']) {
@@ -36,7 +36,7 @@ function summarizeAssemblyTypeItems(items: AssemblyType['items']) {
   const byCategory = Array.from(buckets.entries())
     .map(([label, qty]) => ({ label, qty }))
     .sort((a, b) => b.qty - a.qty);
-  const typeOrder: (PartType | 'UNKNOWN')[] = ['EQUIPMENT', 'PROTECTION', 'HARDWARE', 'UNKNOWN'];
+  const typeOrder: (PartType | 'UNKNOWN')[] = ['EQUIPMENT', 'PROTECTION', 'ACCESSORY', 'UNKNOWN'];
   const byType = typeOrder
     .filter((t) => byTypeMap.has(t))
     .map((t) => ({
@@ -70,20 +70,6 @@ export default function Settings() {
   const [assemblyTypeIds, setAssemblyTypeIds] = useState<string[]>([]);
   const [deleteAssemblyConfirm, setDeleteAssemblyConfirm] = useState<Assembly | null>(null);
 
-  // Backfill PartType (auto-taggage)
-  type BackfillResult = {
-    dryRun: boolean;
-    totalUntagged: number;
-    applied: number;
-    wouldApply?: number;
-    perType: Record<PartType, number>;
-    skippedCount: number;
-    skipped: { id: string; reference: string; description: string | null }[];
-  };
-  const [backfillResult, setBackfillResult] = useState<BackfillResult | null>(null);
-  const [backfillConfirmOpen, setBackfillConfirmOpen] = useState(false);
-  const [selectedSkippedIds, setSelectedSkippedIds] = useState<Set<string>>(new Set());
-  const [bulkPartType, setBulkPartType] = useState<PartType>('EQUIPMENT');
 
   // Product Categories (categorie principale — prefixe de la reference produit)
   const [productCategoryModalOpen, setProductCategoryModalOpen] = useState(false);
@@ -93,6 +79,7 @@ export default function Settings() {
   const [pcDescription, setPcDescription] = useState('');
   const [pcIsActive, setPcIsActive] = useState(true);
   const [pcDisplayOrder, setPcDisplayOrder] = useState(0);
+  const [pcPartType, setPcPartType] = useState<PartType | ''>('');
   const [deleteProductCategoryConfirm, setDeleteProductCategoryConfirm] =
     useState<ProductCategory | null>(null);
 
@@ -144,6 +131,7 @@ export default function Settings() {
     description: pcDescription || null,
     isActive: pcIsActive,
     displayOrder: Number(pcDisplayOrder) || 0,
+    partType: pcPartType || null,
   });
 
   const resetProductCategoryForm = () => {
@@ -153,6 +141,7 @@ export default function Settings() {
     setPcDescription('');
     setPcIsActive(true);
     setPcDisplayOrder(0);
+    setPcPartType('');
   };
 
   const openProductCategoryModal = (cat?: ProductCategory) => {
@@ -163,6 +152,7 @@ export default function Settings() {
       setPcDescription(cat.description || '');
       setPcIsActive(cat.isActive);
       setPcDisplayOrder(cat.displayOrder);
+      setPcPartType(cat.partType || '');
     } else {
       resetProductCategoryForm();
     }
@@ -298,74 +288,6 @@ export default function Settings() {
     },
   });
 
-
-  // Backfill PartType : POST /admin/backfill-part-types (admin role required)
-  const backfillMutation = useMutation({
-    mutationFn: async (dryRun: boolean) => {
-      const res = await api.post<{ success: boolean; data: BackfillResult }>(
-        '/admin/backfill-part-types',
-        { dryRun },
-      );
-      return res.data.data;
-    },
-    onSuccess: (data) => {
-      setBackfillResult(data);
-      setSelectedSkippedIds(new Set());
-      if (!data.dryRun) {
-        queryClient.invalidateQueries({ queryKey: ['assembly-types'], refetchType: 'all' });
-        queryClient.invalidateQueries({ queryKey: ['products'], refetchType: 'all' });
-        toast.success(
-          'Auto-taggage terminé',
-          `${data.applied} produit(s) tagués automatiquement`,
-        );
-      }
-    },
-    onError: (err: { response?: { status?: number; data?: { error?: string } } }) => {
-      const status = err.response?.status;
-      const msg = err.response?.data?.error || 'Erreur inconnue';
-      toast.error(
-        status === 403 ? 'Réservé aux admins' : 'Erreur',
-        status === 403 ? 'Cette action nécessite le rôle admin Keycloak.' : msg,
-      );
-    },
-  });
-
-  const bulkTagMutation = useMutation({
-    mutationFn: async (payload: { productIds: string[]; partType: PartType }) => {
-      const res = await api.post<{ success: boolean; data: { updated: number } }>(
-        '/admin/bulk-set-part-type',
-        payload,
-      );
-      return res.data.data;
-    },
-    onSuccess: (data, variables) => {
-      // Retire les produits tagués de la liste skipped affichée
-      setBackfillResult((prev) =>
-        prev
-          ? {
-              ...prev,
-              skipped: prev.skipped.filter((p) => !variables.productIds.includes(p.id)),
-              skippedCount: Math.max(0, prev.skippedCount - variables.productIds.length),
-            }
-          : prev,
-      );
-      setSelectedSkippedIds(new Set());
-      queryClient.invalidateQueries({ queryKey: ['assembly-types'], refetchType: 'all' });
-      queryClient.invalidateQueries({ queryKey: ['products'], refetchType: 'all' });
-      toast.success(
-        'Taggage manuel',
-        `${data.updated} produit(s) tagués en « ${PART_TYPE_LABEL[variables.partType]} »`,
-      );
-    },
-    onError: (err: { response?: { status?: number; data?: { error?: string } } }) => {
-      const status = err.response?.status;
-      const msg = err.response?.data?.error || 'Erreur inconnue';
-      toast.error(
-        status === 403 ? 'Réservé aux admins' : 'Erreur',
-        status === 403 ? 'Cette action nécessite le rôle admin Keycloak.' : msg,
-      );
-    },
-  });
 
   // Part Category mutations (global, no longer scoped per assembly type)
   const invalidatePartCategories = () => {
@@ -700,6 +622,9 @@ export default function Settings() {
                     <th className="px-4 py-1.5 text-left text-xs font-medium text-[--k-muted]">
                       Description
                     </th>
+                    <th className="px-4 py-1.5 text-left text-xs font-medium text-[--k-muted] w-28">
+                      Type de pièce
+                    </th>
                     <th className="px-4 py-1.5 text-center text-xs font-medium text-[--k-muted] w-20">
                       Actif
                     </th>
@@ -726,6 +651,17 @@ export default function Settings() {
                         </span>
                       </td>
                       <td className="px-4 py-1.5 text-[--k-muted]">{cat.description || '—'}</td>
+                      <td className="px-4 py-1.5">
+                        {cat.partType ? (
+                          <span
+                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${PART_TYPE_BADGE_CLASS[cat.partType]}`}
+                          >
+                            {PART_TYPE_LABEL[cat.partType]}
+                          </span>
+                        ) : (
+                          <span className="text-[--k-muted] italic">—</span>
+                        )}
+                      </td>
                       <td className="px-4 py-1.5 text-center">
                         {cat.isActive ? (
                           <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] text-emerald-700">
@@ -767,58 +703,6 @@ export default function Settings() {
               </table>
             </div>
           )}
-        </div>
-      </div>
-
-      {/* Auto-taggage type de pièce (backfill one-shot) */}
-      <div className="rounded-2xl border border-[--k-border] bg-white shadow-sm shadow-black/[0.03] overflow-hidden">
-        <div className="flex items-center justify-between border-b border-[--k-border] px-4 py-2.5">
-          <div className="flex items-center gap-2">
-            <Wand2 className="h-4 w-4 text-[--k-primary]" />
-            <span className="text-lg font-semibold text-[--k-text]">
-              Auto-taggage type de pièce
-            </span>
-          </div>
-        </div>
-        <div className="p-4 space-y-3">
-          <p className="text-sm text-[--k-muted]">
-            Pour les produits sans « Type de pièce », l'algorithme cherche des
-            mots-clés dans la référence et la description
-            (vis / boulon → Visserie, écran / carte / alim → Équipement,
-            capot / joint / vitre → Protection). Seuls les produits avec un
-            match sans ambiguïté sont tagués — les autres restent à taguer à
-            la main.
-          </p>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => backfillMutation.mutate(true)}
-              disabled={backfillMutation.isPending}
-            >
-              {backfillMutation.isPending && backfillMutation.variables === true ? (
-                <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-              ) : (
-                <Wand2 className="h-4 w-4 mr-1.5" />
-              )}
-              Prévisualiser
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => setBackfillConfirmOpen(true)}
-              disabled={backfillMutation.isPending}
-            >
-              {backfillMutation.isPending && backfillMutation.variables === false ? (
-                <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-              ) : (
-                <Wand2 className="h-4 w-4 mr-1.5" />
-              )}
-              Lancer l'auto-taggage
-            </Button>
-            <span className="text-xs text-[--k-muted]">
-              Réservé aux administrateurs.
-            </span>
-          </div>
         </div>
       </div>
 
@@ -1277,222 +1161,6 @@ export default function Settings() {
         </div>
       </Modal>
 
-      {/* Confirmation avant apply du backfill */}
-      <Modal
-        isOpen={backfillConfirmOpen}
-        onClose={() => setBackfillConfirmOpen(false)}
-        title="Lancer l'auto-taggage ?"
-        size="sm"
-      >
-        <div className="space-y-4">
-          <p className="text-[--k-muted]">
-            L'action va parcourir tous les produits sans « Type de pièce » et
-            leur assigner un type quand l'heuristique est sans ambiguïté. Les
-            autres produits resteront non tagués.
-          </p>
-          <p className="text-sm text-[--k-muted]">
-            Astuce : utilise « Prévisualiser » d'abord pour voir le nombre de
-            produits qui seront touchés.
-          </p>
-          <div className="flex justify-end gap-3 pt-2">
-            <Button variant="secondary" onClick={() => setBackfillConfirmOpen(false)}>
-              Annuler
-            </Button>
-            <Button
-              onClick={() => {
-                setBackfillConfirmOpen(false);
-                backfillMutation.mutate(false);
-              }}
-              disabled={backfillMutation.isPending}
-            >
-              {backfillMutation.isPending ? 'En cours...' : 'Confirmer'}
-            </Button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Résultat du backfill (dry-run ou apply) */}
-      <Modal
-        isOpen={!!backfillResult}
-        onClose={() => setBackfillResult(null)}
-        title={backfillResult?.dryRun ? 'Prévisualisation' : 'Auto-taggage terminé'}
-        size="md"
-      >
-        {backfillResult && (
-          <div className="space-y-4">
-            <div className="rounded-lg bg-[--k-surface-2]/60 p-3 text-sm space-y-1">
-              <div>
-                Produits sans type au départ :{' '}
-                <span className="font-semibold">{backfillResult.totalUntagged}</span>
-              </div>
-              <div>
-                {backfillResult.dryRun ? 'Seraient tagués' : 'Tagués'} :{' '}
-                <span className="font-semibold">
-                  {backfillResult.dryRun
-                    ? backfillResult.wouldApply ?? 0
-                    : backfillResult.applied}
-                </span>
-              </div>
-              <div className="flex flex-wrap gap-1.5 pt-1">
-                {(Object.keys(backfillResult.perType) as PartType[]).map((t) => (
-                  <span
-                    key={t}
-                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${PART_TYPE_BADGE_CLASS[t]}`}
-                  >
-                    {PART_TYPE_LABEL[t]} : {backfillResult.perType[t]}
-                  </span>
-                ))}
-              </div>
-              <div className="pt-1 text-[--k-muted]">
-                Restent à taguer à la main :{' '}
-                <span className="font-semibold text-[--k-text]">
-                  {backfillResult.skippedCount}
-                </span>
-              </div>
-            </div>
-
-            {backfillResult.skipped.length > 0 && (
-              <div>
-                <div className="flex items-center justify-between mb-1.5 gap-2 flex-wrap">
-                  <div className="text-xs font-medium text-[--k-muted]">
-                    Aperçu des produits non tagués (200 max) — coche pour tagger en lot
-                  </div>
-                  <button
-                    type="button"
-                    className="text-[11px] text-[--k-primary] hover:underline"
-                    onClick={() => {
-                      const all = backfillResult.skipped.map((p) => p.id);
-                      const allSelected = all.every((id) => selectedSkippedIds.has(id));
-                      setSelectedSkippedIds(allSelected ? new Set() : new Set(all));
-                    }}
-                  >
-                    {backfillResult.skipped.every((p) => selectedSkippedIds.has(p.id))
-                      ? 'Tout désélectionner'
-                      : 'Tout sélectionner'}
-                  </button>
-                </div>
-
-                {selectedSkippedIds.size > 0 && (
-                  <div className="mb-2 flex items-center gap-2 rounded-lg border border-[--k-primary]/30 bg-[--k-primary]/5 px-3 py-2">
-                    <span className="text-[12px] font-medium text-[--k-text]">
-                      {selectedSkippedIds.size} sélectionné(s) — tagger en :
-                    </span>
-                    <select
-                      value={bulkPartType}
-                      onChange={(e) => setBulkPartType(e.target.value as PartType)}
-                      className="input-field text-[12px]"
-                      style={{ height: '28px', padding: '0 0.5rem', width: 'auto' }}
-                    >
-                      {(['EQUIPMENT', 'PROTECTION', 'HARDWARE'] as PartType[]).map((t) => (
-                        <option key={t} value={t}>
-                          {PART_TYPE_LABEL[t]}
-                        </option>
-                      ))}
-                    </select>
-                    <Button
-                      size="sm"
-                      onClick={() =>
-                        bulkTagMutation.mutate({
-                          productIds: Array.from(selectedSkippedIds),
-                          partType: bulkPartType,
-                        })
-                      }
-                      disabled={bulkTagMutation.isPending}
-                    >
-                      {bulkTagMutation.isPending ? 'En cours...' : 'Appliquer'}
-                    </Button>
-                  </div>
-                )}
-
-                <div className="max-h-64 overflow-y-auto rounded-lg border border-[--k-border]">
-                  <table className="w-full text-[12px]">
-                    <thead className="bg-[--k-surface-2]/50 sticky top-0">
-                      <tr>
-                        <th className="px-2 py-1 text-left font-medium text-[--k-muted] w-8">
-                          <input
-                            type="checkbox"
-                            checked={
-                              backfillResult.skipped.length > 0 &&
-                              backfillResult.skipped.every((p) =>
-                                selectedSkippedIds.has(p.id),
-                              )
-                            }
-                            onChange={(e) => {
-                              const all = backfillResult.skipped.map((p) => p.id);
-                              setSelectedSkippedIds(
-                                e.target.checked ? new Set(all) : new Set(),
-                              );
-                            }}
-                          />
-                        </th>
-                        <th className="px-2 py-1 text-left font-medium text-[--k-muted]">
-                          Référence
-                        </th>
-                        <th className="px-2 py-1 text-left font-medium text-[--k-muted]">
-                          Description
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {backfillResult.skipped.map((p) => {
-                        const checked = selectedSkippedIds.has(p.id);
-                        return (
-                          <tr
-                            key={p.id}
-                            className={`border-t border-[--k-border] cursor-pointer ${
-                              checked ? 'bg-[--k-primary]/5' : 'hover:bg-[--k-surface-2]/40'
-                            }`}
-                            onClick={() => {
-                              setSelectedSkippedIds((prev) => {
-                                const next = new Set(prev);
-                                if (next.has(p.id)) next.delete(p.id);
-                                else next.add(p.id);
-                                return next;
-                              });
-                            }}
-                          >
-                            <td className="px-2 py-1">
-                              <input
-                                type="checkbox"
-                                checked={checked}
-                                onChange={() => {
-                                  /* handled by row onClick */
-                                }}
-                                onClick={(e) => e.stopPropagation()}
-                              />
-                            </td>
-                            <td className="px-2 py-1 font-mono">{p.reference}</td>
-                            <td className="px-2 py-1 text-[--k-muted]">
-                              {p.description || '—'}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            <div className="flex justify-end gap-2 pt-2">
-              {backfillResult.dryRun && (
-                <Button
-                  onClick={() => {
-                    setBackfillResult(null);
-                    setBackfillConfirmOpen(true);
-                  }}
-                >
-                  Lancer pour de vrai
-                </Button>
-              )}
-              <Button variant="secondary" onClick={() => setBackfillResult(null)}>
-                Fermer
-              </Button>
-            </div>
-          </div>
-        )}
-      </Modal>
-
       {/* Product Category create/edit modal */}
       <Modal
         isOpen={productCategoryModalOpen}
@@ -1534,6 +1202,26 @@ export default function Settings() {
             onChange={(e) => setPcDescription(e.target.value)}
             placeholder="Description optionnelle"
           />
+          <div>
+            <label className="block text-[13px] font-medium text-[--k-text] mb-1">
+              Type de pièce
+            </label>
+            <select
+              value={pcPartType}
+              onChange={(e) => setPcPartType(e.target.value as PartType | '')}
+              className="input-field w-full text-[13px]"
+              style={{ height: '36px' }}
+            >
+              <option value="">— Non défini —</option>
+              <option value="EQUIPMENT">{PART_TYPE_LABEL.EQUIPMENT}</option>
+              <option value="PROTECTION">{PART_TYPE_LABEL.PROTECTION}</option>
+              <option value="ACCESSORY">{PART_TYPE_LABEL.ACCESSORY}</option>
+            </select>
+            <p className="mt-1 text-xs text-[--k-muted]">
+              Nature du composant (utilisée par Bornes Factory pour grouper la checklist
+              d'assemblage). Tous les produits de cette catégorie hériteront de ce type.
+            </p>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-[13px] font-medium text-[--k-text] mb-1">
