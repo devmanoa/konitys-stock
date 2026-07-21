@@ -96,17 +96,6 @@ export default function Settings() {
   const [deleteProductCategoryConfirm, setDeleteProductCategoryConfirm] =
     useState<ProductCategory | null>(null);
 
-  // Seed des categories par defaut (Imprimante, PC, Ecran, ...)
-  type SeedResult = {
-    totalDefault: number;
-    createdCount: number;
-    skippedCount: number;
-    created: { name: string; codeReference: string }[];
-    skipped: { name: string; codeReference: string; reason: string }[];
-  };
-  const [seedResult, setSeedResult] = useState<SeedResult | null>(null);
-
-
   // Fetch assembly types
   const { data: assemblyTypesData, isLoading: assemblyTypesLoading } = useQuery({
     queryKey: ['assembly-types'],
@@ -236,35 +225,6 @@ export default function Settings() {
     },
   });
 
-  const seedProductCategoriesMutation = useMutation({
-    mutationFn: async () => {
-      const res = await api.post<{ success: boolean; data: SeedResult }>(
-        '/admin/seed-product-categories',
-      );
-      return res.data.data;
-    },
-    onSuccess: (data) => {
-      setSeedResult(data);
-      invalidateProductCategories();
-      if (data.createdCount > 0) {
-        toast.success(
-          'Catégories initialisées',
-          `${data.createdCount} catégorie(s) créée(s) sur ${data.totalDefault}`,
-        );
-      } else {
-        toast.success('Aucune création', 'Toutes les catégories par défaut existent déjà');
-      }
-    },
-    onError: (err: { response?: { status?: number; data?: { error?: string } } }) => {
-      const status = err.response?.status;
-      toast.error(
-        status === 403 ? 'Réservé aux admins' : 'Erreur',
-        status === 403
-          ? 'Cette action nécessite le rôle admin Keycloak.'
-          : err.response?.data?.error || 'Impossible d\'initialiser les catégories',
-      );
-    },
-  });
 
   // Normalise le code au fur et a mesure de la saisie (majuscules, sans
   // accents ni espaces) — miroir de la normalisation serveur pour un
@@ -702,31 +662,14 @@ export default function Settings() {
               Catégories principales
             </span>
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => seedProductCategoriesMutation.mutate()}
-              disabled={seedProductCategoriesMutation.isPending}
-              data-perm="stock:product_categories.create"
-              title="Crée les 13 catégories par défaut (Imprimante, PC, Écran, ...). Idempotent."
-            >
-              {seedProductCategoriesMutation.isPending ? (
-                <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-              ) : (
-                <Wand2 className="mr-1 h-4 w-4" />
-              )}
-              Initialiser par défaut
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => openProductCategoryModal()}
-              data-perm="stock:product_categories.create"
-            >
-              <Plus className="mr-1 h-4 w-4" />
-              Ajouter
-            </Button>
-          </div>
+          <Button
+            size="sm"
+            onClick={() => openProductCategoryModal()}
+            data-perm="stock:product_categories.create"
+          >
+            <Plus className="mr-1 h-4 w-4" />
+            Ajouter
+          </Button>
         </div>
         <div className="p-4">
           <p className="text-sm text-[--k-muted] mb-4">
@@ -1662,76 +1605,6 @@ export default function Settings() {
             </Button>
           </div>
         </div>
-      </Modal>
-
-      {/* Seed result modal */}
-      <Modal
-        isOpen={!!seedResult}
-        onClose={() => setSeedResult(null)}
-        title="Initialisation des catégories par défaut"
-        size="md"
-      >
-        {seedResult && (
-          <div className="space-y-4">
-            <div className="rounded-lg bg-[--k-surface-2]/60 p-3 text-sm space-y-1">
-              <div>
-                Catégories par défaut :{' '}
-                <span className="font-semibold">{seedResult.totalDefault}</span>
-              </div>
-              <div>
-                Créées :{' '}
-                <span className="font-semibold text-emerald-700">{seedResult.createdCount}</span>
-              </div>
-              <div>
-                Ignorées (déjà présentes) :{' '}
-                <span className="font-semibold text-amber-700">{seedResult.skippedCount}</span>
-              </div>
-            </div>
-
-            {seedResult.created.length > 0 && (
-              <div>
-                <div className="text-xs font-medium text-[--k-muted] mb-1.5">Créées</div>
-                <div className="flex flex-wrap gap-1.5">
-                  {seedResult.created.map((c) => (
-                    <span
-                      key={c.codeReference}
-                      className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] text-emerald-800"
-                    >
-                      <span className="font-mono">{c.codeReference}</span>
-                      <span className="text-emerald-600">·</span>
-                      <span>{c.name}</span>
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {seedResult.skipped.length > 0 && (
-              <div>
-                <div className="text-xs font-medium text-[--k-muted] mb-1.5">Ignorées</div>
-                <div className="flex flex-wrap gap-1.5">
-                  {seedResult.skipped.map((s) => (
-                    <span
-                      key={s.codeReference}
-                      className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600"
-                      title={s.reason}
-                    >
-                      <span className="font-mono">{s.codeReference}</span>
-                      <span className="text-slate-400">·</span>
-                      <span>{s.name}</span>
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="flex justify-end pt-2">
-              <Button variant="secondary" onClick={() => setSeedResult(null)}>
-                Fermer
-              </Button>
-            </div>
-          </div>
-        )}
       </Modal>
 
       {/* Delete Product Category confirmation */}
