@@ -399,7 +399,6 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
             <Select
               value={formData.productCategoryId || ''}
               onChange={(e) => handleChange('productCategoryId', e.target.value || null)}
-              disabled={isEditing}
             >
               <option value="">— Non défini —</option>
               {productCategoriesData
@@ -419,7 +418,6 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
               value={formData.brand || ''}
               onChange={(e) => handleChange('brand', e.target.value)}
               placeholder="ex : DNP"
-              disabled={isEditing}
             />
           </div>
           <div>
@@ -430,7 +428,6 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
               value={formData.model || ''}
               onChange={(e) => handleChange('model', e.target.value)}
               placeholder="ex : DS620"
-              disabled={isEditing}
             />
           </div>
           <div>
@@ -441,7 +438,6 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
               value={formData.variant || ''}
               onChange={(e) => handleChange('variant', e.target.value)}
               placeholder="ex : 2M, USBC-HDMI (optionnel)"
-              disabled={isEditing}
             />
           </div>
         </div>
@@ -451,7 +447,13 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
             Référence interne
           </label>
           {isEditing ? (
-            <Input value={formData.reference || ''} disabled />
+            <>
+              <Input value={formData.reference || ''} disabled />
+              <p className="mt-1 text-[11px] text-[--k-muted]">
+                Référence stable — même si tu modifies la catégorie, la marque ou le modèle,
+                elle reste inchangée (pour ne pas casser QR codes et historique).
+              </p>
+            </>
           ) : refPreview ? (
             <div className="flex items-center gap-2 rounded-md bg-emerald-50 border border-emerald-200 px-3 py-2">
               <span className="font-mono font-semibold text-emerald-800">{refPreview}</span>
