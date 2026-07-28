@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Edit2, Trash2, Boxes, Tag, X, Layers, Loader2, Hash, ArrowUp, ArrowDown, EyeOff } from 'lucide-react';
+import { Plus, Edit2, Trash2, Boxes, Tag, X, Layers, Loader2, Hash, ArrowUp, ArrowDown, EyeOff, Database, Download, Upload, AlertTriangle } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import { PageHeader } from '../components/PageHeader';
@@ -82,6 +82,16 @@ export default function Settings() {
   const [pcPartType, setPcPartType] = useState<PartType | ''>('');
   const [deleteProductCategoryConfirm, setDeleteProductCategoryConfirm] =
     useState<ProductCategory | null>(null);
+
+  // Sauvegarde / Restauration DB
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importConfirmOpen, setImportConfirmOpen] = useState(false);
+  const [importResult, setImportResult] = useState<{
+    wipedCounts: Record<string, number>;
+    restoredCounts: Record<string, number>;
+    totalRestored: number;
+  } | null>(null);
+  const [exportPending, setExportPending] = useState(false);
 
   // Fetch assembly types
   const { data: assemblyTypesData, isLoading: assemblyTypesLoading } = useQuery({
@@ -215,6 +225,75 @@ export default function Settings() {
     },
   });
 
+  // ─── DB Export / Import ────────────────────────────────────────────────
+
+  const handleDbExport = async () => {
+    setExportPending(true);
+    try {
+      const res = await api.get('/admin/db-export', { responseType: 'blob' });
+      const blob = res.data as Blob;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+      a.href = url;
+      a.download = `stock-db-${ts}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success('Export terminé', 'Le fichier a été téléchargé.');
+    } catch (err: unknown) {
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      toast.error(
+        status === 403 ? 'Réservé aux admins' : 'Erreur',
+        status === 403
+          ? 'Cette action nécessite le rôle admin Keycloak.'
+          : "Impossible d'exporter la base",
+      );
+    } finally {
+      setExportPending(false);
+    }
+  };
+
+  const importMutation = useMutation({
+    mutationFn: async () => {
+      if (!importFile) throw new Error('Aucun fichier sélectionné');
+      const text = await importFile.text();
+      const parsed = JSON.parse(text);
+      const data = parsed?.data;
+      if (!data || typeof data !== 'object') {
+        throw new Error('Fichier invalide : champ "data" manquant');
+      }
+      const res = await api.post<{
+        success: boolean;
+        data: {
+          wipedCounts: Record<string, number>;
+          restoredCounts: Record<string, number>;
+          totalRestored: number;
+        };
+      }>('/admin/db-import', { data, confirm: 'WIPE_AND_RESTORE' });
+      return res.data.data;
+    },
+    onSuccess: (result) => {
+      setImportResult(result);
+      setImportConfirmOpen(false);
+      setImportFile(null);
+      // Invalide tout — la DB entiere a change
+      queryClient.invalidateQueries();
+      toast.success(
+        'Import terminé',
+        `${result.totalRestored} enregistrement(s) restauré(s)`,
+      );
+    },
+    onError: (err: { response?: { status?: number; data?: { error?: string } }; message?: string }) => {
+      const status = err.response?.status;
+      const msg = err.response?.data?.error || err.message || 'Erreur inconnue';
+      toast.error(
+        status === 403 ? 'Réservé aux admins' : 'Erreur',
+        status === 403 ? 'Cette action nécessite le rôle admin Keycloak.' : msg,
+      );
+    },
+  });
 
   // Normalise le code au fur et a mesure de la saisie (majuscules, sans
   // accents ni espaces) — miroir de la normalisation serveur pour un
@@ -703,6 +782,64 @@ export default function Settings() {
               </table>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Sauvegarde / Restauration base de données */}
+      <div className="rounded-2xl border border-[--k-border] bg-white shadow-sm shadow-black/[0.03] overflow-hidden">
+        <div className="flex items-center justify-between border-b border-[--k-border] px-4 py-2.5">
+          <div className="flex items-center gap-2">
+            <Database className="h-4 w-4 text-[--k-primary]" />
+            <span className="text-lg font-semibold text-[--k-text]">
+              Sauvegarde / Restauration
+            </span>
+          </div>
+        </div>
+        <div className="p-4 space-y-3">
+          <p className="text-sm text-[--k-muted]">
+            Exporte la base complète en JSON pour la sauvegarder ou la migrer
+            vers un autre environnement (ex : DEV → PROD). L'import{' '}
+            <b>écrase intégralement</b> la base actuelle.
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleDbExport}
+              disabled={exportPending}
+              data-perm="stock:db.export"
+            >
+              {exportPending ? (
+                <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4 mr-1.5" />
+              )}
+              Exporter la base
+            </Button>
+            <label
+              className="inline-flex items-center gap-1.5 rounded-lg border border-[--k-border] bg-[--k-surface] hover:bg-[--k-surface-2] px-3 py-1.5 text-[13px] cursor-pointer"
+              data-perm="stock:db.import"
+            >
+              <Upload className="h-4 w-4" />
+              Choisir un fichier à importer…
+              <input
+                type="file"
+                accept="application/json,.json"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0] || null;
+                  if (f) {
+                    setImportFile(f);
+                    setImportConfirmOpen(true);
+                  }
+                  e.target.value = ''; // reset pour permettre re-select du meme fichier
+                }}
+              />
+            </label>
+            <span className="text-xs text-[--k-muted]">
+              Réservé aux administrateurs.
+            </span>
+          </div>
         </div>
       </div>
 
@@ -1330,6 +1467,134 @@ export default function Settings() {
             </Button>
           </div>
         </div>
+      </Modal>
+
+      {/* Confirmation import DB */}
+      <Modal
+        isOpen={importConfirmOpen}
+        onClose={() => {
+          setImportConfirmOpen(false);
+          setImportFile(null);
+        }}
+        title="Confirmer l'import de la base"
+        size="md"
+      >
+        <div className="space-y-3">
+          <div className="flex items-start gap-2 rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-[13px] text-red-800">
+            <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+            <div>
+              <div className="font-semibold">Attention — action destructive</div>
+              <div className="text-[12px]">
+                Cette action va <b>supprimer toutes les données actuelles</b>{' '}
+                de cette base et les remplacer par le contenu du fichier.
+                Aucun retour possible.
+              </div>
+            </div>
+          </div>
+          {importFile && (
+            <div className="text-[13px] text-[--k-muted]">
+              Fichier :{' '}
+              <span className="font-mono text-[--k-text]">{importFile.name}</span>{' '}
+              ({Math.round(importFile.size / 1024)} kB)
+            </div>
+          )}
+          <div className="flex justify-end gap-3 pt-2">
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setImportConfirmOpen(false);
+                setImportFile(null);
+              }}
+              disabled={importMutation.isPending}
+            >
+              Annuler
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => importMutation.mutate()}
+              disabled={!importFile || importMutation.isPending}
+            >
+              {importMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                  Import en cours…
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4 mr-1.5" />
+                  Écraser et importer
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Résultat import */}
+      <Modal
+        isOpen={!!importResult}
+        onClose={() => setImportResult(null)}
+        title="Import terminé"
+        size="md"
+      >
+        {importResult && (
+          <div className="space-y-3">
+            <div className="rounded-lg bg-[--k-surface-2]/60 p-3 text-sm">
+              <b>{importResult.totalRestored}</b> enregistrement(s) restauré(s)
+              au total.
+            </div>
+            <div className="text-xs font-medium text-[--k-muted]">
+              Détail par table
+            </div>
+            <div className="max-h-64 overflow-y-auto rounded-lg border border-[--k-border]">
+              <table className="w-full text-[12px]">
+                <thead className="bg-[--k-surface-2]/50 sticky top-0">
+                  <tr>
+                    <th className="px-2 py-1 text-left font-medium text-[--k-muted]">
+                      Table
+                    </th>
+                    <th className="px-2 py-1 text-right font-medium text-[--k-muted]">
+                      Vidé
+                    </th>
+                    <th className="px-2 py-1 text-right font-medium text-[--k-muted]">
+                      Importé
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.keys(importResult.restoredCounts).map((t) => {
+                    const restored = importResult.restoredCounts[t];
+                    const wiped = importResult.wipedCounts[t] || 0;
+                    return (
+                      <tr key={t} className="border-t border-[--k-border]">
+                        <td className="px-2 py-1 font-mono">{t}</td>
+                        <td className="px-2 py-1 text-right text-[--k-muted]">
+                          {wiped}
+                        </td>
+                        <td
+                          className={`px-2 py-1 text-right tabular-nums ${
+                            restored < 0
+                              ? 'text-red-700 font-semibold'
+                              : restored > 0
+                                ? 'text-emerald-700'
+                                : 'text-[--k-muted]'
+                          }`}
+                        >
+                          {restored < 0 ? 'échec' : restored}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <div className="flex justify-end">
+              <Button variant="secondary" onClick={() => setImportResult(null)}>
+                Fermer
+              </Button>
+            </div>
+          </div>
+        )}
       </Modal>
 
     </div>
