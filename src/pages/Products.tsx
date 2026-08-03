@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link as RouterLink } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
-import { Plus, Search, Edit2, Trash2, Eye, Link, X, ZoomIn, Download } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Eye, Link, X, ZoomIn, Download, MoreVertical } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
 import SearchSelect from '../components/ui/SearchSelect';
@@ -124,6 +124,7 @@ export default function Products() {
   const [deleteConfirm, setDeleteConfirm] = useState<Product | null>(null);
   const [supplierModalProduct, setSupplierModalProduct] = useState<Product | null>(null);
   const [lightboxProduct, setLightboxProduct] = useState<Product | null>(null);
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['products', page, search, assemblyTypeId, assemblyId, partCategoryId, serialFilter],
@@ -199,6 +200,102 @@ export default function Products() {
 
   const totalCount = data?.pagination?.total ?? 0;
 
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!openDropdownId) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setOpenDropdownId(null);
+      }
+    };
+    const timer = setTimeout(() => {
+      document.addEventListener('click', handleClickOutside);
+    }, 0);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [openDropdownId]);
+
+  const ActionsDropdown = ({ product }: { product: Product }) => {
+    const isOpen = openDropdownId === product.id;
+
+    return (
+      <div ref={isOpen ? dropdownRef : undefined} className="relative">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            setOpenDropdownId(isOpen ? null : product.id);
+          }}
+          className="rounded-lg p-1.5 text-[--k-muted] hover:bg-[--k-surface-2] hover:text-[--k-text]"
+        >
+          <MoreVertical className="h-4 w-4" />
+        </button>
+        {isOpen && (
+          <div className="absolute right-0 top-full z-50 mt-1 w-48 rounded-lg border border-[--k-border] bg-[--k-surface] py-1 shadow-lg">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                setOpenDropdownId(null);
+                navigate(`/products/${product.id}`);
+              }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-[--k-text] hover:bg-[--k-surface-2]"
+            >
+              <Eye className="h-4 w-4" />
+              Voir détail
+            </button>
+            <button
+              type="button"
+              data-perm="stock:products.suppliers.manage"
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                setOpenDropdownId(null);
+                setSupplierModalProduct(product);
+              }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-[--k-text] hover:bg-[--k-surface-2]"
+            >
+              <Link className="h-4 w-4" />
+              Gérer fournisseurs
+            </button>
+            <button
+              type="button"
+              data-perm="stock:products.edit"
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                setOpenDropdownId(null);
+                handleEdit(product);
+              }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-[--k-text] hover:bg-[--k-surface-2]"
+            >
+              <Edit2 className="h-4 w-4" />
+              Modifier
+            </button>
+            <button
+              type="button"
+              data-perm="stock:products.delete"
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                setOpenDropdownId(null);
+                setDeleteConfirm(product);
+              }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+            >
+              <Trash2 className="h-4 w-4" />
+              Supprimer
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   // Mobile card component
   const ProductCard = ({ product }: { product: Product }) => (
     <div className="rounded-2xl border border-[--k-border] bg-[--k-surface] p-4">
@@ -259,39 +356,7 @@ export default function Products() {
       </div>
 
       <div className="mt-3 flex items-center justify-end gap-1 border-t border-[--k-border] pt-3">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => navigate(`/products/${product.id}`)}
-          title="Voir"
-        >
-          <Eye className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setSupplierModalProduct(product)}
-          title="Gérer fournisseurs"
-        >
-          <Link className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => handleEdit(product)}
-          title="Modifier"
-        >
-          <Edit2 className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setDeleteConfirm(product)}
-          title="Supprimer"
-          className="text-red-600 hover:bg-red-50 hover:text-red-700"
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
+        <ActionsDropdown product={product} />
       </div>
     </div>
   );
@@ -428,8 +493,7 @@ export default function Products() {
                 <th className="px-4 py-2 text-left text-xs font-medium bg-white">
                   Équipement
                 </th>
-                <th className="px-4 py-2 text-right text-xs font-medium bg-white">
-                  Actions
+                <th className="px-4 py-2 text-center text-xs font-medium bg-white w-12">
                 </th>
               </tr>
             </thead>
@@ -525,42 +589,8 @@ export default function Products() {
                         <span className="text-[--k-muted]">—</span>
                       )}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-1.5 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => navigate(`/products/${product.id}`)}
-                          title="Voir"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setSupplierModalProduct(product)}
-                          title="Gérer fournisseurs"
-                        >
-                          <Link className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(product)}
-                          title="Modifier"
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setDeleteConfirm(product)}
-                          title="Supprimer"
-                          className="text-red-600 hover:bg-red-50 hover:text-red-700"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
+                    <td className="whitespace-nowrap px-4 py-1.5 text-center">
+                      <ActionsDropdown product={product} />
                     </td>
                   </tr>
                 ))
