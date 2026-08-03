@@ -12,7 +12,14 @@ import { useToast } from '../components/ui/Toast';
 import Pagination from '../components/ui/Pagination';
 import { PageHeader } from '../components/PageHeader';
 import api from '../services/api';
-import type { Product, PaginatedResponse, Assembly, AssemblyType } from '../types';
+import type { Product, PaginatedResponse, Assembly, AssemblyType, PartType } from '../types';
+import { PART_TYPE_LABEL } from '../types';
+
+const PART_TYPE_BADGE_CLASS: Record<PartType, string> = {
+  EQUIPMENT: 'bg-blue-50 text-blue-700 border-blue-200',
+  PROTECTION: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  ACCESSORY: 'bg-amber-50 text-amber-800 border-amber-200',
+};
 
 // Helper to get full image URL
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/api$/, '');
@@ -418,6 +425,9 @@ export default function Products() {
                 <th className="px-4 py-2 text-left text-xs font-medium bg-white">
                   Emplacement
                 </th>
+                <th className="px-4 py-2 text-left text-xs font-medium bg-white">
+                  Équipement
+                </th>
                 <th className="px-4 py-2 text-right text-xs font-medium bg-white">
                   Actions
                 </th>
@@ -426,7 +436,7 @@ export default function Products() {
             <tbody className="bg-[--k-surface]">
               {isLoading ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center">
+                  <td colSpan={7} className="px-4 py-8 text-center">
                     <div className="flex items-center justify-center">
                       <div className="h-6 w-6 animate-spin rounded-full border-2 border-[--k-primary] border-t-transparent" />
                       <span className="ml-2 text-[--k-muted]">Chargement...</span>
@@ -435,7 +445,7 @@ export default function Products() {
                 </tr>
               ) : (data?.data || []).length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-[--k-muted]">
+                  <td colSpan={7} className="px-4 py-8 text-center text-[--k-muted]">
                     Aucun produit trouvé
                   </td>
                 </tr>
@@ -503,6 +513,17 @@ export default function Products() {
                     </td>
                     <td className="whitespace-nowrap px-4 py-1.5">
                       <span className="text-[--k-muted]">{product.location || '-'}</span>
+                    </td>
+                    <td className="px-4 py-1.5">
+                      {product.partType ? (
+                        <span
+                          className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium ${PART_TYPE_BADGE_CLASS[product.partType]}`}
+                        >
+                          {PART_TYPE_LABEL[product.partType]}
+                        </span>
+                      ) : (
+                        <span className="text-[--k-muted]">—</span>
+                      )}
                     </td>
                     <td className="whitespace-nowrap px-4 py-1.5 text-right">
                       <div className="flex items-center justify-end gap-1">
