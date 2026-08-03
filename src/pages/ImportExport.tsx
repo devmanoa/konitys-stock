@@ -12,10 +12,14 @@ import {
   ShoppingCart,
   Boxes,
   FileDown,
+  Database,
+  Loader2,
+  AlertTriangle,
 } from 'lucide-react';
 import { PageHeader } from '../components/PageHeader';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
+import Modal from '../components/ui/Modal';
 import { useToast } from '../components/ui/Toast';
 import api from '../services/api';
 
@@ -86,6 +90,83 @@ export default function ImportExport() {
   const [preview, setPreview] = useState<ImportPreview | null>(null);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [dragOver, setDragOver] = useState(false);
+
+  // Sauvegarde / Restauration DB (dump JSON complet)
+  const [dbImportFile, setDbImportFile] = useState<File | null>(null);
+  const [dbImportConfirmOpen, setDbImportConfirmOpen] = useState(false);
+  const [dbImportResult, setDbImportResult] = useState<{
+    wipedCounts: Record<string, number>;
+    restoredCounts: Record<string, number>;
+    totalRestored: number;
+  } | null>(null);
+  const [dbExportPending, setDbExportPending] = useState(false);
+
+  const handleDbExport = async () => {
+    setDbExportPending(true);
+    try {
+      const res = await api.get('/admin/db-export', { responseType: 'blob' });
+      const blob = res.data as Blob;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+      a.href = url;
+      a.download = `stock-db-${ts}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success('Export terminé', 'Le fichier a été téléchargé.');
+    } catch (err: unknown) {
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      toast.error(
+        status === 403 ? 'Réservé aux admins' : 'Erreur',
+        status === 403
+          ? 'Cette action nécessite le rôle admin Keycloak.'
+          : "Impossible d'exporter la base",
+      );
+    } finally {
+      setDbExportPending(false);
+    }
+  };
+
+  const dbImportMutation = useMutation({
+    mutationFn: async () => {
+      if (!dbImportFile) throw new Error('Aucun fichier sélectionné');
+      const text = await dbImportFile.text();
+      const parsed = JSON.parse(text);
+      const data = parsed?.data;
+      if (!data || typeof data !== 'object') {
+        throw new Error('Fichier invalide : champ "data" manquant');
+      }
+      const res = await api.post<{
+        success: boolean;
+        data: {
+          wipedCounts: Record<string, number>;
+          restoredCounts: Record<string, number>;
+          totalRestored: number;
+        };
+      }>('/admin/db-import', { data, confirm: 'WIPE_AND_RESTORE' });
+      return res.data.data;
+    },
+    onSuccess: (result) => {
+      setDbImportResult(result);
+      setDbImportConfirmOpen(false);
+      setDbImportFile(null);
+      queryClient.invalidateQueries();
+      toast.success(
+        'Import terminé',
+        `${result.totalRestored} enregistrement(s) restauré(s)`,
+      );
+    },
+    onError: (err: { response?: { status?: number; data?: { error?: string } }; message?: string }) => {
+      const status = err.response?.status;
+      const msg = err.response?.data?.error || err.message || 'Erreur inconnue';
+      toast.error(
+        status === 403 ? 'Réservé aux admins' : 'Erreur',
+        status === 403 ? 'Cette action nécessite le rôle admin Keycloak.' : msg,
+      );
+    },
+  });
 
   // Preview mutation
   const previewMutation = useMutation({
@@ -417,6 +498,190 @@ export default function ImportExport() {
           </div>
         </div>
       </div>
+
+      {/* Sauvegarde / Restauration base de données (dump JSON complet) */}
+      <div className="rounded-2xl border border-[--k-border] bg-white shadow-sm shadow-black/[0.03] overflow-hidden">
+        <div className="flex items-center gap-2 border-b border-[--k-border] bg-gradient-to-r from-rose-50/50 to-red-50/20 px-4 py-2.5">
+          <Database className="h-4 w-4 text-[--k-primary]" />
+          <span className="text-lg font-semibold text-[--k-text]">
+            Sauvegarde / Restauration
+          </span>
+        </div>
+        <div className="p-4 space-y-3">
+          <p className="text-sm text-[--k-muted]">
+            Exporte la base complète en JSON pour la sauvegarder ou la migrer
+            vers un autre environnement (ex : DEV → PROD). L'import{' '}
+            <b>écrase intégralement</b> la base actuelle.
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleDbExport}
+              disabled={dbExportPending}
+              data-perm="stock:db.export"
+            >
+              {dbExportPending ? (
+                <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4 mr-1.5" />
+              )}
+              Exporter la base
+            </Button>
+            <label
+              className="inline-flex items-center gap-1.5 rounded-lg border border-[--k-border] bg-[--k-surface] hover:bg-[--k-surface-2] px-3 py-1.5 text-[13px] cursor-pointer"
+              data-perm="stock:db.import"
+            >
+              <Upload className="h-4 w-4" />
+              Choisir un fichier à importer…
+              <input
+                type="file"
+                accept="application/json,.json"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0] || null;
+                  if (f) {
+                    setDbImportFile(f);
+                    setDbImportConfirmOpen(true);
+                  }
+                  e.target.value = '';
+                }}
+              />
+            </label>
+            <span className="text-xs text-[--k-muted]">
+              Réservé aux administrateurs.
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Confirmation import DB */}
+      <Modal
+        isOpen={dbImportConfirmOpen}
+        onClose={() => {
+          setDbImportConfirmOpen(false);
+          setDbImportFile(null);
+        }}
+        title="Confirmer l'import de la base"
+        size="md"
+      >
+        <div className="space-y-3">
+          <div className="flex items-start gap-2 rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-[13px] text-red-800">
+            <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+            <div>
+              <div className="font-semibold">Attention — action destructive</div>
+              <div className="text-[12px]">
+                Cette action va <b>supprimer toutes les données actuelles</b>{' '}
+                de cette base et les remplacer par le contenu du fichier.
+                Aucun retour possible.
+              </div>
+            </div>
+          </div>
+          {dbImportFile && (
+            <div className="text-[13px] text-[--k-muted]">
+              Fichier :{' '}
+              <span className="font-mono text-[--k-text]">{dbImportFile.name}</span>{' '}
+              ({Math.round(dbImportFile.size / 1024)} kB)
+            </div>
+          )}
+          <div className="flex justify-end gap-3 pt-2">
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setDbImportConfirmOpen(false);
+                setDbImportFile(null);
+              }}
+              disabled={dbImportMutation.isPending}
+            >
+              Annuler
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => dbImportMutation.mutate()}
+              disabled={!dbImportFile || dbImportMutation.isPending}
+            >
+              {dbImportMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                  Import en cours…
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4 mr-1.5" />
+                  Écraser et importer
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Résultat import DB */}
+      <Modal
+        isOpen={!!dbImportResult}
+        onClose={() => setDbImportResult(null)}
+        title="Import terminé"
+        size="md"
+      >
+        {dbImportResult && (
+          <div className="space-y-3">
+            <div className="rounded-lg bg-[--k-surface-2]/60 p-3 text-sm">
+              <b>{dbImportResult.totalRestored}</b> enregistrement(s) restauré(s)
+              au total.
+            </div>
+            <div className="text-xs font-medium text-[--k-muted]">
+              Détail par table
+            </div>
+            <div className="max-h-64 overflow-y-auto rounded-lg border border-[--k-border]">
+              <table className="w-full text-[12px]">
+                <thead className="bg-[--k-surface-2]/50 sticky top-0">
+                  <tr>
+                    <th className="px-2 py-1 text-left font-medium text-[--k-muted]">
+                      Table
+                    </th>
+                    <th className="px-2 py-1 text-right font-medium text-[--k-muted]">
+                      Vidé
+                    </th>
+                    <th className="px-2 py-1 text-right font-medium text-[--k-muted]">
+                      Importé
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.keys(dbImportResult.restoredCounts).map((t) => {
+                    const restored = dbImportResult.restoredCounts[t];
+                    const wiped = dbImportResult.wipedCounts[t] || 0;
+                    return (
+                      <tr key={t} className="border-t border-[--k-border]">
+                        <td className="px-2 py-1 font-mono">{t}</td>
+                        <td className="px-2 py-1 text-right text-[--k-muted]">
+                          {wiped}
+                        </td>
+                        <td
+                          className={`px-2 py-1 text-right tabular-nums ${
+                            restored < 0
+                              ? 'text-red-700 font-semibold'
+                              : restored > 0
+                                ? 'text-emerald-700'
+                                : 'text-[--k-muted]'
+                          }`}
+                        >
+                          {restored < 0 ? 'échec' : restored}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <div className="flex justify-end">
+              <Button variant="secondary" onClick={() => setDbImportResult(null)}>
+                Fermer
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }
