@@ -22,6 +22,7 @@ import Badge from '../components/ui/Badge';
 import Modal from '../components/ui/Modal';
 import { useToast } from '../components/ui/Toast';
 import api from '../services/api';
+import { downloadBlob } from '../utils/downloadBlob';
 
 interface ImportPreview {
   fileName: string;
@@ -105,16 +106,8 @@ export default function ImportExport() {
     setDbExportPending(true);
     try {
       const res = await api.get('/admin/db-export', { responseType: 'blob' });
-      const blob = res.data as Blob;
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
       const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-      a.href = url;
-      a.download = `stock-db-${ts}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      downloadBlob(res.data as Blob, `stock-db-${ts}.json`);
       toast.success('Export terminé', 'Le fichier a été téléchargé.');
     } catch (err: unknown) {
       const status = (err as { response?: { status?: number } })?.response?.status;
@@ -245,25 +238,13 @@ export default function ImportExport() {
 
   const handleDownloadTemplate = async () => {
     const response = await api.get('/import/template', { responseType: 'blob' });
-    const url = window.URL.createObjectURL(new Blob([response.data]));
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', 'template_import.xlsx');
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
+    downloadBlob(new Blob([response.data]), 'template_import.xlsx');
   };
 
   const handleExport = async (endpoint: string, filename: string, format: 'xlsx' | 'csv' = 'xlsx') => {
     try {
       const response = await api.get(`/export/${endpoint}?format=${format}`, { responseType: 'blob' });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `${filename}.${format}`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+      downloadBlob(new Blob([response.data]), `${filename}.${format}`);
       toast.success('Export réussi', `Fichier ${filename}.${format} téléchargé`);
     } catch {
       toast.error('Erreur d\'export', 'Impossible de générer le fichier');

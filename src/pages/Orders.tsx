@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { useSearchParams, useNavigate, Link as RouterLink } from 'react-router-dom';
 import {
@@ -12,14 +12,12 @@ import {
   Truck,
   Calendar,
   Hash,
-  MoreVertical,
   Copy,
   PackageCheck,
   Eye,
   FileText,
 } from 'lucide-react';
 import Button from '../components/ui/Button';
-import Badge from '../components/ui/Badge';
 import SearchSelect from '../components/ui/SearchSelect';
 import { KpiCard } from '../components/KpiCard';
 import Modal from '../components/ui/Modal';
@@ -27,15 +25,104 @@ import OrderForm from '../components/forms/OrderForm';
 import { useToast } from '../components/ui/Toast';
 import Pagination from '../components/ui/Pagination';
 import { PageHeader } from '../components/PageHeader';
+import ActionsMenu, { type ActionsMenuItem } from '../components/ActionsMenu';
 import api from '../services/api';
 import OperatorAvatar from '../components/OperatorAvatar';
+import { formatDate } from '../utils/date';
+import {
+  getStatusIcon,
+  getStatusBadge,
+  getOrderLabel,
+  getOrderTotalQty,
+  getOrderReceivedQty,
+} from '../utils/orderDisplay';
 import type { Order, Supplier, OrderTemplate, ApiResponse, PaginatedResponse } from '../types';
+
+// Mobile card component (top-level : évite d'être recréé à chaque render du parent)
+function OrderCard({
+  order,
+  navigate,
+  actions,
+}: {
+  order: Order;
+  navigate: (to: string) => void;
+  actions: ActionsMenuItem[];
+}) {
+  const totalQty = getOrderTotalQty(order);
+  const receivedQty = getOrderReceivedQty(order);
+
+  return (
+    <div
+      onClick={() => navigate(`/orders/${order.id}`)}
+      className="rounded-2xl border border-[--k-border] bg-[--k-surface] p-4 cursor-pointer hover:border-[--k-primary] transition-colors"
+    >
+      <div className="flex items-start justify-between">
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-mono text-[--k-primary]">
+            {order.orderNumber}
+          </p>
+          <p className="font-medium text-[--k-text] mt-0.5">
+            {getOrderLabel(order)}
+          </p>
+        </div>
+        <div className="flex items-center gap-1">
+          {getStatusIcon(order.status)}
+          {getStatusBadge(order.status)}
+          <ActionsMenu items={actions} />
+        </div>
+      </div>
+
+      <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+        <div>
+          <span className="text-[--k-muted]">Fournisseur:</span>
+          <p className="truncate flex items-center gap-1">
+            <Truck className="h-3 w-3 text-[--k-muted]" />
+            <RouterLink
+              to={`/suppliers/${order.supplierId}`}
+              className="text-[--k-primary] hover:underline"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {order.supplier.name}
+            </RouterLink>
+          </p>
+        </div>
+        <div>
+          <span className="text-[--k-muted]">Quantité:</span>
+          <p className="font-bold text-[--k-text]">
+            {totalQty}
+            {receivedQty > 0 && receivedQty !== totalQty && (
+              <span className="ml-1 text-xs font-normal text-[--k-muted]">(reçu: {receivedQty})</span>
+            )}
+          </p>
+        </div>
+        <div>
+          <span className="text-[--k-muted]">Date commande:</span>
+          <p className="text-[--k-text] flex items-center gap-1">
+            <Calendar className="h-3 w-3 text-[--k-muted]" />
+            {formatDate(order.orderDate)}
+          </p>
+        </div>
+        <div>
+          <span className="text-[--k-muted]">Articles:</span>
+          <p className="text-[--k-text]">
+            {order.items?.length || 0}
+          </p>
+        </div>
+        {order.destinationSite && (
+          <div className="col-span-2">
+            <span className="text-[--k-muted]">Destination:</span>
+            <p className="text-[--k-text]">{order.destinationSite.name}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function Orders() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [duplicateOrder, setDuplicateOrder] = useState<Order | undefined>(undefined);
-  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
   const [isTemplatePickerOpen, setIsTemplatePickerOpen] = useState(false);
   const navigate = useNavigate();
   const toast = useToast();
@@ -108,24 +195,6 @@ export default function Orders() {
     enabled: isTemplatePickerOpen,
   });
 
-  // Helper: total qty of an order (sum of items)
-  const getOrderTotalQty = (order: Order) =>
-    order.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
-
-  // Helper: total received qty
-  const getOrderReceivedQty = (order: Order) =>
-    order.items?.reduce((sum, item) => sum + (item.receivedQty || 0), 0) || 0;
-
-  // Helper: order title/description for display
-  const getOrderLabel = (order: Order) => {
-    if (order.title) return order.title;
-    if (order.items?.length === 1) {
-      const item = order.items[0];
-      return item.product?.description || item.product?.reference || 'Commande';
-    }
-    return `${order.items?.length || 0} article${(order.items?.length || 0) > 1 ? 's' : ''}`;
-  };
-
   // Filter orders client-side:
   //  - "En cours" englobe PENDING + PARTIAL (le serveur a renvoye tous les statuts)
   //  - search libre sur reference / titre / fournisseur / responsable / produit
@@ -147,43 +216,6 @@ export default function Orders() {
       )
     );
   });
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'PENDING':
-        return <Clock className="h-4 w-4 text-yellow-500" />;
-      case 'COMPLETED':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'CANCELLED':
-        return <XCircle className="h-4 w-4 text-red-500" />;
-      default:
-        return null;
-    }
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'PENDING':
-        return <Badge variant="warning">En cours</Badge>;
-      case 'PARTIAL':
-        return <Badge variant="info">Reçu partiellement</Badge>;
-      case 'COMPLETED':
-        return <Badge variant="success">Terminée</Badge>;
-      case 'CANCELLED':
-        return <Badge variant="danger">Annulée</Badge>;
-      default:
-        return <Badge>{status}</Badge>;
-    }
-  };
-
-  const formatDate = (dateString: string | null | undefined) => {
-    if (!dateString) return '-';
-    return new Date(dateString).toLocaleDateString('fr-FR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
-  };
 
   // Don't count the default PENDING tab as an "active filter"; counting ALL would
   // also be misleading since it's a no-op compared to no value.
@@ -213,164 +245,32 @@ export default function Orders() {
   const cancelledCount = orderStats?.counts.CANCELLED || 0;
   const totalQuantityPending = orderStats?.pendingQty || 0;
 
-  // Fermer le dropdown au clic extérieur
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!openDropdownId) return;
-    const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setOpenDropdownId(null);
-      }
-    };
-    // Utiliser setTimeout pour éviter que le click actuel ferme le menu
-    const timer = setTimeout(() => {
-      document.addEventListener('click', handleClickOutside);
-    }, 0);
-    return () => {
-      clearTimeout(timer);
-      document.removeEventListener('click', handleClickOutside);
-    };
-  }, [openDropdownId]);
-
-  // Composant menu actions
-  const ActionsDropdown = ({ order }: { order: Order }) => {
-    const isOpen = openDropdownId === order.id;
-
-    return (
-      <div ref={isOpen ? dropdownRef : undefined} className="relative">
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            setOpenDropdownId(isOpen ? null : order.id);
-          }}
-          className="rounded-lg p-1.5 text-[--k-muted] hover:bg-[--k-surface-2] hover:text-[--k-text]"
-        >
-          <MoreVertical className="h-4 w-4" />
-        </button>
-        {isOpen && (
-          <div className="absolute right-0 top-full z-50 mt-1 w-48 rounded-lg border border-[--k-border] bg-[--k-surface] py-1 shadow-lg">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                setOpenDropdownId(null);
-                navigate(`/orders/${order.id}`);
-              }}
-              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-[--k-text] hover:bg-[--k-surface-2]"
-            >
-              <Eye className="h-4 w-4" />
-              Voir détail
-            </button>
-            {(order.status === 'PENDING' || order.status === 'PARTIAL') && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  setOpenDropdownId(null);
-                  navigate(`/orders/${order.id}`);
-                }}
-                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-[--k-text] hover:bg-[--k-surface-2]"
-              >
-                <PackageCheck className="h-4 w-4" />
-                Réceptionner
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                setOpenDropdownId(null);
-                setDuplicateOrder(order);
-                setIsCreateModalOpen(true);
-              }}
-              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-[--k-text] hover:bg-[--k-surface-2]"
-            >
-              <Copy className="h-4 w-4" />
-              Dupliquer
-            </button>
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  // Mobile card component
-  const OrderCard = ({ order }: { order: Order }) => {
-    const totalQty = getOrderTotalQty(order);
-    const receivedQty = getOrderReceivedQty(order);
-
-    return (
-      <div
-        onClick={() => navigate(`/orders/${order.id}`)}
-        className="rounded-2xl border border-[--k-border] bg-[--k-surface] p-4 cursor-pointer hover:border-[--k-primary] transition-colors"
-      >
-        <div className="flex items-start justify-between">
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-mono text-[--k-primary]">
-              {order.orderNumber}
-            </p>
-            <p className="font-medium text-[--k-text] mt-0.5">
-              {getOrderLabel(order)}
-            </p>
-          </div>
-          <div className="flex items-center gap-1">
-            {getStatusIcon(order.status)}
-            {getStatusBadge(order.status)}
-            <ActionsDropdown order={order} />
-          </div>
-        </div>
-
-        <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
-          <div>
-            <span className="text-[--k-muted]">Fournisseur:</span>
-            <p className="truncate flex items-center gap-1">
-              <Truck className="h-3 w-3 text-[--k-muted]" />
-              <RouterLink
-                to={`/suppliers/${order.supplierId}`}
-                className="text-[--k-primary] hover:underline"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {order.supplier.name}
-              </RouterLink>
-            </p>
-          </div>
-          <div>
-            <span className="text-[--k-muted]">Quantité:</span>
-            <p className="font-bold text-[--k-text]">
-              {totalQty}
-              {receivedQty > 0 && receivedQty !== totalQty && (
-                <span className="ml-1 text-xs font-normal text-[--k-muted]">(reçu: {receivedQty})</span>
-              )}
-            </p>
-          </div>
-          <div>
-            <span className="text-[--k-muted]">Date commande:</span>
-            <p className="text-[--k-text] flex items-center gap-1">
-              <Calendar className="h-3 w-3 text-[--k-muted]" />
-              {formatDate(order.orderDate)}
-            </p>
-          </div>
-          <div>
-            <span className="text-[--k-muted]">Articles:</span>
-            <p className="text-[--k-text]">
-              {order.items?.length || 0}
-            </p>
-          </div>
-          {order.destinationSite && (
-            <div className="col-span-2">
-              <span className="text-[--k-muted]">Destination:</span>
-              <p className="text-[--k-text]">{order.destinationSite.name}</p>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
+  // Items du menu actions d'une commande (l'item « Réceptionner » est
+  // conditionnel au statut, d'où le filtre au call-site).
+  const orderActions = (order: Order): ActionsMenuItem[] => [
+    {
+      icon: Eye,
+      label: 'Voir détail',
+      onClick: () => navigate(`/orders/${order.id}`),
+    },
+    ...(order.status === 'PENDING' || order.status === 'PARTIAL'
+      ? [
+          {
+            icon: PackageCheck,
+            label: 'Réceptionner',
+            onClick: () => navigate(`/orders/${order.id}`),
+          },
+        ]
+      : []),
+    {
+      icon: Copy,
+      label: 'Dupliquer',
+      onClick: () => {
+        setDuplicateOrder(order);
+        setIsCreateModalOpen(true);
+      },
+    },
+  ];
 
   return (
     <div className="space-y-4 md:space-y-6">
@@ -480,7 +380,12 @@ export default function Orders() {
         ) : (
           <div className="space-y-3">
             {filteredOrders?.map((order) => (
-              <OrderCard key={order.id} order={order} />
+              <OrderCard
+                key={order.id}
+                order={order}
+                navigate={navigate}
+                actions={orderActions(order)}
+              />
             ))}
           </div>
         )}
@@ -626,7 +531,7 @@ export default function Orders() {
                           )}
                         </td>
                         <td className="px-4 py-1.5 text-center">
-                          <ActionsDropdown order={order} />
+                          <ActionsMenu items={orderActions(order)} />
                         </td>
                       </tr>
                     );

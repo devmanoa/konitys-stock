@@ -10,9 +10,6 @@ import {
   Calendar,
   Link,
   Plus,
-  ArrowDownCircle,
-  ArrowUpCircle,
-  ArrowLeftRight,
   ExternalLink,
   ZoomIn,
   Download,
@@ -50,6 +47,7 @@ import SerialItemsPanel from '../components/SerialItemsPanel';
 import PrintLabels, { type LabelPayload } from '../components/PrintLabels';
 import { qrForProduct, qrForProductWithSerial, qrForInternalItem } from '../utils/qr';
 import api from '../services/api';
+import { getRiskBadge, getMovementTypeIcon } from '../utils/productDisplay';
 import type { Product, ApiResponse, ProductPriceHistoryEntry, StockMovement } from '../types';
 
 // Helper to get full image URL
@@ -145,21 +143,6 @@ export default function ProductDetail() {
     enabled: !!id,
   });
 
-  const getRiskBadge = (risk?: string) => {
-    if (!risk) return <Badge>Non défini</Badge>;
-    const variants: Record<string, 'danger' | 'warning' | 'success'> = {
-      HIGH: 'danger',
-      MEDIUM: 'warning',
-      LOW: 'success',
-    };
-    const labels: Record<string, string> = {
-      HIGH: 'Fort',
-      MEDIUM: 'Moyen',
-      LOW: 'Faible',
-    };
-    return <Badge variant={variants[risk]}>{labels[risk]}</Badge>;
-  };
-
   const getTotalStock = () => {
     if (!data?.stocks) return { total: 0, neuf: 0, occasion: 0 };
     return data.stocks.reduce(
@@ -170,19 +153,6 @@ export default function ProductDetail() {
       }),
       { total: 0, neuf: 0, occasion: 0 }
     );
-  };
-
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'IN':
-        return <ArrowDownCircle className="h-4 w-4 text-green-500" />;
-      case 'OUT':
-        return <ArrowUpCircle className="h-4 w-4 text-red-500" />;
-      case 'TRANSFER':
-        return <ArrowLeftRight className="h-4 w-4 text-blue-500" />;
-      default:
-        return null;
-    }
   };
 
   if (isLoading) {
@@ -341,7 +311,7 @@ export default function ProductDetail() {
                 {data.supplyRisk && (
                   <div>
                     <dt className="text-[13px] font-medium text-[--k-muted]">Risque approvisionnement</dt>
-                    <dd className="mt-1">{getRiskBadge(data.supplyRisk)}</dd>
+                    <dd className="mt-1">{getRiskBadge(data.supplyRisk, <Badge>Non défini</Badge>)}</dd>
                   </div>
                 )}
                 {(data.storageLocation || data.location) && (
@@ -755,7 +725,7 @@ export default function ProductDetail() {
                       </td>
                       <td className="py-2">
                         <div className="flex items-center gap-2">
-                          {getTypeIcon(mvt.type)}
+                          {getMovementTypeIcon(mvt.type, 'h-4 w-4')}
                           <Badge
                             variant={
                               mvt.type === 'IN' ? 'success' : mvt.type === 'OUT' ? 'danger' : 'info'

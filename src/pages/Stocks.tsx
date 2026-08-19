@@ -43,6 +43,148 @@ interface MatrixRow {
 type SortField = 'reference' | 'totalNew' | 'totalUsed' | 'total';
 type SortOrder = 'asc' | 'desc';
 
+// Mobile card component (top-level : évite d'être recréé à chaque render du parent)
+function StockCard({
+  row,
+  isExpanded,
+  onToggleExpand,
+  onZoom,
+  sortedStorageSites,
+  showSiteDetails,
+}: {
+  row: MatrixRow;
+  isExpanded: boolean;
+  onToggleExpand: (productId: string) => void;
+  onZoom: (product: ProductWithAssembly) => void;
+  sortedStorageSites: Site[];
+  showSiteDetails: boolean;
+}) {
+  return (
+    <div className="rounded-2xl border border-[--k-border] bg-[--k-surface]">
+      <div className="p-4">
+        <div className="flex items-start gap-3">
+          <button
+            type="button"
+            onClick={() => row.product.imageUrl && onZoom(row.product)}
+            disabled={!row.product.imageUrl}
+            className={`group relative h-[5rem] w-[5rem] flex-shrink-0 overflow-hidden rounded-lg bg-[--k-surface-2] ${row.product.imageUrl ? 'cursor-zoom-in' : 'cursor-default'}`}
+          >
+            <img
+              src={getFullImageUrl(row.product.imageUrl)}
+              alt=""
+              className="h-full w-full object-cover"
+              onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_PRODUCT_IMAGE; }}
+            />
+            {row.product.imageUrl && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-colors">
+                <ZoomIn className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+            )}
+          </button>
+          <div className="flex-1 min-w-0">
+            <Link
+              to={`/products/${row.product.id}`}
+              className="text-[16px] font-medium text-[--k-primary] hover:text-indigo-700"
+            >
+              {row.product.description || row.product.reference}
+            </Link>
+            <p className="text-[15px] text-[--k-muted] font-mono mt-0.5">
+              {row.product.reference}
+            </p>
+            {row.product.storageLocation && (
+              <p className="text-[11px] text-[--k-muted] mt-0.5">
+                📍 {locationLabel(row.product.storageLocation, { includeSite: true })}
+              </p>
+            )}
+            {row.product.supplyRisk && (
+              <Badge
+                variant={
+                  row.product.supplyRisk === 'HIGH'
+                    ? 'danger'
+                    : row.product.supplyRisk === 'MEDIUM'
+                    ? 'warning'
+                    : 'success'
+                }
+                className="mt-1"
+              >
+                {row.product.supplyRisk === 'HIGH'
+                  ? 'Risque fort'
+                  : row.product.supplyRisk === 'MEDIUM'
+                  ? 'Risque moyen'
+                  : 'Risque faible'}
+              </Badge>
+            )}
+          </div>
+        </div>
+
+        {/* Stock summary */}
+        <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+          <div className="rounded-lg bg-[--k-surface-2] p-2">
+            <p className="text-xs text-[--k-muted]">Total</p>
+            <p className="text-lg font-bold text-[--k-text]">{row.total}</p>
+          </div>
+          <div className="rounded-lg bg-green-50 p-2">
+            <p className="text-xs text-green-600">Neuf</p>
+            <p className="text-lg font-bold text-green-600">{row.totalNew}</p>
+          </div>
+          <div className="rounded-lg bg-orange-50 p-2">
+            <p className="text-xs text-orange-600">Occasion</p>
+            <p className="text-lg font-bold text-orange-600">{row.totalUsed}</p>
+          </div>
+        </div>
+
+
+        {/* Expand/collapse button for site details */}
+        {showSiteDetails && (
+          <button
+            onClick={() => onToggleExpand(row.product.id)}
+            className="mt-3 flex w-full items-center justify-center gap-1 rounded-lg border border-[--k-border] py-2 text-sm text-[--k-muted] hover:bg-[--k-surface-2]"
+          >
+            {isExpanded ? (
+              <>
+                <ChevronUp className="h-4 w-4" />
+                Masquer les détails par site
+              </>
+            ) : (
+              <>
+                <ChevronDown className="h-4 w-4" />
+                Voir les détails par site
+              </>
+            )}
+          </button>
+        )}
+      </div>
+
+      {/* Expanded site details */}
+      {isExpanded && (
+        <div className="border-t border-[--k-border] p-4">
+          <div className="space-y-2">
+            {sortedStorageSites.map((site) => {
+              const siteStock = row.stocks.get(site.id);
+              const siteTotal = (siteStock?.quantityNew || 0) + (siteStock?.quantityUsed || 0);
+              if (siteTotal === 0) return null;
+
+              return (
+                <div
+                  key={site.id}
+                  className="flex items-center justify-between rounded-lg bg-[--k-surface-2] px-3 py-2"
+                >
+                  <span className="text-sm font-medium text-[--k-text]">
+                    {site.name}
+                  </span>
+                  <span className="text-sm font-medium text-[--k-text]">
+                    {formatStockBreakdown(siteStock?.quantityNew || 0, siteStock?.quantityUsed || 0)}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Stocks() {
   const [search, setSearch] = useState('');
   const [selectedSite, setSelectedSite] = useState('');
@@ -95,10 +237,12 @@ export default function Stocks() {
     },
   });
 
-  // Filter assemblies by selected type
+  // Filter assemblies by selected type.
+  // Selon l'endpoint, l'API renvoie soit des AssemblyType directs (id), soit
+  // des lignes de liaison (assemblyTypeId) — d'où le champ optionnel.
   const filteredAssemblies = selectedAssemblyType
     ? assembliesData?.filter((assembly) =>
-        assembly.assemblyTypes?.some((at: any) =>
+        assembly.assemblyTypes?.some((at: AssemblyType & { assemblyTypeId?: string }) =>
           at.assemblyTypeId === selectedAssemblyType || at.id === selectedAssemblyType
         )
       )
@@ -204,7 +348,7 @@ export default function Stocks() {
     if (selectedAssemblyType) {
       result = result.filter((row) => {
         return (row.product.assemblyTypes || []).some(
-          (l: any) => l.assemblyTypeId === selectedAssemblyType,
+          (l) => l.assemblyTypeId === selectedAssemblyType,
         );
       });
     }
@@ -335,136 +479,6 @@ export default function Stocks() {
       newExpanded.add(productId);
     }
     setExpandedRows(newExpanded);
-  };
-
-  // Mobile card component for stocks
-  const StockCard = ({ row }: { row: MatrixRow }) => {
-    const isExpanded = expandedRows.has(row.product.id);
-
-    return (
-      <div className="rounded-2xl border border-[--k-border] bg-[--k-surface]">
-        <div className="p-4">
-          <div className="flex items-start gap-3">
-            <button
-              type="button"
-              onClick={() => row.product.imageUrl && setLightboxProduct(row.product)}
-              disabled={!row.product.imageUrl}
-              className={`group relative h-[5rem] w-[5rem] flex-shrink-0 overflow-hidden rounded-lg bg-[--k-surface-2] ${row.product.imageUrl ? 'cursor-zoom-in' : 'cursor-default'}`}
-            >
-              <img
-                src={getFullImageUrl(row.product.imageUrl)}
-                alt=""
-                className="h-full w-full object-cover"
-                onError={(e) => { (e.target as HTMLImageElement).src = DEFAULT_PRODUCT_IMAGE; }}
-              />
-              {row.product.imageUrl && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-colors">
-                  <ZoomIn className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-              )}
-            </button>
-            <div className="flex-1 min-w-0">
-              <Link
-                to={`/products/${row.product.id}`}
-                className="text-[16px] font-medium text-[--k-primary] hover:text-indigo-700"
-              >
-                {row.product.description || row.product.reference}
-              </Link>
-              <p className="text-[15px] text-[--k-muted] font-mono mt-0.5">
-                {row.product.reference}
-              </p>
-              {row.product.storageLocation && (
-                <p className="text-[11px] text-[--k-muted] mt-0.5">
-                  📍 {locationLabel(row.product.storageLocation, { includeSite: true })}
-                </p>
-              )}
-              {row.product.supplyRisk && (
-                <Badge
-                  variant={
-                    row.product.supplyRisk === 'HIGH'
-                      ? 'danger'
-                      : row.product.supplyRisk === 'MEDIUM'
-                      ? 'warning'
-                      : 'success'
-                  }
-                  className="mt-1"
-                >
-                  {row.product.supplyRisk === 'HIGH'
-                    ? 'Risque fort'
-                    : row.product.supplyRisk === 'MEDIUM'
-                    ? 'Risque moyen'
-                    : 'Risque faible'}
-                </Badge>
-              )}
-            </div>
-          </div>
-
-          {/* Stock summary */}
-          <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-            <div className="rounded-lg bg-[--k-surface-2] p-2">
-              <p className="text-xs text-[--k-muted]">Total</p>
-              <p className="text-lg font-bold text-[--k-text]">{row.total}</p>
-            </div>
-            <div className="rounded-lg bg-green-50 p-2">
-              <p className="text-xs text-green-600">Neuf</p>
-              <p className="text-lg font-bold text-green-600">{row.totalNew}</p>
-            </div>
-            <div className="rounded-lg bg-orange-50 p-2">
-              <p className="text-xs text-orange-600">Occasion</p>
-              <p className="text-lg font-bold text-orange-600">{row.totalUsed}</p>
-            </div>
-          </div>
-
-
-          {/* Expand/collapse button for site details */}
-          {storageSites.length > 0 && (
-            <button
-              onClick={() => toggleRowExpand(row.product.id)}
-              className="mt-3 flex w-full items-center justify-center gap-1 rounded-lg border border-[--k-border] py-2 text-sm text-[--k-muted] hover:bg-[--k-surface-2]"
-            >
-              {isExpanded ? (
-                <>
-                  <ChevronUp className="h-4 w-4" />
-                  Masquer les détails par site
-                </>
-              ) : (
-                <>
-                  <ChevronDown className="h-4 w-4" />
-                  Voir les détails par site
-                </>
-              )}
-            </button>
-          )}
-        </div>
-
-        {/* Expanded site details */}
-        {isExpanded && (
-          <div className="border-t border-[--k-border] p-4">
-            <div className="space-y-2">
-              {sortedStorageSites.map((site) => {
-                const siteStock = row.stocks.get(site.id);
-                const siteTotal = (siteStock?.quantityNew || 0) + (siteStock?.quantityUsed || 0);
-                if (siteTotal === 0) return null;
-
-                return (
-                  <div
-                    key={site.id}
-                    className="flex items-center justify-between rounded-lg bg-[--k-surface-2] px-3 py-2"
-                  >
-                    <span className="text-sm font-medium text-[--k-text]">
-                      {site.name}
-                    </span>
-                    <span className="text-sm font-medium text-[--k-text]">
-                      {formatStockBreakdown(siteStock?.quantityNew || 0, siteStock?.quantityUsed || 0)}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-      </div>
-    );
   };
 
   return (
@@ -620,7 +634,15 @@ export default function Stocks() {
         ) : (
           <div className="space-y-3">
             {filteredData.map((row) => (
-              <StockCard key={row.product.id} row={row} />
+              <StockCard
+                key={row.product.id}
+                row={row}
+                isExpanded={expandedRows.has(row.product.id)}
+                onToggleExpand={toggleRowExpand}
+                onZoom={setLightboxProduct}
+                sortedStorageSites={sortedStorageSites}
+                showSiteDetails={storageSites.length > 0}
+              />
             ))}
           </div>
         )}
@@ -770,7 +792,7 @@ export default function Stocks() {
                         <div className="flex flex-col">
                           {(row.product.assemblyTypes || []).length > 0 && (
                             <span className="text-xs text-[--k-primary]">
-                              {(row.product.assemblyTypes || []).map((l: any) => l.assemblyType.name).join(', ')}
+                              {(row.product.assemblyTypes || []).map((l) => l.assemblyType.name).join(', ')}
                             </span>
                           )}
                           {row.product.assembly && (

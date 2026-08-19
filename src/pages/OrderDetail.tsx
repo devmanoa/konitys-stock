@@ -30,7 +30,12 @@ import OrderAttachments from '../components/OrderAttachments';
 import OrderAuditTimeline from '../components/OrderAuditTimeline';
 import api from '../services/api';
 import OperatorAvatar from '../components/OperatorAvatar';
+import { formatDate as formatDateUtil, formatDateTime } from '../utils/date';
+import { getStatusBadge } from '../utils/orderDisplay';
 import type { Order, OrderItem, ApiResponse } from '../types';
+
+// Cette page affiche '—' (tiret cadratin) pour les dates absentes.
+const formatDate = (dateStr?: string | null) => formatDateUtil(dateStr, '—');
 
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/api$/, '');
 const DEFAULT_PRODUCT_IMAGE = '/default-product.svg';
@@ -88,42 +93,11 @@ export default function OrderDetail() {
     enabled: !!id,
   });
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'PENDING':
-        return <Badge variant="warning">En cours</Badge>;
-      case 'PARTIAL':
-        return <Badge variant="info">Reçu partiellement</Badge>;
-      case 'COMPLETED':
-        return <Badge variant="success">Terminée</Badge>;
-      case 'CANCELLED':
-        return <Badge variant="danger">Annulée</Badge>;
-      default:
-        return <Badge>{status}</Badge>;
-    }
-  };
-
   const getItemStatusBadge = (item: OrderItem) => {
     if (item.receivedQty !== null && item.receivedQty !== undefined) {
       return <Badge variant="success">Reçu ({item.receivedQty})</Badge>;
     }
     return <Badge variant="warning">En attente</Badge>;
-  };
-
-  const formatDate = (dateStr?: string | null) => {
-    if (!dateStr) return '—';
-    return new Date(dateStr).toLocaleDateString('fr-FR');
-  };
-
-  const formatDateTime = (dateStr?: string | null) => {
-    if (!dateStr) return '—';
-    return new Date(dateStr).toLocaleDateString('fr-FR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
   };
 
   const formatPrice = (price?: number | null) => {

@@ -22,7 +22,11 @@ import OperatorAvatar from '../components/OperatorAvatar';
 import RichTextDisplay from '../components/ui/RichTextDisplay';
 import { useToast } from '../components/ui/Toast';
 import api from '../services/api';
+import { formatDateTime } from '../utils/date';
 import type { OrderTemplate, ApiResponse } from '../types';
+
+// Cette page affiche la date de création avec l'heure ('—' si absente).
+const formatDate = (dateStr?: string | null) => formatDateTime(dateStr, '—');
 
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/api$/, '');
 const DEFAULT_PRODUCT_IMAGE = '/default-product.svg';
@@ -65,16 +69,6 @@ export default function OrderTemplateDetail() {
     },
   });
 
-  const formatDate = (dateStr?: string | null) => {
-    if (!dateStr) return '—';
-    return new Date(dateStr).toLocaleDateString('fr-FR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
 
   const formatPrice = (price?: number | null) => {
     if (price === null || price === undefined) return '—';

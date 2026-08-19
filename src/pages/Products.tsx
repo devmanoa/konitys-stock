@@ -1,9 +1,8 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate, useSearchParams, Link as RouterLink } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
-import { Plus, Search, Edit2, Trash2, Eye, Link, X, ZoomIn, Download, MoreVertical } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Eye, Link, X, ZoomIn, Download } from 'lucide-react';
 import Button from '../components/ui/Button';
-import Badge from '../components/ui/Badge';
 import SearchSelect from '../components/ui/SearchSelect';
 import Modal from '../components/ui/Modal';
 import ProductForm from '../components/forms/ProductForm';
@@ -11,7 +10,9 @@ import ProductSupplierForm from '../components/forms/ProductSupplierForm';
 import { useToast } from '../components/ui/Toast';
 import Pagination from '../components/ui/Pagination';
 import { PageHeader } from '../components/PageHeader';
+import ActionsMenu, { type ActionsMenuItem } from '../components/ActionsMenu';
 import api from '../services/api';
+import { getRiskBadge } from '../utils/productDisplay';
 import type { Product, PaginatedResponse, Assembly, AssemblyType, PartType } from '../types';
 import { PART_TYPE_LABEL } from '../types';
 
@@ -30,6 +31,83 @@ const getFullImageUrl = (url: string | null | undefined): string => {
   if (url.startsWith('http')) return url;
   return `${API_BASE_URL}${url}`;
 };
+
+// Mobile card component (top-level : évite d'être recréé à chaque render du parent)
+function ProductCard({
+  product,
+  navigate,
+  onZoom,
+  actions,
+}: {
+  product: Product;
+  navigate: (to: string) => void;
+  onZoom: (product: Product) => void;
+  actions: ActionsMenuItem[];
+}) {
+  return (
+    <div className="rounded-2xl border border-[--k-border] bg-[--k-surface] p-4">
+      <div className="flex items-start gap-3">
+        <button
+          type="button"
+          onClick={() => product.imageUrl && onZoom(product)}
+          disabled={!product.imageUrl}
+          className={`group relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border border-[--k-border] bg-[--k-surface-2] ${product.imageUrl ? 'cursor-zoom-in' : 'cursor-default'}`}
+        >
+          <img
+            src={getFullImageUrl(product.imageUrl)}
+            alt={product.reference}
+            className="h-full w-full object-cover"
+          />
+          {product.imageUrl && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-colors">
+              <ZoomIn className="h-5 w-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
+          )}
+        </button>
+        <div className="flex-1 min-w-0">
+          <button
+            onClick={() => navigate(`/products/${product.id}`)}
+            className="font-medium text-[--k-primary] hover:text-indigo-700 hover:underline text-left truncate block w-full"
+          >
+            {product.description || product.reference}
+          </button>
+          <p className="text-[13px] text-[--k-muted] truncate mt-0.5">
+            {product.reference}
+          </p>
+          <div className="flex flex-wrap items-center gap-2 mt-2">
+            {getRiskBadge(product.supplyRisk)}
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-3 grid grid-cols-2 gap-2 text-[13px]">
+        <div>
+          <span className="text-[--k-muted]">Borne :</span>
+          <p className="text-[--k-text] truncate">
+            {product.assembly?.name || (product.assemblyTypes || []).map((l) => l.assemblyType.name).join(', ') || '-'}
+          </p>
+        </div>
+        <div>
+          <span className="text-[--k-muted]">Fournisseur:</span>
+          <p className="truncate">
+            {product.productSuppliers?.[0]?.supplier ? (
+              <RouterLink
+                to={`/suppliers/${product.productSuppliers[0].supplier.id}`}
+                className="text-[--k-primary] hover:underline"
+              >
+                {product.productSuppliers[0].supplier.name}
+              </RouterLink>
+            ) : '-'}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-3 flex items-center justify-end gap-1 border-t border-[--k-border] pt-3">
+        <ActionsMenu items={actions} />
+      </div>
+    </div>
+  );
+}
 
 export default function Products() {
   const navigate = useNavigate();
@@ -108,10 +186,12 @@ export default function Products() {
     },
   });
 
-  // Filter assemblies by selected type
+  // Filter assemblies by selected type.
+  // Selon l'endpoint, l'API renvoie soit des AssemblyType directs (id), soit
+  // des lignes de liaison (assemblyTypeId) — d'où le champ optionnel.
   const filteredAssemblies = assemblyTypeId
     ? assembliesData?.filter((assembly) =>
-        assembly.assemblyTypes?.some((at: any) =>
+        assembly.assemblyTypes?.some((at: AssemblyType & { assemblyTypeId?: string }) =>
           at.assemblyTypeId === assemblyTypeId || at.id === assemblyTypeId
         )
       )
@@ -124,7 +204,6 @@ export default function Products() {
   const [deleteConfirm, setDeleteConfirm] = useState<Product | null>(null);
   const [supplierModalProduct, setSupplierModalProduct] = useState<Product | null>(null);
   const [lightboxProduct, setLightboxProduct] = useState<Product | null>(null);
-  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['products', page, search, assemblyTypeId, assemblyId, partCategoryId, serialFilter],
@@ -160,21 +239,6 @@ export default function Products() {
     },
   });
 
-  const getRiskBadge = (risk?: string) => {
-    if (!risk) return null;
-    const variants: Record<string, 'danger' | 'warning' | 'success'> = {
-      HIGH: 'danger',
-      MEDIUM: 'warning',
-      LOW: 'success',
-    };
-    const labels: Record<string, string> = {
-      HIGH: 'Fort',
-      MEDIUM: 'Moyen',
-      LOW: 'Faible',
-    };
-    return <Badge variant={variants[risk]}>{labels[risk]}</Badge>;
-  };
-
   const handleCreate = () => {
     setSelectedProduct(undefined);
     setIsModalOpen(true);
@@ -200,166 +264,34 @@ export default function Products() {
 
   const totalCount = data?.pagination?.total ?? 0;
 
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!openDropdownId) return;
-    const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setOpenDropdownId(null);
-      }
-    };
-    const timer = setTimeout(() => {
-      document.addEventListener('click', handleClickOutside);
-    }, 0);
-    return () => {
-      clearTimeout(timer);
-      document.removeEventListener('click', handleClickOutside);
-    };
-  }, [openDropdownId]);
-
-  const ActionsDropdown = ({ product }: { product: Product }) => {
-    const isOpen = openDropdownId === product.id;
-
-    return (
-      <div ref={isOpen ? dropdownRef : undefined} className="relative">
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            setOpenDropdownId(isOpen ? null : product.id);
-          }}
-          className="rounded-lg p-1.5 text-[--k-muted] hover:bg-[--k-surface-2] hover:text-[--k-text]"
-        >
-          <MoreVertical className="h-4 w-4" />
-        </button>
-        {isOpen && (
-          <div className="absolute right-0 top-full z-50 mt-1 w-48 rounded-lg border border-[--k-border] bg-[--k-surface] py-1 shadow-lg">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                setOpenDropdownId(null);
-                navigate(`/products/${product.id}`);
-              }}
-              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-[--k-text] hover:bg-[--k-surface-2]"
-            >
-              <Eye className="h-4 w-4" />
-              Voir détail
-            </button>
-            <button
-              type="button"
-              data-perm="stock:products.suppliers.manage"
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                setOpenDropdownId(null);
-                setSupplierModalProduct(product);
-              }}
-              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-[--k-text] hover:bg-[--k-surface-2]"
-            >
-              <Link className="h-4 w-4" />
-              Gérer fournisseurs
-            </button>
-            <button
-              type="button"
-              data-perm="stock:products.edit"
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                setOpenDropdownId(null);
-                handleEdit(product);
-              }}
-              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-[--k-text] hover:bg-[--k-surface-2]"
-            >
-              <Edit2 className="h-4 w-4" />
-              Modifier
-            </button>
-            <button
-              type="button"
-              data-perm="stock:products.delete"
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                setOpenDropdownId(null);
-                setDeleteConfirm(product);
-              }}
-              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
-            >
-              <Trash2 className="h-4 w-4" />
-              Supprimer
-            </button>
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  // Mobile card component
-  const ProductCard = ({ product }: { product: Product }) => (
-    <div className="rounded-2xl border border-[--k-border] bg-[--k-surface] p-4">
-      <div className="flex items-start gap-3">
-        <button
-          type="button"
-          onClick={() => product.imageUrl && setLightboxProduct(product)}
-          disabled={!product.imageUrl}
-          className={`group relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border border-[--k-border] bg-[--k-surface-2] ${product.imageUrl ? 'cursor-zoom-in' : 'cursor-default'}`}
-        >
-          <img
-            src={getFullImageUrl(product.imageUrl)}
-            alt={product.reference}
-            className="h-full w-full object-cover"
-          />
-          {product.imageUrl && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-colors">
-              <ZoomIn className="h-5 w-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
-          )}
-        </button>
-        <div className="flex-1 min-w-0">
-          <button
-            onClick={() => navigate(`/products/${product.id}`)}
-            className="font-medium text-[--k-primary] hover:text-indigo-700 hover:underline text-left truncate block w-full"
-          >
-            {product.description || product.reference}
-          </button>
-          <p className="text-[13px] text-[--k-muted] truncate mt-0.5">
-            {product.reference}
-          </p>
-          <div className="flex flex-wrap items-center gap-2 mt-2">
-            {getRiskBadge(product.supplyRisk)}
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-3 grid grid-cols-2 gap-2 text-[13px]">
-        <div>
-          <span className="text-[--k-muted]">Borne :</span>
-          <p className="text-[--k-text] truncate">
-            {product.assembly?.name || (product.assemblyTypes || []).map((l: any) => l.assemblyType.name).join(', ') || '-'}
-          </p>
-        </div>
-        <div>
-          <span className="text-[--k-muted]">Fournisseur:</span>
-          <p className="truncate">
-            {product.productSuppliers?.[0]?.supplier ? (
-              <RouterLink
-                to={`/suppliers/${product.productSuppliers[0].supplier.id}`}
-                className="text-[--k-primary] hover:underline"
-              >
-                {product.productSuppliers[0].supplier.name}
-              </RouterLink>
-            ) : '-'}
-          </p>
-        </div>
-      </div>
-
-      <div className="mt-3 flex items-center justify-end gap-1 border-t border-[--k-border] pt-3">
-        <ActionsDropdown product={product} />
-      </div>
-    </div>
-  );
+  // Items du menu actions d'un produit (les data-perm sont portés par
+  // ActionsMenu via la propriété perm).
+  const productActions = (product: Product): ActionsMenuItem[] => [
+    {
+      icon: Eye,
+      label: 'Voir détail',
+      onClick: () => navigate(`/products/${product.id}`),
+    },
+    {
+      icon: Link,
+      label: 'Gérer fournisseurs',
+      perm: 'stock:products.suppliers.manage',
+      onClick: () => setSupplierModalProduct(product),
+    },
+    {
+      icon: Edit2,
+      label: 'Modifier',
+      perm: 'stock:products.edit',
+      onClick: () => handleEdit(product),
+    },
+    {
+      icon: Trash2,
+      label: 'Supprimer',
+      perm: 'stock:products.delete',
+      onClick: () => setDeleteConfirm(product),
+      className: 'text-red-600 hover:bg-red-50',
+    },
+  ];
 
   return (
     <div className="space-y-4 md:space-y-6">
@@ -446,7 +378,13 @@ export default function Products() {
         ) : (
           <div className="space-y-3">
             {(data?.data || []).map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard
+                key={product.id}
+                product={product}
+                navigate={navigate}
+                onZoom={setLightboxProduct}
+                actions={productActions(product)}
+              />
             ))}
           </div>
         )}
@@ -555,7 +493,7 @@ export default function Products() {
                         </span>
                         {(product.assemblyTypes || []).length > 0 && (
                           <span className="text-xs text-[--k-muted]">
-                            {(product.assemblyTypes || []).map((l: any) => l.assemblyType.name).join(', ')}
+                            {(product.assemblyTypes || []).map((l) => l.assemblyType.name).join(', ')}
                           </span>
                         )}
                       </div>
@@ -590,7 +528,7 @@ export default function Products() {
                       )}
                     </td>
                     <td className="whitespace-nowrap px-4 py-1.5 text-center">
-                      <ActionsDropdown product={product} />
+                      <ActionsMenu items={productActions(product)} />
                     </td>
                   </tr>
                 ))

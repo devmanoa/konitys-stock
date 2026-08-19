@@ -12,6 +12,108 @@ import { PageHeader } from '../components/PageHeader';
 import api from '../services/api';
 import type { Supplier, PaginatedResponse, AssemblyType, ApiResponse } from '../types';
 
+// Mobile card component (top-level : évite d'être recréé à chaque render du parent)
+function SupplierCard({
+  supplier,
+  onEdit,
+  onDelete,
+}: {
+  supplier: Supplier;
+  onEdit: (supplier: Supplier) => void;
+  onDelete: (supplier: Supplier) => void;
+}) {
+  return (
+    <div className="rounded-2xl border border-[--k-border] bg-[--k-surface] p-4">
+      <div className="flex items-start justify-between">
+        <div className="flex-1 min-w-0">
+          <Link
+            to={`/suppliers/${supplier.id}`}
+            className="font-medium text-[--k-primary] hover:text-indigo-700 hover:underline"
+          >
+            {supplier.name}
+          </Link>
+          {supplier.contact && (
+            <p className="text-[13px] text-[--k-muted] mt-0.5">
+              {supplier.contact}
+            </p>
+          )}
+        </div>
+        <div className="flex items-center gap-1">
+          <Link to={`/suppliers/${supplier.id}`}>
+            <Button variant="ghost" size="sm" title="Voir détails">
+              <Eye className="h-4 w-4" />
+            </Button>
+          </Link>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onEdit(supplier)}
+            title="Modifier"
+          >
+            <Edit2 className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onDelete(supplier)}
+            title="Supprimer"
+            className="text-red-600 hover:bg-red-50 hover:text-red-700"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      <div className="mt-3 space-y-2">
+        {supplier.email && (
+          <a
+            href={`mailto:${supplier.email}`}
+            className="flex items-center gap-2 text-[13px] text-[--k-muted] hover:text-[--k-primary]"
+          >
+            <Mail className="h-4 w-4 flex-shrink-0" />
+            <span className="truncate">{supplier.email}</span>
+          </a>
+        )}
+        {supplier.phone && (
+          <a
+            href={`tel:${supplier.phone}`}
+            className="flex items-center gap-2 text-[13px] text-[--k-muted] hover:text-[--k-primary]"
+          >
+            <Phone className="h-4 w-4 flex-shrink-0" />
+            <span>{supplier.phone}</span>
+          </a>
+        )}
+        {supplier.website && (
+          <a
+            href={supplier.website.startsWith('http') ? supplier.website : `https://${supplier.website}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 text-[13px] text-[--k-muted] hover:text-[--k-primary]"
+          >
+            <Globe className="h-4 w-4 flex-shrink-0" />
+            <span className="truncate">{supplier.website.replace(/^https?:\/\//, '')}</span>
+          </a>
+        )}
+      </div>
+
+      <div className="mt-3 flex items-center gap-4 border-t border-[--k-border] pt-3 text-[13px]">
+        <div>
+          <span className="text-[--k-muted]">Produits: </span>
+          <span className="font-medium text-[--k-text]">
+            {supplier._count?.productSuppliers || 0}
+          </span>
+        </div>
+        <div>
+          <span className="text-[--k-muted]">Commandes: </span>
+          <span className="font-medium text-[--k-text]">
+            {supplier._count?.orders || 0}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Suppliers() {
   const queryClient = useQueryClient();
   const toast = useToast();
@@ -84,98 +186,6 @@ export default function Suppliers() {
     );
   };
 
-  // Mobile card component
-  const SupplierCard = ({ supplier }: { supplier: Supplier }) => (
-    <div className="rounded-2xl border border-[--k-border] bg-[--k-surface] p-4">
-      <div className="flex items-start justify-between">
-        <div className="flex-1 min-w-0">
-          <Link
-            to={`/suppliers/${supplier.id}`}
-            className="font-medium text-[--k-primary] hover:text-indigo-700 hover:underline"
-          >
-            {supplier.name}
-          </Link>
-          {supplier.contact && (
-            <p className="text-[13px] text-[--k-muted] mt-0.5">
-              {supplier.contact}
-            </p>
-          )}
-        </div>
-        <div className="flex items-center gap-1">
-          <Link to={`/suppliers/${supplier.id}`}>
-            <Button variant="ghost" size="sm" title="Voir détails">
-              <Eye className="h-4 w-4" />
-            </Button>
-          </Link>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleEdit(supplier)}
-            title="Modifier"
-          >
-            <Edit2 className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setDeleteConfirm(supplier)}
-            title="Supprimer"
-            className="text-red-600 hover:bg-red-50 hover:text-red-700"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
-      <div className="mt-3 space-y-2">
-        {supplier.email && (
-          <a
-            href={`mailto:${supplier.email}`}
-            className="flex items-center gap-2 text-[13px] text-[--k-muted] hover:text-[--k-primary]"
-          >
-            <Mail className="h-4 w-4 flex-shrink-0" />
-            <span className="truncate">{supplier.email}</span>
-          </a>
-        )}
-        {supplier.phone && (
-          <a
-            href={`tel:${supplier.phone}`}
-            className="flex items-center gap-2 text-[13px] text-[--k-muted] hover:text-[--k-primary]"
-          >
-            <Phone className="h-4 w-4 flex-shrink-0" />
-            <span>{supplier.phone}</span>
-          </a>
-        )}
-        {supplier.website && (
-          <a
-            href={supplier.website.startsWith('http') ? supplier.website : `https://${supplier.website}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 text-[13px] text-[--k-muted] hover:text-[--k-primary]"
-          >
-            <Globe className="h-4 w-4 flex-shrink-0" />
-            <span className="truncate">{supplier.website.replace(/^https?:\/\//, '')}</span>
-          </a>
-        )}
-      </div>
-
-      <div className="mt-3 flex items-center gap-4 border-t border-[--k-border] pt-3 text-[13px]">
-        <div>
-          <span className="text-[--k-muted]">Produits: </span>
-          <span className="font-medium text-[--k-text]">
-            {supplier._count?.productSuppliers || 0}
-          </span>
-        </div>
-        <div>
-          <span className="text-[--k-muted]">Commandes: </span>
-          <span className="font-medium text-[--k-text]">
-            {supplier._count?.orders || 0}
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-
   return (
     <div className="space-y-4 md:space-y-6">
       <PageHeader title="Fournisseurs" subtitle="Gestion des fournisseurs">
@@ -227,7 +237,12 @@ export default function Suppliers() {
         ) : (
           <div className="space-y-3">
             {(data?.data || []).map((supplier) => (
-              <SupplierCard key={supplier.id} supplier={supplier} />
+              <SupplierCard
+                key={supplier.id}
+                supplier={supplier}
+                onEdit={handleEdit}
+                onDelete={setDeleteConfirm}
+              />
             ))}
           </div>
         )}

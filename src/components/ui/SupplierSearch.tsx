@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Search, X, Loader2 } from 'lucide-react'
 import api from '../../services/api'
+import { useClickOutside } from '../../hooks/useClickOutside'
 import type { Supplier, PaginatedResponse } from '../../types'
 
 interface SupplierSearchProps {
@@ -43,16 +44,7 @@ export default function SupplierSearch({
     enabled: search.length >= 1,
   })
 
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      const target = event.target as Node
-      const isOutsideWrapper = wrapperRef.current && !wrapperRef.current.contains(target)
-      const isOutsideDropdown = !dropdownRef.current || !dropdownRef.current.contains(target)
-      if (isOutsideWrapper && isOutsideDropdown) setIsOpen(false)
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+  useClickOutside([wrapperRef, dropdownRef], () => setIsOpen(false))
 
   useEffect(() => {
     if (isOpen && inputContainerRef.current) {

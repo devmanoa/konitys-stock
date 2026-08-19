@@ -10,6 +10,7 @@ import Button from '../../components/ui/Button'
 import { Card, CardContent } from '../../components/ui/Card'
 import api from '../../services/api'
 import { getFullImageUrl } from '../../utils/imageUrl'
+import { downloadBlob } from '../../utils/downloadBlob'
 import OperatorAvatar from '../../components/OperatorAvatar'
 import ShareLinksPanel from './ShareLinksPanel'
 import type { ApiResponse, Location } from '../../types'
@@ -119,15 +120,8 @@ export default function InventoryDetail() {
     const blob = new Blob([res.data], {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
     const suffix = tab === 'entries' ? 'saisies' : 'non_trouves'
-    a.download = `${(inv?.name || 'inventaire').replace(/[^a-zA-Z0-9_-]+/g, '_')}_${suffix}.xlsx`
-    document.body.appendChild(a)
-    a.click()
-    a.remove()
-    URL.revokeObjectURL(url)
+    downloadBlob(blob, `${(inv?.name || 'inventaire').replace(/[^a-zA-Z0-9_-]+/g, '_')}_${suffix}.xlsx`)
   }
 
   const isClosed = inv?.status === 'CLOSED'

@@ -21,6 +21,7 @@ import { PageHeader } from '../components/PageHeader'
 import { cn } from '../components/ui/cn'
 import api from '../services/api'
 import { formatStockBreakdown } from '../utils/stockFormat'
+import { formatDate } from '../utils/date'
 import OperatorAvatar from '../components/OperatorAvatar'
 import type {
   DashboardStats,
@@ -128,10 +129,6 @@ export default function Dashboard() {
       currency: 'EUR',
       maximumFractionDigits: 0,
     }).format(value)
-  }
-
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('fr-FR')
   }
 
   const formatNumber = (value: number) => {

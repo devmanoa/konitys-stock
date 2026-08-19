@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { ChevronDown, Search, X } from 'lucide-react'
+import { useClickOutside } from '../../hooks/useClickOutside'
 import { cn } from './cn'
 
 interface SearchSelectOption {
@@ -66,20 +67,10 @@ export default function SearchSelect({
     }
   }, [open, updatePosition])
 
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      const target = e.target as Node
-      if (
-        buttonRef.current && !buttonRef.current.contains(target) &&
-        dropdownRef.current && !dropdownRef.current.contains(target)
-      ) {
-        setOpen(false)
-        setSearch('')
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+  useClickOutside([buttonRef, dropdownRef], () => {
+    setOpen(false)
+    setSearch('')
+  })
 
   useEffect(() => {
     if (open && inputRef.current) {

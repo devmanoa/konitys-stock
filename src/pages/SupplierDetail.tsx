@@ -35,6 +35,7 @@ import SupplierContactForm from '../components/forms/SupplierContactForm';
 import ReceiveOrderForm from '../components/forms/ReceiveOrderForm';
 import { useToast } from '../components/ui/Toast';
 import api from '../services/api';
+import { getOrderLabel, getOrderTotalQty, getOrderReceivedQty } from '../utils/orderDisplay';
 import type { Supplier, Order, ProductSupplier, SupplierContact, ApiResponse } from '../types';
 
 interface SupplierWithRelations extends Supplier {
@@ -143,21 +144,6 @@ export default function SupplierDetail() {
     };
     return <Badge variant={variants[status]}>{labels[status]}</Badge>;
   };
-
-  const getOrderLabel = (order: Order) => {
-    if (order.title) return order.title;
-    if (order.items?.length === 1) {
-      const item = order.items[0];
-      return item.product?.description || item.product?.reference || 'Commande';
-    }
-    return `${order.items?.length || 0} article${(order.items?.length || 0) > 1 ? 's' : ''}`;
-  };
-
-  const getOrderTotalQty = (order: Order) =>
-    order.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
-
-  const getOrderReceivedQty = (order: Order) =>
-    order.items?.reduce((sum, item) => sum + (item.receivedQty || 0), 0) || 0;
 
   const startEditComment = () => {
     setCommentValue(data?.comment || '');
@@ -567,7 +553,7 @@ export default function SupplierDetail() {
                         </RouterLink>
                       </td>
                       <td className="py-2 pr-4 text-[--k-muted]">
-                        {(ps.product.assemblyTypes || []).map((l: any) => l.assemblyType.name).join(', ') || '-'}
+                        {(ps.product.assemblyTypes || []).map((l) => l.assemblyType.name).join(', ') || '-'}
                       </td>
                       <td className="py-2 pr-4 text-[--k-muted]">{ps.supplierRef || '-'}</td>
                       <td className="py-2 pr-4 text-right text-[--k-text]">

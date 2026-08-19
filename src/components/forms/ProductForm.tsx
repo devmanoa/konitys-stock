@@ -110,7 +110,7 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
   // Filter assemblies by any of the selected types (or show all if none selected)
   const filteredAssemblies = selectedTypes.length > 0
     ? assembliesData?.filter((assembly) =>
-        assembly.assemblyTypes?.some((at: any) =>
+        assembly.assemblyTypes?.some((at: AssemblyType & { assemblyTypeId?: string }) =>
           selectedTypes.some(st => st.assemblyTypeId === at.assemblyTypeId || st.assemblyTypeId === at.id)
         )
       )

@@ -17,7 +17,11 @@ import OrderTemplateEditForm from '../components/forms/OrderTemplateEditForm';
 import { PageHeader } from '../components/PageHeader';
 import { useToast } from '../components/ui/Toast';
 import api from '../services/api';
+import { formatDate as formatDateUtil } from '../utils/date';
 import type { OrderTemplate, ApiResponse } from '../types';
+
+// Cette page affiche '—' (tiret cadratin) pour les dates absentes.
+const formatDate = (dateStr?: string | null) => formatDateUtil(dateStr, '—');
 
 export default function OrderTemplates() {
   const navigate = useNavigate();
@@ -73,14 +77,6 @@ export default function OrderTemplates() {
     setIsRenameOpen(true);
   };
 
-  const formatDate = (dateStr?: string | null) => {
-    if (!dateStr) return '—';
-    return new Date(dateStr).toLocaleDateString('fr-FR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
-  };
 
   const formatPrice = (price?: number | null) => {
     if (price === null || price === undefined) return '—';

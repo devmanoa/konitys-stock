@@ -31,6 +31,8 @@ import MovementDetail from '../components/MovementDetail';
 import OperatorAvatar from '../components/OperatorAvatar';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
+import { formatDate } from '../utils/date';
+import { getMovementTypeIcon } from '../utils/productDisplay';
 import type { StockMovement, Site, ApiResponse, PaginatedResponse } from '../types';
 
 export default function Movements() {
@@ -129,19 +131,6 @@ export default function Movements() {
     );
   });
 
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'IN':
-        return <ArrowDownCircle className="h-5 w-5 text-green-500" />;
-      case 'OUT':
-        return <ArrowUpCircle className="h-5 w-5 text-red-500" />;
-      case 'TRANSFER':
-        return <ArrowLeftRight className="h-5 w-5 text-blue-500" />;
-      default:
-        return null;
-    }
-  };
-
   const getTypeBadge = (type: string) => {
     switch (type) {
       case 'IN':
@@ -161,14 +150,6 @@ export default function Movements() {
     ) : (
       <Badge variant="warning">Occasion</Badge>
     );
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('fr-FR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
   };
 
   const hasFilters = typeFilter || siteFilter || startDate || endDate || search || conditionFilter;
@@ -481,7 +462,7 @@ export default function Movements() {
                     </td>
                     <td className="px-4 py-1.5">
                       <div className="flex items-center gap-2">
-                        {getTypeIcon(movement.type)}
+                        {getMovementTypeIcon(movement.type)}
                         {getTypeBadge(movement.type)}
                       </div>
                     </td>

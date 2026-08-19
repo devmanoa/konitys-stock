@@ -10,6 +10,7 @@ import Button from '../../components/ui/Button'
 import { Card, CardContent } from '../../components/ui/Card'
 import api from '../../services/api'
 import { getFullImageUrl } from '../../utils/imageUrl'
+import { downloadBlob } from '../../utils/downloadBlob'
 import type { ApiResponse } from '../../types'
 import type { Inventory } from './types'
 
@@ -57,15 +58,8 @@ export default function InventoryCompare() {
     const blob = new Blob([res.data], {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
     const name = (data?.inventory?.name || 'inventaire').replace(/[^a-zA-Z0-9_-]+/g, '_')
-    a.download = `${name}_comparaison_${filter}.xlsx`
-    document.body.appendChild(a)
-    a.click()
-    a.remove()
-    URL.revokeObjectURL(url)
+    downloadBlob(blob, `${name}_comparaison_${filter}.xlsx`)
   }
 
   const applyMutation = useMutation({
