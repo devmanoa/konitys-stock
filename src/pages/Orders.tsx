@@ -37,6 +37,7 @@ import {
   getOrderReceivedQty,
 } from '../utils/orderDisplay';
 import type { Order, Supplier, OrderTemplate, ApiResponse, PaginatedResponse } from '../types';
+import Spinner from '../components/ui/Spinner'
 
 // Mobile card component (top-level : évite d'être recréé à chaque render du parent)
 function OrderCard({
@@ -369,10 +370,7 @@ export default function Orders() {
       {/* Mobile Cards View */}
       <div className="block lg:hidden">
         {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-[--k-primary] border-t-transparent" />
-            <span className="ml-2 text-[--k-muted]">Chargement...</span>
-          </div>
+          <Spinner size="md" label="Chargement..." className="py-8" />
         ) : filteredOrders?.length === 0 ? (
           <div className="py-8 text-center text-[--k-muted]">
             Aucune commande trouvée
@@ -405,10 +403,7 @@ export default function Orders() {
       {/* Desktop Orders Table */}
       <div className="hidden lg:block rounded-2xl border border-[--k-border] bg-white shadow-sm shadow-black/[0.03]">
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-[--k-primary] border-t-transparent" />
-            <span className="ml-2 text-[--k-muted]">Chargement...</span>
-          </div>
+          <Spinner size="lg" label="Chargement..." className="py-12" />
         ) : filteredOrders?.length === 0 ? (
           <div className="py-12 text-center text-[--k-muted]">
             Aucune commande trouvée
@@ -588,10 +583,7 @@ export default function Orders() {
       >
         <div className="space-y-3">
           {isLoadingTemplates ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-[--k-primary] border-t-transparent" />
-              <span className="ml-2 text-[--k-muted]">Chargement...</span>
-            </div>
+            <Spinner size="md" label="Chargement..." className="py-8" />
           ) : !templatesData?.length ? (
             <div className="py-8 text-center text-[--k-muted]">
               <FileText className="mx-auto mb-2 h-8 w-8 text-[--k-muted]" />

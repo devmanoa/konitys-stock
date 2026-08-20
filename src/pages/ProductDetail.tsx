@@ -49,6 +49,7 @@ import { qrForProduct, qrForProductWithSerial, qrForInternalItem } from '../util
 import api from '../services/api';
 import { getRiskBadge, getMovementTypeIcon } from '../utils/productDisplay';
 import type { Product, ApiResponse, ProductPriceHistoryEntry, StockMovement } from '../types';
+import Spinner from '../components/ui/Spinner'
 
 // Helper to get full image URL
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/api$/, '');
@@ -157,10 +158,7 @@ export default function ProductDetail() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[--k-primary] border-t-transparent" />
-        <span className="ml-2 text-[--k-muted]">Chargement...</span>
-      </div>
+      <Spinner size="lg" label="Chargement..." className="py-12" />
     );
   }
 

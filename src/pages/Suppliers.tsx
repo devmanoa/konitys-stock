@@ -11,6 +11,7 @@ import Pagination from '../components/ui/Pagination';
 import { PageHeader } from '../components/PageHeader';
 import api from '../services/api';
 import type { Supplier, PaginatedResponse, AssemblyType, ApiResponse } from '../types';
+import Spinner from '../components/ui/Spinner'
 
 // Mobile card component (top-level : évite d'être recréé à chaque render du parent)
 function SupplierCard({
@@ -226,10 +227,7 @@ export default function Suppliers() {
       {/* Mobile Cards View */}
       <div className="block lg:hidden">
         {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-[--k-primary] border-t-transparent" />
-            <span className="ml-2 text-[--k-muted]">Chargement...</span>
-          </div>
+          <Spinner size="md" label="Chargement..." className="py-8" />
         ) : (data?.data || []).length === 0 ? (
           <div className="py-8 text-center text-[--k-muted]">
             Aucun fournisseur trouvé
@@ -268,10 +266,7 @@ export default function Suppliers() {
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-[--k-primary] border-t-transparent" />
-            <span className="ml-2 text-[--k-muted]">Chargement...</span>
-          </div>
+          <Spinner size="lg" label="Chargement..." className="py-12" />
         ) : (data?.data || []).length === 0 ? (
           <div className="py-12 text-center text-[--k-muted]">
             Aucun fournisseur trouvé

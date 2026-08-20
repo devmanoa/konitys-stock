@@ -37,6 +37,7 @@ import { useToast } from '../components/ui/Toast';
 import api from '../services/api';
 import { getOrderLabel, getOrderTotalQty, getOrderReceivedQty } from '../utils/orderDisplay';
 import type { Supplier, Order, ProductSupplier, SupplierContact, ApiResponse } from '../types';
+import Spinner from '../components/ui/Spinner'
 
 interface SupplierWithRelations extends Supplier {
   productSuppliers: (ProductSupplier & {
@@ -161,10 +162,7 @@ export default function SupplierDetail() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[--k-primary] border-t-transparent" />
-        <span className="ml-2 text-[--k-muted]">Chargement...</span>
-      </div>
+      <Spinner size="lg" label="Chargement..." className="py-12" />
     );
   }
 

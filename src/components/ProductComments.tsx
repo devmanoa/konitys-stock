@@ -10,6 +10,7 @@ import RichTextDisplay from './ui/RichTextDisplay';
 import OperatorAvatar from './OperatorAvatar';
 import api from '../services/api';
 import type { ProductComment, KnownUser, ApiResponse } from '../types';
+import Spinner from './ui/Spinner'
 
 function formatRelativeTime(dateStr: string): string {
   const now = new Date();
@@ -179,9 +180,7 @@ export default function Comments({ entityType, entityId }: CommentsProps) {
 
         {/* Comments list */}
         {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-[--k-primary] border-t-transparent" />
-          </div>
+          <Spinner size="md" className="py-8" />
         ) : comments.length === 0 ? (
           <p className="text-center text-[13px] text-[--k-muted] py-6 italic">
             Aucun commentaire pour le moment

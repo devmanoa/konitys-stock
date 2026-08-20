@@ -34,6 +34,7 @@ import api from '../services/api';
 import { formatDate } from '../utils/date';
 import { getMovementTypeIcon } from '../utils/productDisplay';
 import type { StockMovement, Site, ApiResponse, PaginatedResponse } from '../types';
+import Spinner from '../components/ui/Spinner'
 
 export default function Movements() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -367,10 +368,7 @@ export default function Movements() {
       {/* Mobile Cards View */}
       <div className="block lg:hidden">
         {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-[--k-primary] border-t-transparent" />
-            <span className="ml-2 text-[--k-muted]">Chargement...</span>
-          </div>
+          <Spinner size="md" label="Chargement..." className="py-8" />
         ) : filteredMovements?.length === 0 ? (
           <div className="py-8 text-center text-[--k-muted]">
             Aucun mouvement trouvé
@@ -407,10 +405,7 @@ export default function Movements() {
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-[--k-primary] border-t-transparent" />
-            <span className="ml-2 text-[--k-muted]">Chargement...</span>
-          </div>
+          <Spinner size="lg" label="Chargement..." className="py-12" />
         ) : filteredMovements?.length === 0 ? (
           <div className="py-12 text-center text-[--k-muted]">
             Aucun mouvement trouvé

@@ -15,6 +15,7 @@ import api from '../services/api';
 import { getRiskBadge } from '../utils/productDisplay';
 import type { Product, PaginatedResponse, Assembly, AssemblyType, PartType } from '../types';
 import { PART_TYPE_LABEL } from '../types';
+import Spinner from '../components/ui/Spinner'
 
 const PART_TYPE_BADGE_CLASS: Record<PartType, string> = {
   EQUIPMENT: 'bg-blue-50 text-blue-700 border-blue-200',
@@ -367,10 +368,7 @@ export default function Products() {
       {/* Mobile Cards View */}
       <div className="block lg:hidden">
         {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-[--k-primary] border-t-transparent" />
-            <span className="ml-2 text-[--k-muted]">Chargement...</span>
-          </div>
+          <Spinner size="md" label="Chargement..." className="py-8" />
         ) : (data?.data || []).length === 0 ? (
           <div className="py-8 text-center text-[--k-muted]">
             Aucun produit trouvé
@@ -439,10 +437,7 @@ export default function Products() {
               {isLoading ? (
                 <tr>
                   <td colSpan={7} className="px-4 py-8 text-center">
-                    <div className="flex items-center justify-center">
-                      <div className="h-6 w-6 animate-spin rounded-full border-2 border-[--k-primary] border-t-transparent" />
-                      <span className="ml-2 text-[--k-muted]">Chargement...</span>
-                    </div>
+                    <Spinner size="md" label="Chargement..." />
                   </td>
                 </tr>
               ) : (data?.data || []).length === 0 ? (

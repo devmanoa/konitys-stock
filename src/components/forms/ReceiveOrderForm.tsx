@@ -8,6 +8,7 @@ import Select from '../ui/Select'
 import api from '../../services/api'
 import RichTextEditor from '../ui/RichTextEditor'
 import type { Order, OrderItem, Site, ApiResponse, AnomalyDecision } from '../../types'
+import Spinner from '../ui/Spinner'
 
 interface ReceiveItemFormData {
   receivedDate: string
@@ -123,10 +124,7 @@ export default function ReceiveOrderForm({ orderId, itemId, onSuccess, onCancel 
 
   if (isLoadingOrder) {
     return (
-      <div className="flex items-center justify-center py-8">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-[--k-primary] border-t-transparent" />
-        <span className="ml-2 text-[--k-muted]">Chargement...</span>
-      </div>
+      <Spinner size="md" label="Chargement..." className="py-8" />
     )
   }
 

@@ -13,6 +13,7 @@ import type { AssemblyType, Assembly, PaginatedResponse } from '../types';
 import AssemblyTypesSection from './settings/AssemblyTypesSection';
 import ProductCategoriesSection from './settings/ProductCategoriesSection';
 import PartCategoriesSection from './settings/PartCategoriesSection';
+import Spinner from '../components/ui/Spinner'
 
 /**
  * Page Paramètres. Chaque carte vit dans son propre composant
@@ -163,9 +164,7 @@ export default function Settings() {
             Les bornes catégorisent les composants (ex: Ossature, Face Avant, Écran). Chaque borne peut être liée à plusieurs types de bornes.
           </p>
           {assembliesLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-[--k-primary] border-t-transparent" />
-            </div>
+            <Spinner size="md" className="py-8" />
           ) : !assembliesData?.length ? (
             <p className="text-[--k-muted] italic py-4">
               Aucune borne créée

@@ -33,6 +33,7 @@ import OperatorAvatar from '../components/OperatorAvatar';
 import { formatDate as formatDateUtil, formatDateTime } from '../utils/date';
 import { getStatusBadge } from '../utils/orderDisplay';
 import type { Order, OrderItem, ApiResponse } from '../types';
+import Spinner from '../components/ui/Spinner'
 
 // Cette page affiche '—' (tiret cadratin) pour les dates absentes.
 const formatDate = (dateStr?: string | null) => formatDateUtil(dateStr, '—');
@@ -107,10 +108,7 @@ export default function OrderDetail() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[--k-primary] border-t-transparent" />
-        <span className="ml-2 text-[--k-muted]">Chargement...</span>
-      </div>
+      <Spinner size="lg" label="Chargement..." className="py-12" />
     );
   }
 

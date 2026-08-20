@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import QRCode from 'qrcode'
 import { X, Printer, Loader2 } from 'lucide-react'
 import Button from './ui/Button'
 
@@ -77,15 +76,20 @@ export default function PrintLabels({ isOpen, onClose, labels, defaultMode = 'fu
     if (!isOpen) return
     let cancelled = false
     setGenerating(true)
-    Promise.all(
-      labels.map((l) =>
-        QRCode.toDataURL(l.qrValue, {
-          margin: 0,
-          errorCorrectionLevel: 'M',
-          width: 512,
-        }),
-      ),
-    )
+    // Import dynamique : la lib `qrcode` n'est téléchargée qu'à la première
+    // ouverture de la modale, pas au chargement de la page.
+    import('qrcode')
+      .then(({ default: QRCode }) =>
+        Promise.all(
+          labels.map((l) =>
+            QRCode.toDataURL(l.qrValue, {
+              margin: 0,
+              errorCorrectionLevel: 'M',
+              width: 512,
+            }),
+          ),
+        ),
+      )
       .then((urls) => {
         if (!cancelled) setQrDataUrls(urls)
       })

@@ -19,6 +19,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { loadRemoteComponent } from '../../remoteLoader'
 import { Topbar } from '../Topbar'
 import ErrorBoundary from '../ErrorBoundary'
+import Spinner from '../ui/Spinner'
 import { Sidebar } from '../Sidebar'
 
 // Lazy-load remote components
@@ -239,7 +240,12 @@ export default function AppLayout() {
           className={`flex-1 min-w-0 overflow-y-auto md:p-5 ${fullscreenMobile ? 'p-0' : 'p-3'}`}
         >
           <ErrorBoundary>
-            <Outlet />
+            {/* Les pages sont chargées à la demande (React.lazy dans App.tsx) :
+                ce Suspense garde le shell (sidebar/topbar) visible pendant le
+                téléchargement du chunk de la page. */}
+            <Suspense fallback={<Spinner size="lg" label="Chargement..." className="py-12" />}>
+              <Outlet />
+            </Suspense>
           </ErrorBoundary>
         </main>
       </div>

@@ -11,6 +11,7 @@ import api from '../services/api';
 import RichTextEditor from './ui/RichTextEditor';
 import OperatorAvatar from './OperatorAvatar';
 import type { ApiResponse, ProductSerialItem, SerialStatus, ProductCondition, Site } from '../types';
+import Spinner from './ui/Spinner'
 
 const PAGE_SIZE = 15;
 
@@ -245,9 +246,7 @@ export default function SerialItemsPanel({ productId }: Props) {
 
       {/* Liste */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-8">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-[--k-primary] border-t-transparent" />
-        </div>
+        <Spinner size="md" className="py-8" />
       ) : items.length === 0 ? (
         <p className="py-6 text-center text-sm text-[--k-muted]">
           Aucun exemplaire à afficher.

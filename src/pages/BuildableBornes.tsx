@@ -8,6 +8,7 @@ import { PageHeader } from '../components/PageHeader';
 import { stripHtml } from '../components/ui/RichTextDisplay';
 import api from '../services/api';
 import type { ApiResponse, BuildableBorne, BuildableComponent } from '../types';
+import Spinner from '../components/ui/Spinner'
 
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/api$/, '');
 const getFullImageUrl = (url: string | null | undefined): string => {
@@ -305,9 +306,7 @@ export default function BuildableBornes() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[--k-primary] border-t-transparent" />
-      </div>
+      <Spinner size="lg" className="py-16" />
     );
   }
 

@@ -19,6 +19,7 @@ import { useToast } from '../components/ui/Toast';
 import api from '../services/api';
 import { formatDate as formatDateUtil } from '../utils/date';
 import type { OrderTemplate, ApiResponse } from '../types';
+import Spinner from '../components/ui/Spinner'
 
 // Cette page affiche '—' (tiret cadratin) pour les dates absentes.
 const formatDate = (dateStr?: string | null) => formatDateUtil(dateStr, '—');
@@ -117,10 +118,7 @@ export default function OrderTemplates() {
 
       {/* Loading */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-[--k-primary] border-t-transparent" />
-          <span className="ml-2 text-[--k-muted]">Chargement...</span>
-        </div>
+        <Spinner size="lg" label="Chargement..." className="py-12" />
       ) : !filtered.length ? (
         <div className="py-12 text-center">
           <FileText className="mx-auto mb-3 h-10 w-10 text-[--k-muted]" />

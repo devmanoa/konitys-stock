@@ -10,6 +10,7 @@ import api from '../../services/api';
 import type { AssemblyType, PaginatedResponse, PartType } from '../../types';
 import { PART_TYPE_LABEL } from '../../types';
 import { PART_TYPE_BADGE_CLASS } from './partTypeBadge';
+import Spinner from '../../components/ui/Spinner'
 
 function summarizeAssemblyTypeItems(items: AssemblyType['items']) {
   const list = items || [];
@@ -90,9 +91,7 @@ export default function AssemblyTypesSection() {
             Les types de bornes représentent les familles de bornes (ex: Borne Classik, Borne Spherik). Une borne peut appartenir à plusieurs types.
           </p>
           {assemblyTypesLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-[--k-primary] border-t-transparent" />
-            </div>
+            <Spinner size="md" className="py-8" />
           ) : !assemblyTypesData?.length ? (
             <p className="text-[--k-muted] italic py-4">
               Aucun type borne créé

@@ -10,6 +10,7 @@ import { PageHeader } from '../components/PageHeader';
 import { useToast } from '../components/ui/Toast';
 import api from '../services/api';
 import type { Site, ApiResponse } from '../types';
+import Spinner from '../components/ui/Spinner'
 
 export default function Sites() {
   const queryClient = useQueryClient();
@@ -125,10 +126,7 @@ export default function Sites() {
 
       {/* Grid */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-[--k-primary] border-t-transparent" />
-          <span className="ml-2 text-[--k-muted]">Chargement...</span>
-        </div>
+        <Spinner size="lg" label="Chargement..." className="py-12" />
       ) : filteredSites?.length === 0 ? (
         <div className="rounded-2xl border border-[--k-border] bg-white shadow-sm shadow-black/[0.03] py-12 text-center text-[--k-muted]">
           Aucun site trouvé

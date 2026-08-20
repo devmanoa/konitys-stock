@@ -16,6 +16,7 @@ import { KpiCard } from '../components/KpiCard'
 import { cn } from '../components/ui/cn'
 import api from '../services/api'
 import type { ApiResponse, LowStockAlert } from '../types'
+import Spinner from '../components/ui/Spinner'
 
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/api$/, '')
 const DEFAULT_PRODUCT_IMAGE = '/default-product.svg'
@@ -260,10 +261,7 @@ export default function StockAlerts() {
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-[--k-primary] border-t-transparent" />
-            <span className="ml-2 text-[--k-muted]">Chargement...</span>
-          </div>
+          <Spinner size="md" label="Chargement..." className="py-12" />
         ) : filteredAlerts.length === 0 ? (
           <div className="py-12 text-center text-[--k-muted]">
             {(alerts || []).length === 0

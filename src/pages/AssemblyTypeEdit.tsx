@@ -12,6 +12,7 @@ import { useToast } from '../components/ui/Toast'
 import api from '../services/api'
 import type { ApiResponse, AssemblyType, PartCategory, PartType, Product } from '../types'
 import { PART_TYPE_LABEL } from '../types'
+import Spinner from '../components/ui/Spinner'
 
 const UNCATEGORIZED_KEY = '__uncat__'
 // Tabs par type de piece — pas de tab "Tous" (on force le filtre).
@@ -256,10 +257,7 @@ export default function AssemblyTypeEdit() {
 
   if (!isCreating && isLoadingType) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[--k-primary] border-t-transparent" />
-        <span className="ml-2 text-[--k-muted]">Chargement…</span>
-      </div>
+      <Spinner size="lg" label="Chargement…" className="py-12" />
     )
   }
 

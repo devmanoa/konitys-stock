@@ -1,36 +1,42 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from './contexts/AuthContext'
 import { ToastProvider } from './components/ui/Toast'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import AppLayout from './components/layout/AppLayout'
-import Dashboard from './pages/Dashboard'
-import Products from './pages/Products'
-import ProductDetail from './pages/ProductDetail'
-import Suppliers from './pages/Suppliers'
-import SupplierDetail from './pages/SupplierDetail'
-import Orders from './pages/Orders'
-import OrderDetail from './pages/OrderDetail'
-import Stocks from './pages/Stocks'
-import Movements from './pages/Movements'
-import Sites from './pages/Sites'
-import Packs from './pages/Packs'
-import ImportExport from './pages/ImportExport'
-import Settings from './pages/Settings'
-import OrderTemplates from './pages/OrderTemplates'
-import OrderTemplateDetail from './pages/OrderTemplateDetail'
-import BuildableBornes from './pages/BuildableBornes'
-import AssemblyTypeEdit from './pages/AssemblyTypeEdit'
-import StockAlerts from './pages/StockAlerts'
-import Scan from './pages/Scan'
-import InventoryList from './pages/inventory/InventoryList'
-import InventoryDetail from './pages/inventory/InventoryDetail'
-import InventoryZone from './pages/inventory/InventoryZone'
-import InventoryCompare from './pages/inventory/InventoryCompare'
-import MobileInventory from './pages/inventory/mobile/MobileInventory'
-import MobileInventoryZone from './pages/inventory/mobile/MobileInventoryZone'
-import MobileInventoryRecent from './pages/inventory/mobile/MobileInventoryRecent'
+import Spinner from './components/ui/Spinner'
 import DebugConsole from './components/DebugConsole'
+// Dashboard reste en import statique : c'est la landing page la plus fréquente,
+// la garder dans le chunk principal évite un aller-retour réseau au premier rendu.
+import Dashboard from './pages/Dashboard'
+
+// Toutes les autres pages sont chargées à la demande (code-splitting par route).
+const Products = lazy(() => import('./pages/Products'))
+const ProductDetail = lazy(() => import('./pages/ProductDetail'))
+const Suppliers = lazy(() => import('./pages/Suppliers'))
+const SupplierDetail = lazy(() => import('./pages/SupplierDetail'))
+const Orders = lazy(() => import('./pages/Orders'))
+const OrderDetail = lazy(() => import('./pages/OrderDetail'))
+const Stocks = lazy(() => import('./pages/Stocks'))
+const Movements = lazy(() => import('./pages/Movements'))
+const Sites = lazy(() => import('./pages/Sites'))
+const Packs = lazy(() => import('./pages/Packs'))
+const ImportExport = lazy(() => import('./pages/ImportExport'))
+const Settings = lazy(() => import('./pages/Settings'))
+const OrderTemplates = lazy(() => import('./pages/OrderTemplates'))
+const OrderTemplateDetail = lazy(() => import('./pages/OrderTemplateDetail'))
+const BuildableBornes = lazy(() => import('./pages/BuildableBornes'))
+const AssemblyTypeEdit = lazy(() => import('./pages/AssemblyTypeEdit'))
+const StockAlerts = lazy(() => import('./pages/StockAlerts'))
+const Scan = lazy(() => import('./pages/Scan'))
+const InventoryList = lazy(() => import('./pages/inventory/InventoryList'))
+const InventoryDetail = lazy(() => import('./pages/inventory/InventoryDetail'))
+const InventoryZone = lazy(() => import('./pages/inventory/InventoryZone'))
+const InventoryCompare = lazy(() => import('./pages/inventory/InventoryCompare'))
+const MobileInventory = lazy(() => import('./pages/inventory/mobile/MobileInventory'))
+const MobileInventoryZone = lazy(() => import('./pages/inventory/mobile/MobileInventoryZone'))
+const MobileInventoryRecent = lazy(() => import('./pages/inventory/mobile/MobileInventoryRecent'))
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -41,6 +47,11 @@ const queryClient = new QueryClient({
   },
 })
 
+/** Fallback plein écran pendant le chargement d'un chunk de page. */
+function FullScreenLoader() {
+  return <Spinner size="lg" className="min-h-screen" />
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -50,24 +61,26 @@ function App() {
               Mounted outside <Routes> so it's available on every page including
               the public mobile share-link routes. */}
           <DebugConsole />
-          <Routes>
-            {/* Mobile share-link routes — NO Keycloak. The linkId in the URL
-                is the credential. Anything below /m/:linkId calls
-                /api/public/inventory/:linkId/* directly. */}
-            <Route path="/m/:linkId" element={<MobileInventory />} />
-            <Route path="/m/:linkId/zone/:locationId" element={<MobileInventoryZone />} />
-            <Route path="/m/:linkId/recent" element={<MobileInventoryRecent />} />
+          <Suspense fallback={<FullScreenLoader />}>
+            <Routes>
+              {/* Mobile share-link routes — NO Keycloak. The linkId in the URL
+                  is the credential. Anything below /m/:linkId calls
+                  /api/public/inventory/:linkId/* directly. */}
+              <Route path="/m/:linkId" element={<MobileInventory />} />
+              <Route path="/m/:linkId/zone/:locationId" element={<MobileInventoryZone />} />
+              <Route path="/m/:linkId/recent" element={<MobileInventoryRecent />} />
 
-            {/* Everything else is authenticated via Keycloak. */}
-            <Route
-              path="/*"
-              element={
-                <AuthProvider>
-                  <AuthenticatedRoutes />
-                </AuthProvider>
-              }
-            />
-          </Routes>
+              {/* Everything else is authenticated via Keycloak. */}
+              <Route
+                path="/*"
+                element={
+                  <AuthProvider>
+                    <AuthenticatedRoutes />
+                  </AuthProvider>
+                }
+              />
+            </Routes>
+          </Suspense>
         </BrowserRouter>
       </ToastProvider>
     </QueryClientProvider>

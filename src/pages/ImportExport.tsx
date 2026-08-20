@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { PageHeader } from '../components/PageHeader';
 import Button from '../components/ui/Button';
+import { SpinnerIcon } from '../components/ui/Spinner';
 import Badge from '../components/ui/Badge';
 import Modal from '../components/ui/Modal';
 import { useToast } from '../components/ui/Toast';
@@ -312,9 +313,7 @@ export default function ImportExport() {
                     </p>
                   </div>
                 </div>
-                {previewMutation.isPending && (
-                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-[--k-primary] border-t-transparent" />
-                )}
+                {previewMutation.isPending && <SpinnerIcon size="sm" />}
               </div>
             )}
 

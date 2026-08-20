@@ -6,6 +6,7 @@ import Input from '../ui/Input';
 import SupplierSearch from '../ui/SupplierSearch';
 import api from '../../services/api';
 import type { Product, Supplier, ProductSupplier, ApiResponse } from '../../types';
+import Spinner from '../ui/Spinner'
 
 interface ProductSupplierFormProps {
   product: Product;
@@ -107,9 +108,7 @@ export default function ProductSupplierForm({ product, onClose }: ProductSupplie
       <div>
         <h3 className="mb-3 font-medium text-[--k-text]">Fournisseurs liés</h3>
         {isLoading ? (
-          <div className="flex items-center justify-center py-4">
-            <div className="h-5 w-5 animate-spin rounded-full border-2 border-[--k-primary] border-t-transparent" />
-          </div>
+          <Spinner size="sm" className="py-4" />
         ) : productData?.productSuppliers?.length === 0 ? (
           <p className="text-[13px] text-[--k-muted]">Aucun fournisseur lié à ce produit.</p>
         ) : (

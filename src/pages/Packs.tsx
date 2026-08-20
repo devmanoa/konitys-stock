@@ -11,6 +11,7 @@ import RichTextEditor from '../components/ui/RichTextEditor';
 import { stripHtml } from '../components/ui/RichTextDisplay';
 import api from '../services/api';
 import type { Pack, Product, ApiResponse } from '../types';
+import Spinner from '../components/ui/Spinner'
 
 export default function Packs() {
   const queryClient = useQueryClient();
@@ -186,9 +187,7 @@ export default function Packs() {
         </div>
         <div>
           {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-[--k-primary] border-t-transparent" />
-            </div>
+            <Spinner size="md" className="py-8" />
           ) : filteredPacks.length === 0 ? (
             <div className="py-8 text-center">
               <PackageOpen className="mx-auto h-12 w-12 text-[--k-muted]" />
