@@ -1,0 +1,1 @@
+function l(e,r={}){if(!e)return"";const i=r.separator??" / ",s=[];let t=e;for(;t;)s.unshift(t.name),t=t.parent??null;let n=s.join(i);if(r.includeSite){const a=e.site||e.parent?.site;a?.name&&(n=`${a.name} · ${n}`)}return n}export{l};

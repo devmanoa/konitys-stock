@@ -1,0 +1,32 @@
+const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/browser-dzkxux04.js","assets/index-DaQ1nFhg.js","assets/index-B9gwVzmH.css"])))=>i.map(i=>d[i]);
+import{h as w,r as n,a3 as j,n as v,j as e,X as N,v as M,B as g}from"./index-DaQ1nFhg.js";const q=[["path",{d:"M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2",key:"143wyd"}],["path",{d:"M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6",key:"1itne7"}],["rect",{x:"6",y:"14",width:"12",height:"8",rx:"1",key:"1ue0tg"}]],z=w("printer",q),h={"full-57x32":{label:"57 × 32 mm — complet",widthMm:57,heightMm:32,qrSize:22,description:"QR + nom + référence. Format standard ZD411D."},"full-102x50":{label:"102 × 50 mm — large",widthMm:102,heightMm:50,qrSize:38,description:"Plus large, plus de place pour le texte."},"light-40x25":{label:"40 × 25 mm — QR seul",widthMm:40,heightMm:25,qrSize:20,description:"Que le QR code, sans texte."}};function $({isOpen:d,onClose:m,labels:s,defaultMode:b="full"}){const[o,y]=n.useState(b==="light"?"light-40x25":"full-57x32"),[x,p]=n.useState([]),[f,u]=n.useState(!1),c=n.useRef(null);if(n.useEffect(()=>{if(!d)return;let r=!1;return u(!0),j(async()=>{const{default:t}=await import("./browser-dzkxux04.js").then(l=>l.b);return{default:t}},__vite__mapDeps([0,1,2])).then(({default:t})=>Promise.all(s.map(l=>t.toDataURL(l.qrValue,{margin:0,errorCorrectionLevel:"M",width:512})))).then(t=>{r||p(t)}).catch(()=>{r||p([])}).finally(()=>{r||u(!1)}),()=>{r=!0}},[d,s]),!d)return null;const i=h[o],a=o==="light-40x25",k=()=>{if(!c.current)return;const r=c.current.innerHTML,t=window.open("","_blank","width=600,height=400");t&&(t.document.write(`<!doctype html>
+<html>
+  <head>
+    <title>Étiquettes</title>
+    <style>
+      @page { size: ${i.widthMm}mm ${i.heightMm}mm; margin: 0; }
+      @media print {
+        html, body { margin: 0 !important; padding: 0 !important; }
+        .pl-label { page-break-after: always; break-after: page; }
+        .pl-label:last-child { page-break-after: auto; break-after: auto; }
+      }
+      body { margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+      .pl-label {
+        width: ${i.widthMm}mm;
+        height: ${i.heightMm}mm;
+        box-sizing: border-box;
+        padding: 2mm;
+        display: flex;
+        align-items: center;
+        gap: 3mm;
+        overflow: hidden;
+      }
+      .pl-label.light { justify-content: center; gap: 0; padding: 1mm; }
+      .pl-qr { width: ${i.qrSize}mm; height: ${i.qrSize}mm; flex-shrink: 0; }
+      .pl-text { display: flex; flex-direction: column; justify-content: center; min-width: 0; flex: 1; }
+      .pl-title { font-size: 9pt; font-weight: 600; line-height: 1.15; word-break: break-word; }
+      .pl-ref { font-size: 7pt; color: #444; margin-top: 1mm; font-family: ui-monospace, monospace; }
+    </style>
+  </head>
+  <body>${r}</body>
+</html>`),t.document.close(),t.focus(),setTimeout(()=>{t.print(),t.close()},250))};return v.createPortal(e.jsxs("div",{className:"fixed inset-0 z-[9999] flex items-center justify-center",children:[e.jsx("div",{className:"absolute inset-0 bg-black/40 backdrop-blur-[2px]",onClick:m}),e.jsxs("div",{className:"relative w-full max-w-2xl mx-2 sm:mx-4 max-h-[90vh] overflow-hidden rounded-2xl border border-[--k-border] bg-[--k-surface] shadow-xl",children:[e.jsxs("div",{className:"flex items-center justify-between border-b border-[--k-border] px-4 sm:px-6 py-3 sm:py-4",children:[e.jsxs("h2",{className:"text-[15px] font-semibold text-[--k-text]",children:["Imprimer ",s.length>1?`${s.length} étiquettes`:"une étiquette"]}),e.jsx("button",{onClick:m,className:"shrink-0 rounded-lg p-1.5 text-[--k-muted] hover:bg-[--k-surface-2] hover:text-[--k-text] transition",children:e.jsx(N,{className:"h-5 w-5"})})]}),e.jsxs("div",{className:"max-h-[calc(90vh-8rem)] overflow-y-auto px-4 sm:px-6 py-4 space-y-4",children:[e.jsxs("div",{children:[e.jsx("label",{className:"mb-2 block text-[13px] font-medium text-[--k-text]",children:"Format d'étiquette"}),e.jsx("div",{className:"grid grid-cols-1 sm:grid-cols-3 gap-2",children:Object.keys(h).map(r=>{const t=h[r],l=o===r;return e.jsxs("button",{type:"button",onClick:()=>y(r),className:`text-left rounded-xl border p-3 text-[12px] transition ${l?"border-[--k-primary] bg-[--k-primary-2]/30 text-[--k-text]":"border-[--k-border] bg-[--k-surface] text-[--k-muted] hover:border-[--k-primary]/50 hover:text-[--k-text]"}`,children:[e.jsx("div",{className:"font-medium text-[13px] text-[--k-text]",children:t.label}),e.jsx("div",{className:"mt-1 text-[11px]",children:t.description})]},r)})})]}),e.jsxs("div",{children:[e.jsxs("div",{className:"mb-2 flex items-center justify-between",children:[e.jsx("label",{className:"text-[13px] font-medium text-[--k-text]",children:"Aperçu"}),e.jsxs("span",{className:"text-[11px] text-[--k-muted]",children:[i.widthMm," × ",i.heightMm," mm — ",s.length," étiquette",s.length>1?"s":""]})]}),e.jsx("div",{className:"rounded-xl border border-dashed border-[--k-border] bg-white p-4 max-h-[260px] overflow-auto",children:f?e.jsx("div",{className:"flex h-32 items-center justify-center text-[--k-muted]",children:e.jsx(M,{className:"h-5 w-5 animate-spin"})}):e.jsx("div",{ref:c,className:"flex flex-wrap gap-3",children:s.map((r,t)=>e.jsxs("div",{className:`pl-label ${a?"light":""}`,style:{width:`${i.widthMm}mm`,height:`${i.heightMm}mm`,padding:a?"1mm":"2mm",display:"flex",alignItems:"center",justifyContent:a?"center":"flex-start",gap:a?0:"3mm",border:"1px dashed #d1d5db",boxSizing:"border-box",overflow:"hidden",background:"white"},children:[x[t]&&e.jsx("img",{src:x[t],alt:"QR",className:"pl-qr",style:{width:`${i.qrSize}mm`,height:`${i.qrSize}mm`,flexShrink:0}}),!a&&e.jsxs("div",{className:"pl-text",style:{display:"flex",flexDirection:"column",justifyContent:"center",minWidth:0,flex:1},children:[r.title&&e.jsx("div",{className:"pl-title",style:{fontSize:"9pt",fontWeight:600,lineHeight:1.15,wordBreak:"break-word"},children:r.title}),r.reference&&e.jsx("div",{className:"pl-ref",style:{fontSize:"7pt",color:"#444",marginTop:"1mm",fontFamily:"ui-monospace, monospace"},children:r.reference})]})]},t))})})]})]}),e.jsxs("div",{className:"flex justify-end gap-3 border-t border-[--k-border] px-4 sm:px-6 py-3",children:[e.jsx(g,{variant:"secondary",onClick:m,children:"Annuler"}),e.jsxs(g,{onClick:k,disabled:f||s.length===0,children:[e.jsx(z,{className:"mr-2 h-4 w-4"}),"Imprimer"]})]})]})]}),document.body)}export{$ as P};

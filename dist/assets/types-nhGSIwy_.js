@@ -1,0 +1,1 @@
+const e={OK:"OK",TO_CHECK:"À contrôler",DAMAGED:"Abîmé",OUT_OF_SERVICE:"Hors service"},t={OK:"bg-emerald-100 text-emerald-700",TO_CHECK:"bg-amber-100 text-amber-700",DAMAGED:"bg-rose-100 text-rose-700",OUT_OF_SERVICE:"bg-slate-200 text-slate-700"};export{e as S,t as a};
